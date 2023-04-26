@@ -1,0 +1,89 @@
+paths:
+  prepared: 
+    main: D:\Ferrari\Projects\trans_fusion\site1\data\prepared
+    train: train
+    val: val
+    test: test
+    general: general
+    data: data
+    label: label
+    train_csv: train.csv
+    val_csv: val.csv
+  opt:
+    y0:
+      - D:\Ferrari\Projects\trans_fusion\site1\data\opt\18193.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\opt\18208.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\opt\18218.tif
+    y1: 
+      - D:\Ferrari\Projects\trans_fusion\site1\data\opt\19208.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\opt\19228.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\opt\19233.tif
+    y2: 
+      - D:\Ferrari\Projects\trans_fusion\site1\data\opt\20213.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\opt\20218.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\opt\20223.tif
+  sar:
+    y0:
+      - D:\Ferrari\Projects\trans_fusion\site1\data\sar\18198.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\sar\18210.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\sar\18222.tif
+    y1: 
+      - D:\Ferrari\Projects\trans_fusion\site1\data\sar\19217.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\sar\19229.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\sar\19241.tif
+    y2: 
+      - D:\Ferrari\Projects\trans_fusion\site1\data\sar\20212.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\sar\20218.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\sar\20224.tif
+  labels:
+    y1: D:\Ferrari\Projects\trans_fusion\site1\data\general\label_2019.tif
+    y2: D:\Ferrari\Projects\trans_fusion\site1\data\general\label_2020.tif
+  cmaps:
+    y0:
+      - D:\Ferrari\Projects\trans_fusion\site1\data\general\cmap_18193.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\general\cmap_18208.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\general\cmap_18218.tif
+    y1: 
+      - D:\Ferrari\Projects\trans_fusion\site1\data\general\cmap_19208.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\general\cmap_19228.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\general\cmap_19233.tif
+    y2: 
+      - D:\Ferrari\Projects\trans_fusion\site1\data\general\cmap_20213.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\general\cmap_20218.tif
+      - D:\Ferrari\Projects\trans_fusion\site1\data\general\cmap_20223.tif
+  previous:
+    y1:  D:\Ferrari\Projects\trans_fusion\site1\data\general\previous_2019.tif
+    y2:  D:\Ferrari\Projects\trans_fusion\site1\data\general\previous_2020.tif
+  experiments: D:\Ferrari\Projects\trans_fusion\site1\exps
+  exp_subpaths:
+    logs: logs
+    models: models
+    visual: visual
+    predicted: predicted
+    results: results
+files: 
+  statistics: statistics.json
+params:
+  tile_size: 256
+  patch_size: 128
+  tile_min_def_prop: 0.02
+  tiles_val_prop: 0.3
+  n_images: 3
+  n_models: 5
+  n_patches_tile: 3
+  classes_weights: [0.2, 0.8, 0]
+  learning_rate: 5.0e-5
+  early_stop_patience: 10
+  early_stop_min_delta: 5.0e-5
+  early_stop_min_epochs: 1
+  max_training_epochs: 500
+  batch_size: 32
+  opt_bands: 13
+  sar_bands: 2
+  n_classes: 3
+  prediction_overlaps: [0.15, 0.2, 0.25, 0.3]
+  prediction_remove_border: 8
+  prediction_prefix: pred
+  cmap_prefix: cmap
+  min_cloud_cover: 0.3
+  resunet_depths: [32, 64, 128, 256]

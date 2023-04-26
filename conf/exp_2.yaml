@@ -1,0 +1,4 @@
+params:
+  model_name: models.resunet.networks.ResUnetSAR
+  input_depth: 5
+  prediction_overlaps: [0.6]
