@@ -29,9 +29,16 @@ parser.add_argument( # Create training/validation data.
 
 parser.add_argument( # Create test data.
     '-t', '--test-data',
-    default=False,
+    default=True,
     action=argparse.BooleanOptionalAction,
     help = 'Create test data.'
+)
+
+parser.add_argument( # Generate statistics.
+    '-s', '--gen-statistics',
+    action=argparse.BooleanOptionalAction,
+    default=True,
+    help = 'Generate statistics.'
 )
 
 parser.add_argument( # Clear prepared folder before prepare new data.
@@ -73,7 +80,7 @@ validation_folder = prepared_folder / preparation_params['validation_folder']
 test_folder = prepared_folder / preparation_params['test_folder']
 prediction_folder = prepared_folder / preparation_params['prediction_folder']
 
-if args.clear_prepared_folder and prepared_folder.exists():
+if args.clear_prepared_folder:
     rmtree(prepared_folder)
 prepared_folder.mkdir(exist_ok=True)
 train_folder.mkdir(exist_ok=True)
@@ -94,6 +101,78 @@ logging.basicConfig(
         )
 log = logging.getLogger('preparing')
 
+#statistics estimation
+statistics_file = prepared_folder / preparation_params['statistics_file']
+if args.gen_statistics:
+    log.info('Generating statistics.')
+    opt_means, opt_stds, sar_means, sar_stds = [], [], [], []
+
+    #optical
+    #train files
+    print('train OPT files')
+    opt_path = Path(original_data_params['opt']['folder'])
+    for opt_file_group in original_data_params['opt']['imgs']['train']:
+        for opt_file in opt_file_group:
+            file_path = opt_path / opt_file
+            data = load_opt_image(file_path)
+            opt_means.append(data.mean(axis=(0,1)))
+            opt_stds.append(data.std(axis=(0,1)))
+
+    #test files
+    print('test SAR files')
+    for opt_file_group in original_data_params['opt']['imgs']['test']:
+        for opt_file in opt_file_group:
+            file_path = opt_path / opt_file
+            data = load_opt_image(file_path)
+            opt_means.append(data.mean(axis=(0,1)))
+            opt_stds.append(data.std(axis=(0,1)))
+
+    opt_mean = np.array(opt_means).mean(axis=0)
+    opt_std = np.array(opt_stds).mean(axis=0)
+
+    #SAR
+    #train files
+    print('train OPT files')
+    sar_path = Path(original_data_params['sar']['folder'])
+    for sar_file_group in original_data_params['sar']['imgs']['train']:
+        for sar_file in sar_file_group:
+            file_path = sar_path / sar_file
+            data = load_SAR_image(file_path)
+            sar_means.append(data.mean(axis=(0,1)))
+            sar_stds.append(data.std(axis=(0,1)))
+
+    #test files
+    print('test SAR files')
+    for sar_file_group in original_data_params['sar']['imgs']['test']:
+        for sar_file in sar_file_group:
+            file_path = sar_path / sar_file
+            data = load_SAR_image(file_path)
+            sar_means.append(data.mean(axis=(0,1)))
+            sar_stds.append(data.std(axis=(0,1)))
+
+    sar_mean = np.array(sar_means).mean(axis=0)
+    sar_std = np.array(sar_stds).mean(axis=0)
+
+    statistics = {
+        'opt_mean': opt_mean.tolist(),
+        'opt_std': opt_std.tolist(),
+        'sar_mean': sar_mean.tolist(),
+        'sar_std': sar_std.tolist()
+    }
+
+    save_json(statistics, statistics_file)
+else:
+    log.info(f'Loading statistics from {statistics_file}.')
+    statistics = load_json(statistics_file)
+    opt_mean = statistics['opt_mean']
+    opt_std = statistics['opt_std']
+    sar_mean = statistics['sar_mean']
+    sar_std = statistics['sar_std']
+
+
+for st in statistics:
+    log.info(f'{st}: {statistics[st]}')
+
 #Generating patches idx
 tiles = load_sb_image(Path(tiles_params['path']))
 shape = tiles.shape
@@ -105,7 +184,6 @@ window_shape = (patch_size, patch_size)
 slide_step = int((1-patch_overlap)*patch_size)
 idx_patches = view_as_windows(idx, window_shape, slide_step).reshape((-1, patch_size, patch_size))
 
-data = None
 #training patches
 if args.train_data:
     train_dataset = {
@@ -117,7 +195,7 @@ if args.train_data:
         'label': []
     }
     train_label = load_sb_image(Path(label_params['train_path'])).astype(np.uint8).flatten()
-    def_prev = load_sb_image(Path(previous_def_params['train_path'])).astype(np.float16)
+    def_prev = load_sb_image(Path(previous_def_params['train_path'])).astype(np.float32)
 
     keep = ((train_label[idx_patches] == 1).sum(axis=(1,2)) / patch_size**2) >= min_def_proportion
     keep_args = np.argwhere(keep == True).flatten() #args with at least min_prop deforestation
@@ -138,26 +216,24 @@ if args.train_data:
     val_idx_patches = all_idx_patches[keep_val]
     train_idx_patches = all_idx_patches[keep_train]
 
-    np.random.shuffle(val_idx_patches)
-    np.random.shuffle(train_idx_patches)
-
     opt_path = Path(original_data_params['opt']['folder'])
     sar_path = Path(original_data_params['sar']['folder'])
 
     for opt_group_i, opt_group in enumerate(original_data_params['opt']['imgs']['train']):
         for sar_group_i, sar_group in enumerate(original_data_params['sar']['imgs']['train']):
-            group_idx = f'{opt_group_i}-{sar_group_i}'
+            group_idx = f'{opt_group_i}-{opt_group_i}'
             imgs = []
             for opt_img_file in opt_group:
                 data_file = opt_path / opt_img_file
                 data = load_opt_image(data_file)
-                data = data / 10000
-                imgs.append(data.astype(np.float16))
+                data = (data - opt_mean) / opt_std
+                imgs.append(data.astype(np.float32))
 
             for sar_img_file in sar_group:
                 data_file = sar_path / sar_img_file
                 data = load_SAR_image(data_file)
-                imgs.append(data.astype(np.float16))
+                data = (data - sar_mean) / sar_std
+                imgs.append(data.astype(np.float32))
 
             imgs.append(np.expand_dims(def_prev, axis=-1))
             data = np.concatenate(imgs, axis=-1)
@@ -183,8 +259,7 @@ if args.train_data:
                 np.save(data_patch_file, data_patch)
                 np.save(label_patch_file, label_patch)
 
-            del train_label
-            data = None
+            del data, train_label
 
     train_dataset = pd.DataFrame(train_dataset)
     val_dataset = pd.DataFrame(val_dataset)
@@ -207,7 +282,7 @@ if args.test_data:
         'label': []
     }
     test_label = load_sb_image(Path(label_params['test_path'])).astype(np.uint8).flatten()
-    def_prev = load_sb_image(Path(previous_def_params['test_path'])).astype(np.float16)
+    def_prev = load_sb_image(Path(previous_def_params['test_path'])).astype(np.float32)
 
     keep = ((test_label[idx_patches] == 1).sum(axis=(1,2)) / patch_size**2) >= min_def_proportion
     keep_args = np.argwhere(keep == True).flatten() #args with at least min_prop deforestation
@@ -227,23 +302,23 @@ if args.test_data:
     for opt_group_i, opt_group in enumerate(original_data_params['opt']['imgs']['test']):
         for sar_group_i, sar_group in enumerate(original_data_params['sar']['imgs']['test']):
             group_idx = f'{opt_group_i}-{opt_group_i}'
-            if data is None:
-                imgs = []
-                for opt_img_file in opt_group:
-                    data_file = opt_path / opt_img_file
-                    data = load_opt_image(data_file)
-                    data = data / 10000
-                    imgs.append(data.astype(np.float16))
+            imgs = []
+            for opt_img_file in opt_group:
+                data_file = opt_path / opt_img_file
+                data = load_opt_image(data_file)
+                data = (data - opt_mean) / opt_std
+                imgs.append(data.astype(np.float32))
 
-                for sar_img_file in sar_group:
-                    data_file = sar_path / sar_img_file
-                    data = load_SAR_image(data_file)
-                    imgs.append(data.astype(np.float16))
+            for sar_img_file in sar_group:
+                data_file = sar_path / sar_img_file
+                data = load_SAR_image(data_file)
+                data = (data - sar_mean) / sar_std
+                imgs.append(data.astype(np.float32))
 
-                imgs.append(np.expand_dims(def_prev, axis=-1))
-                data = np.concatenate(imgs, axis=-1)
-                data = data.reshape(-1, data.shape[-1])
-                del imgs
+            imgs.append(np.expand_dims(def_prev, axis=-1))
+            data = np.concatenate(imgs, axis=-1)
+            data = data.reshape(-1, data.shape[-1])
+            del imgs
             for patch_i, test_idx_patch in enumerate(tqdm(all_idx_patches, desc='Test Patches')):
                 data_patch = data[test_idx_patch]
                 label_patch = test_label[test_idx_patch]
@@ -254,6 +329,7 @@ if args.test_data:
                 np.save(data_patch_file, data_patch)
                 np.save(label_patch_file, label_patch)
 
+
     test_dataset = pd.DataFrame(test_dataset)
 
     test_dataset.to_csv(
@@ -263,9 +339,8 @@ if args.test_data:
 #prediction patches
 if args.prediction_data:
     test_label = load_sb_image(Path(label_params['test_path'])).astype(np.uint8)
-    def_prev = load_sb_image(Path(previous_def_params['test_path'])).astype(np.float16)
+    def_prev = load_sb_image(Path(previous_def_params['test_path'])).astype(np.float32)
     pad_shape = ((patch_size, patch_size),(patch_size, patch_size))
-    original_shape = test_label.shape
 
     test_label = np.pad(test_label, pad_shape, mode = 'reflect')
     def_prev = np.pad(def_prev, pad_shape, mode = 'reflect')
@@ -298,28 +373,25 @@ if args.prediction_data:
                     'data': [],
                     'label': []
                 }
-                if data is None:
-                    imgs = []
-                    for opt_img_file in opt_group:
-                        data_file = opt_path / opt_img_file
-                        data = load_opt_image(data_file)
-                        data = data / 10000
-                        data = np.pad(data, pad_shape, mode = 'reflect')
-                        imgs.append(data.astype(np.float16))
-
-                    for sar_img_file in sar_group:
-                        data_file = sar_path / sar_img_file
-                        data = load_SAR_image(data_file)
-                        data = np.pad(data, pad_shape, mode = 'reflect')
-                        imgs.append(data.astype(np.float16))
-
-                    imgs.append(np.expand_dims(def_prev, axis=-1))
-                    data = np.concatenate(imgs, axis=-1)
-                    del imgs
-                else:
-                    data = data.reshape(original_shape + (data.shape[-1],))
+                imgs = []
+                for opt_img_file in opt_group:
+                    data_file = opt_path / opt_img_file
+                    data = load_opt_image(data_file)
+                    data = (data - opt_mean) / opt_std
                     data = np.pad(data, pad_shape, mode = 'reflect')
+                    imgs.append(data.astype(np.float32))
+
+                for sar_img_file in sar_group:
+                    data_file = sar_path / sar_img_file
+                    data = load_SAR_image(data_file)
+                    data = (data - sar_mean) / sar_std
+                    data = np.pad(data, pad_shape, mode = 'reflect')
+                    imgs.append(data.astype(np.float32))
+
+                imgs.append(np.expand_dims(def_prev, axis=-1))
+                data = np.concatenate(imgs, axis=-1)
                 data = data.reshape(-1, data.shape[-1])
+                del imgs
                 for patch_i, pred_idx_patch in enumerate(tqdm(pred_idx_patches, desc='Prediction Patches')):
                     data_patch = data[pred_idx_patch]
                     label_patch = test_label[pred_idx_patch]

@@ -1,60 +1,42 @@
 import argparse
-import pathlib
-from conf import paths, default, general
+from pathlib import Path
 import numpy as np
 from osgeo import gdal, gdalconst, ogr
-import os
+import yaml
 
 parser = argparse.ArgumentParser(
     description='Generate .tif previous deforestation temporal distance map. As older is the deforestation, the value is close to 0. As recent is the deforestation, the value is close to 1'
 )
 
-parser.add_argument( # base image 
-    '-b', '--base-image-path',
-    type = pathlib.Path,
-    default = paths.OPT_PATH,
-    help = 'Path to the folder of the geotiff files to generate aligned labels of the same region'
-)
-
-parser.add_argument( # PRODES yearly deforestation shapefile 
-    '-d', '--deforestation-shape',
-    type = pathlib.Path,
-    default = paths.PRODES_YEAR_DEF_SHP,
-    help = 'Path to PRODES yearly deforestation shapefile (.shp)'
-)
-
-parser.add_argument( # PRODES previous deforestation shapefile 
-    '-p', '--previous-deforestation-shape',
-    type = pathlib.Path,
-    default = paths.PRODES_PREV_DEF_SHP,
-    help = 'Path to PRODES previous deforestation shapefile (.shp)'
-)
-
-parser.add_argument( # referent year 
-    '-y', '--year',
-    type = int,
-    default = 2020,
-    help = "Reference year to generate the temporal distance map. The higher value is 'year'-1."
-)
-
-parser.add_argument( # output 
-    '-o', '--output-path',
-    type = pathlib.Path,
-    default = paths.GENERAL_PATH,
-    help = 'Path to output label .tif folder'
+parser.add_argument( # The path to the config file (.yaml)
+    '-c', '--cfg',
+    type = Path,
+    default = 'cfg.yaml',
+    help = 'Path to the config file (.yaml).'
 )
 
 args = parser.parse_args()
 
-v_yearly_def = ogr.Open(str(args.deforestation_shape))
+with open(args.cfg, 'r') as file:
+    cfg = yaml.load(file, Loader=yaml.Loader)
+
+original_data = cfg['original_data']
+
+prodes_folder = Path(original_data['prodes']['folder'])
+
+base_image = Path(original_data['opt']['folder']) / original_data['opt']['imgs']['train'][0][0]
+
+previous_def_params = cfg['previous_def_params']
+
+f_yearly_def = prodes_folder / original_data['prodes']['yearly_deforestation']
+v_yearly_def = ogr.Open(str(f_yearly_def))
 l_yearly_def = v_yearly_def.GetLayer()
 
-v_previous_def = ogr.Open(str(args.previous_deforestation_shape))
+f_previous_def = prodes_folder / original_data['prodes']['defor_2007']
+v_previous_def = ogr.Open(str(f_previous_def))
 l_previous_def = v_previous_def.GetLayer()
 
-base_image = os.listdir(str(args.base_image_path))[0]
-
-base_data = gdal.Open(os.path.join(str(args.base_image_path), base_image), gdalconst.GA_ReadOnly)
+base_data = gdal.Open(str(base_image), gdalconst.GA_ReadOnly)
 
 geo_transform = base_data.GetGeoTransform()
 x_res = base_data.RasterXSize
@@ -62,20 +44,22 @@ y_res = base_data.RasterYSize
 crs = base_data.GetSpatialRef()
 proj = base_data.GetProjection()
 
-output = os.path.join(args.output_path, f'{general.PREVIOUS_PREFIX}_{args.year}.tif')
+#train previous deforestation
+test_output = previous_def_params['train_path']
 
-target_ds = gdal.GetDriverByName('GTiff').Create(output, x_res, y_res, 1, gdal.GDT_Float32)
-target_ds.SetGeoTransform(geo_transform)
-target_ds.SetSpatialRef(crs)
-target_ds.SetProjection(proj)
+target_train = gdal.GetDriverByName('GTiff').Create(test_output, x_res, y_res, 1, gdal.GDT_Float32)
+target_train.SetGeoTransform(geo_transform)
+target_train.SetSpatialRef(crs)
+target_train.SetProjection(proj)
 
-last_year = args.year - 1
+train_year = previous_def_params['train_year']
+last_year = train_year - 1
 b_year = 2007
-years = np.arange(b_year, args.year)
+years = np.arange(b_year, train_year)
 vals = np.linspace(0,1, len(years)+1)
 
 
-gdal.RasterizeLayer(target_ds, [1], l_previous_def, burn_values=[vals[1]])
+gdal.RasterizeLayer(target_train, [1], l_previous_def, burn_values=[vals[1]])
 print('prev', vals[1])
 
 for i, t_year in enumerate(years[1:]):
@@ -83,6 +67,33 @@ for i, t_year in enumerate(years[1:]):
     print(t_year, v)
     where = f'"year"={t_year}'
     l_yearly_def.SetAttributeFilter(where)
-    gdal.RasterizeLayer(target_ds, [1], l_yearly_def, burn_values=[v])
+    gdal.RasterizeLayer(target_train, [1], l_yearly_def, burn_values=[v])
 
-target_ds = None
+target_train = None
+
+#test previous deforestation
+test_output = previous_def_params['test_path']
+
+target_test = gdal.GetDriverByName('GTiff').Create(test_output, x_res, y_res, 1, gdal.GDT_Float32)
+target_test.SetGeoTransform(geo_transform)
+target_test.SetSpatialRef(crs)
+target_test.SetProjection(proj)
+
+test_year = previous_def_params['test_year']
+last_year = test_year - 1
+b_year = 2007
+years = np.arange(b_year, test_year)
+vals = np.linspace(0,1, len(years)+1)
+
+
+gdal.RasterizeLayer(target_test, [1], l_previous_def, burn_values=[vals[1]])
+print('prev', vals[1])
+
+for i, t_year in enumerate(years[1:]):
+    v = vals[i+2]
+    print(t_year, v)
+    where = f'"year"={t_year}'
+    l_yearly_def.SetAttributeFilter(where)
+    gdal.RasterizeLayer(target_test, [1], l_yearly_def, burn_values=[v])
+
+target_test = None

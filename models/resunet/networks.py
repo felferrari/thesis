@@ -5,15 +5,15 @@ import torch
 class ResUnetOpt(nn.Module):
     def __init__(self, params):
         super(ResUnetOpt, self).__init__()
-        input_depth = params['params']['input_depth']
-        depths = params['params']['resunet_depths']
-        n_classes = params['params']['n_classes']
+        input_depth = params['n_opt_images'] * params['opt_bands'] + 1
+        depths = params['resunet_depths']
+        n_classes = params['n_classes']
         self.encoder = ResUnetEncoder(input_depth, depths)
         self.decoder = ResUnetDecoder(depths)
         self.classifier = ResUnetClassifier(depths[0], n_classes)
 
     def forward(self, x):
-        x = torch.cat((x[0], x[1], x[4]), dim=1)
+        x = torch.cat((x[0], x[2]), dim=1)
 
         x = self.encoder(x)
         x = self.decoder(x)
@@ -25,15 +25,15 @@ class ResUnetOpt(nn.Module):
 class ResUnetSAR(nn.Module):
     def __init__(self, params):
         super(ResUnetSAR, self).__init__()
-        input_depth = params['params']['input_depth']
-        depths = params['params']['resunet_depths']
-        n_classes = params['params']['n_classes']
+        input_depth = params['n_sar_images'] * params['sar_bands'] + 1
+        depths = params['resunet_depths']
+        n_classes = params['n_classes']
         self.encoder = ResUnetEncoder(input_depth, depths)
         self.decoder = ResUnetDecoder(depths)
         self.classifier = ResUnetClassifier(depths[0], n_classes)
 
     def forward(self, x):
-        x = torch.cat((x[2], x[3], x[4]), dim=1)
+        x = torch.cat((x[1], x[2]), dim=1)
 
         x = self.encoder(x)
         x = self.decoder(x)
@@ -46,15 +46,15 @@ class ResUnetSAR(nn.Module):
 class ResUnetEF(nn.Module):
     def __init__(self, params):
         super(ResUnetEF, self).__init__()
-        input_depth = params['params']['input_depth']
-        depths = params['params']['resunet_depths']
-        n_classes = params['params']['n_classes']
+        input_depth = params['n_opt_images'] * params['opt_bands'] + params['n_sar_images'] * params['sar_bands'] + 1
+        depths = params['resunet_depths']
+        n_classes = params['n_classes']
         self.encoder = ResUnetEncoder(input_depth, depths)
         self.decoder = ResUnetDecoder(depths)
         self.classifier = ResUnetClassifier(depths[0], n_classes)
 
     def forward(self, x):
-        x = torch.cat((x[0], x[1], x[2], x[3], x[4]), dim=1)
+        x = torch.cat((x[0], x[1], x[2]), dim=1)
 
         x = self.encoder(x)
         x = self.decoder(x)
@@ -63,8 +63,12 @@ class ResUnetEF(nn.Module):
         return x
 
 class ResUnetJF(nn.Module):
-    def __init__(self, input_depth_0, input_depth_1, depths, n_classes):
+    def __init__(self, params):
         super(ResUnetJF, self).__init__()
+        input_depth_0 = params['n_opt_images'] * params['opt_bands'] + 1
+        input_depth_1 = params['n_sar_images'] * params['sar_bands'] + 1
+        depths = params['resunet_depths']
+        n_classes = params['n_classes']
         self.encoder_0 = ResUnetEncoder(input_depth_0, depths)
         self.encoder_1 = ResUnetEncoder(input_depth_1, depths)
         self.decoder = ResUnetDecoderJF(depths)
@@ -72,8 +76,8 @@ class ResUnetJF(nn.Module):
 
 
     def forward(self, x):
-        x_0 = torch.cat((x[0], x[1], x[4]), dim=1)
-        x_1 = torch.cat((x[2], x[3], x[4]), dim=1)
+        x_0 = torch.cat((x[0], x[2]), dim=1)
+        x_1 = torch.cat((x[1], x[2]), dim=1)
 
         x_0 = self.encoder_0(x_0)
         x_1 = self.encoder_1(x_1)
@@ -88,8 +92,12 @@ class ResUnetJF(nn.Module):
         return x
     
 class ResUnetJFNoSkip(nn.Module):
-    def __init__(self, input_depth_0, input_depth_1, depths, n_classes):
+    def __init__(self, params):
         super(ResUnetJFNoSkip, self).__init__()
+        input_depth_0 = params['n_opt_images'] * params['opt_bands'] + 1
+        input_depth_1 = params['n_sar_images'] * params['sar_bands'] + 1
+        depths = params['resunet_depths']
+        n_classes = params['n_classes']
         self.encoder_0 = ResUnetEncoder(input_depth_0, depths)
         self.encoder_1 = ResUnetEncoder(input_depth_1, depths)
         self.decoder = ResUnetDecoderJFNoSkip(depths)
@@ -97,8 +105,8 @@ class ResUnetJFNoSkip(nn.Module):
 
 
     def forward(self, x):
-        x_0 = torch.cat((x[0], x[1], x[4]), dim=1)
-        x_1 = torch.cat((x[2], x[3], x[4]), dim=1)
+        x_0 = torch.cat((x[0], x[2]), dim=1)
+        x_1 = torch.cat((x[1], x[2]), dim=1)
 
         x_0 = self.encoder_0(x_0)
         x_1 = self.encoder_1(x_1)
@@ -110,8 +118,12 @@ class ResUnetJFNoSkip(nn.Module):
         return x
     
 class ResUnetLF(nn.Module):
-    def __init__(self, input_depth_0, input_depth_1, depths, n_classes):
+    def __init__(self, params):
         super(ResUnetLF, self).__init__()
+        input_depth_0 = params['n_opt_images'] * params['opt_bands'] + 1
+        input_depth_1 = params['n_sar_images'] * params['sar_bands'] + 1
+        depths = params['resunet_depths']
+        n_classes = params['n_classes']
         self.encoder_0 = ResUnetEncoder(input_depth_0, depths)
         self.encoder_1 = ResUnetEncoder(input_depth_1, depths)
         self.decoder_0 = ResUnetDecoder(depths)
@@ -119,8 +131,8 @@ class ResUnetLF(nn.Module):
         self.classifier = ResUnetClassifier(2*depths[0], n_classes)
 
     def forward(self, x):
-        x_0 = torch.cat((x[0], x[1], x[4]), dim=1)
-        x_1 = torch.cat((x[2], x[3], x[4]), dim=1)
+        x_0 = torch.cat((x[0], x[2]), dim=1)
+        x_1 = torch.cat((x[1], x[2]), dim=1)
 
         x_0 = self.encoder_0(x_0)
         x_1 = self.encoder_1(x_1)

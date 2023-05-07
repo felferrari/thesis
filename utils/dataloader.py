@@ -10,47 +10,36 @@ from skimage.util import view_as_windows
 
 
 class GenericDataset(Dataset):
-    def __init__(self, dataset_csv, patch_size, device, params, n_patches_tile = 1):
+    def __init__(self, dataset_csv, patch_size, device, params):
         self.data_df = pd.read_csv(dataset_csv)
+        #self.data_df = self.data_df.sample(frac=1).reset_index(drop=True)
         self.device = device
         self.patch_size = patch_size
         self.params = params
-        self.n_patches_tile = n_patches_tile
 
 
     def __len__(self):
-        return len(self.data_df)*self.n_patches_tile
+        return len(self.data_df)
     
     def augment_data(self, data, label):
         return data, label
     
     def split_data(self, data):
-        opt_bands = self.params['opt_bands']
-        sar_bands = self.params['sar_bands']
+        opt_bands = self.params['opt_bands']*self.params['n_opt_images']
+        sar_bands = self.params['sar_bands']*self.params['n_sar_images']
         b1 = opt_bands
-        b2 = b1 + opt_bands
-        b3 = b2 + sar_bands
-        b4 = b3 + sar_bands
-        b5 = b4 + 1
+        b2 = b1 + sar_bands
+        b3 = b2 + 1
         return (
             data[:b1],
             data[b1:b2],
-            data[b2:b3],
-            data[b3:b4],
-            data[b4:b5],
+            data[b2:b3]
         )
     
     def __getitem__(self, index):
-        index = index // self.n_patches_tile
-        delta_size = self.params['tile_size'] - self.params['patch_size']
-        d0 = random.randrange(delta_size)
-        d1 = random.randrange(delta_size)
         data_file, label_file = self.data_df['data'][index], self.data_df['label'][index]
-        data = np.load(data_file)[d0:d0+self.params['patch_size'], d1:d1+self.params['patch_size']].astype(np.float32)
-        label = np.load(label_file)[d0:d0+self.params['patch_size'], d1:d1+self.params['patch_size']].astype(np.int64)
-        if np.any(np.isnan(data)):
-            print(data)
-
+        data = np.load(data_file).astype(np.float32)
+        label = np.load(label_file).astype(np.int64)
         
         data = torch.from_numpy(data).moveaxis(2, 0).to(self.device)
         label = torch.from_numpy(label).to(self.device)
@@ -76,9 +65,12 @@ class TrainDataset(GenericDataset):
 
 class ValDataset(GenericDataset):
     pass
+
+class PredDataSet(GenericDataset):
+    pass
         
 
-class PredDataSet(Dataset):
+class PredDataSet2(Dataset):
     def __init__(self, images, device, patch_size, stats, transformer = ToTensor()) -> None:
         self.device = device
         self.patch_size = patch_size
@@ -101,26 +93,27 @@ class PredDataSet(Dataset):
 
         pad_shape = ((patch_size, patch_size),(patch_size, patch_size),(0,0))
 
-        img = load_opt_image(images['opt_0'])
-        img = (img - opt_mean)/opt_std
-        img = np.pad(img, pad_shape, mode = 'reflect')
-        self.opt_img_0 = img.reshape((-1, img.shape[-1]))
+        data_opt = []
+        for img_file_i in images['opt_files']:
+            img_path = images['opt_folder'] / img_file_i
+            img = load_opt_image(img_path).astype(np.float16)
+            img = (img - opt_mean)/opt_std
+            data_opt.append(img)
+        data_opt = np.concatenate(data_opt, axis=-1)
+        data_opt = np.pad(data_opt, pad_shape, mode = 'reflect')
+        self.opt = data_opt.reshape((-1, data_opt.shape[-1]))
+        del data_opt
 
-        img = load_opt_image(images['opt_1'])
-        img = (img - opt_mean)/opt_std
-        img = np.pad(img, pad_shape, mode = 'reflect')
-        self.opt_img_1 = img.reshape((-1, img.shape[-1]))
-        
-        img = load_SAR_image(images['sar_0'])
-        img = (img - sar_mean)/sar_std
-        img = np.pad(img, pad_shape, mode = 'reflect')
-        self.sar_img_0 = img.reshape((-1, img.shape[-1]))
-
-        img = load_SAR_image(images['sar_1'])
-        img = (img - sar_mean)/sar_std
-        img = np.pad(img, pad_shape, mode = 'reflect')
-        self.sar_img_1 = img.reshape((-1, img.shape[-1]))
-
+        data_sar = []
+        for img_file_i in images['sar_files']:
+            img_path = images['sar_folder'] / img_file_i
+            img = load_SAR_image(img_path).astype(np.float16)
+            img = (img - sar_mean)/sar_std
+            data_sar.append(img)
+        data_sar = np.concatenate(data_sar, axis=-1)
+        data_sar = np.pad(data_sar, pad_shape, mode = 'reflect')
+        self.sar = data_sar.reshape((-1, data_sar.shape[-1]))
+        del data_sar
 
 
     def gen_patches(self, overlap):
@@ -135,19 +128,15 @@ class PredDataSet(Dataset):
     def __getitem__(self, index):
         patch = self.idx_patches[index]
 
-        opt_0 = self.transformer(self.opt_img_0[patch].astype(np.float32)).to(self.device)
-        opt_1 = self.transformer(self.opt_img_1[patch].astype(np.float32)).to(self.device)
+        opt = self.transformer(self.opt[patch].astype(np.float32)).to(self.device)
 
-        sar_0 = self.transformer(self.sar_img_0[patch].astype(np.float32)).to(self.device)
-        sar_1 = self.transformer(self.sar_img_1[patch].astype(np.float32)).to(self.device)
+        sar = self.transformer(self.sar[patch].astype(np.float32)).to(self.device)
 
         prev_def = self.transformer(self.prev_def[patch].astype(np.float32)).to(self.device)
 
         return (
-            opt_0,
-            opt_1,
-            sar_0,
-            sar_1,
+            opt,
+            sar,
             prev_def
         )    
 

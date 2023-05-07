@@ -1,6 +1,6 @@
 general_params:
-  train_year: &train_year 2020
-  test_year: &test_year 2021
+  train_year: &train_year 2019
+  test_year: &test_year 2020
   patch_size: &patch_size 128
   data_prefix: &data_prefix data
   label_prefix: &label_prefix label
@@ -13,64 +13,38 @@ general_params:
     predicted: predicted
     visual: visual
     results: results
-  opt_bands: &opt_bands 10 #number of bands per optical image
+  opt_bands: &opt_bands 13 #number of bands per optical image
   sar_bands: &sar_bands 2 #number of bands per SAR image
-  n_opt_images: &n_opt_images 2 #!5 #number of optical images
-  n_sar_images: &n_sar_images 12 #number of optical images
+  n_opt_images: &n_opt_images 2 #5 #number of optical images
+  n_sar_images: &n_sar_images 2 #12 #number of optical images
   n_classes: &n_classes 3 #number of classes
   n_models: &n_models 5 #number of models to be trained for each experiment
   resunet_depths: &resunet_depths [32, 64, 128, 256]
 original_data:
   opt:
     n_bands: *opt_bands 
-    folder: D:\Ferrari\Projects\thesis\data\opt_full_L1C
+    folder: D:\Ferrari\Projects\thesis\data\opt
     imgs:
       train:
         -
-          - 2019-08-06-2019-08-07.tif
-          - 2019-11-24-2019-11-25.tif
-          - 2020-02-17-2020-02-18.tif
-          - 2020-05-02-2020-05-03.tif
-          - 2020-07-31-2020-08-01.tif
+          - 18193.tif
+          - 19208.tif
       test:
         -
-          - 2020-07-31-2020-08-01.tif
-          - 2020-11-03-2020-11-04.tif
-          - 2021-02-01-2021-02-02.tif
-          - 2021-05-27-2021-05-28.tif
-          - 2021-07-16-2021-07-17.tif
+          - 19208.tif
+          - 20213.tif
   sar:
     n_bands: *sar_bands 
     folder: D:\Ferrari\Projects\thesis\data\sar
     imgs:
       train: 
         -
-          - 2019-07-14-2019-08-14.tif
-          - 2019-08-15-2019-09-15.tif
-          - 2019-09-16-2019-10-17.tif
-          - 2019-10-18-2019-11-18.tif
-          - 2019-11-19-2019-12-20.tif
-          - 2019-12-21-2020-01-21.tif
-          - 2020-01-22-2020-02-22.tif
-          - 2020-02-23-2020-03-25.tif
-          - 2020-03-26-2020-04-26.tif
-          - 2020-04-27-2020-05-28.tif
-          - 2020-05-29-2020-06-29.tif
-          - 2020-06-30-2020-07-30.tif
+          - 18198.tif
+          - 19217.tif
       test: 
         -
-          - 2020-06-30-2020-07-30.tif
-          - 2020-07-31-2020-08-30.tif
-          - 2020-08-31-2020-09-30.tif
-          - 2020-10-01-2020-10-31.tif
-          - 2020-11-01-2020-12-01.tif
-          - 2020-12-02-2021-01-01.tif
-          - 2021-01-02-2021-02-01.tif
-          - 2021-02-02-2021-03-03.tif
-          - 2021-03-04-2021-04-02.tif
-          - 2021-04-03-2021-05-02.tif
-          - 2021-05-03-2021-06-01.tif
-          - 2021-06-02-2021-07-01.tif
+          - 19217.tif
+          - 20212.tif
   prodes:
     folder: D:\Ferrari\Projects\thesis\prodes
     defor_2007: accumulated_deforestation_2007.shp
@@ -96,7 +70,7 @@ previous_def_params:
   train_year: *train_year
   test_year: *test_year
 preparation_params:
-  folder: C:\Users\felferrari\Documents\projetos\thesis\prepared #D:\Ferrari\Projects\thesis\prepared_data
+  folder: D:\Ferrari\Projects\thesis\prepared_data
   train_folder: train
   train_data: train.csv
   validation_folder: validation
@@ -149,6 +123,7 @@ prediction_params:
   n_opt_images: *n_opt_images 
   n_sar_images: *n_sar_images
 
+
 experiments:
   exp_1:
     model: models.resunet.networks.ResUnetOpt
@@ -158,30 +133,6 @@ experiments:
     resunet_depths: *resunet_depths
   exp_2:
     model: models.resunet.networks.ResUnetSAR
-    sar_bands: *sar_bands
-    n_sar_images: *n_sar_images 
-    n_classes: *n_classes
-    resunet_depths: *resunet_depths
-  exp_3:
-    model: models.resunet.networks.ResUnetEF
-    opt_bands: *opt_bands
-    n_opt_images: *n_opt_images 
-    sar_bands: *sar_bands
-    n_sar_images: *n_sar_images 
-    n_classes: *n_classes
-    resunet_depths: *resunet_depths
-  exp_4:
-    model: models.resunet.networks.ResUnetJF
-    opt_bands: *opt_bands
-    n_opt_images: *n_opt_images 
-    sar_bands: *sar_bands
-    n_sar_images: *n_sar_images 
-    n_classes: *n_classes
-    resunet_depths: *resunet_depths
-  exp_5:
-    model: models.resunet.networks.ResUnetLF
-    opt_bands: *opt_bands
-    n_opt_images: *n_opt_images 
     sar_bands: *sar_bands
     n_sar_images: *n_sar_images 
     n_classes: *n_classes

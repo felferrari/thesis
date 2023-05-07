@@ -1,4 +1,0 @@
-params:
-  model_name: models.resunet.networks.ResUnetEF
-  input_depth: 31
-  prediction_overlaps: [0.6]

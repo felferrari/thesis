@@ -4,15 +4,35 @@ import os
 import sys
 from osgeo import gdal_array
 from osgeo import ogr, gdal, gdalconst
-from pydoc import locate
+from pathlib import Path
+from typing import Union
+import yaml 
 
 def load_json(fp):
     with open(fp) as f:
         return json.load(f)
     
-def save_json(dict_, fp):
-    with open(fp, 'w') as f:
+def save_json(dict_:dict, file_path: Union[str, Path]) -> None:
+    """Save a dictionary into a file
+
+    Args:
+        dict_ (dict): Dictionaruy to be saved
+        file_path (Union[str, Path]): file path
+    """
+
+    with open(file_path, 'w') as f:
         json.dump(dict_, f, indent=4)
+
+def save_yaml(dict_:dict, file_path: Union[str, Path]) -> None:
+    """Save a dictionary into a file
+
+    Args:
+        dict_ (dict): Dictionaruy to be saved
+        file_path (Union[str, Path]): file path
+    """
+
+    with open(file_path, 'w') as f:
+        yaml.dump(dict_, f, default_flow_style=False)
     
     
 def load_opt_image(img_file):
@@ -51,11 +71,11 @@ def load_SAR_image(img_file):
     Returns:
         array:numpy array of the image. Channels Last.
     """
-    db_img = gdal_array.LoadFile(str(img_file))
-    temp_dn_img = 10**(db_img/10)
+    img = gdal_array.LoadFile(str(img_file))
+    #temp_dn_img = 10**(db_img/10)
     #temp_dn_img[temp_dn_img>1] = 1
-    temp_dn_img[np.isnan(temp_dn_img)] = 0
-    return np.moveaxis(temp_dn_img, 0, -1)
+    img[np.isnan(img)] = 0
+    return np.moveaxis(img, 0, -1)
 
 def load_SAR_DN_image(img_file):
     '''Function to read SAR images'''
@@ -189,8 +209,4 @@ def count_parameters(model):
     text+=f'Total: {total_params:,}\n'
     return text
 
-def get_model(cfg:dict, model_cfg:dict):
-    cfg['params'].update(model_cfg['params'])
-    model = locate(cfg['params']['model_name'])(cfg)
-    return model
 

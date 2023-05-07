@@ -1,18 +1,18 @@
 from tqdm import tqdm
 import torch
 import os
-from torchmetrics.classification import MulticlassF1Score
+from torchmetrics.classification import MulticlassF1Score, MulticlassAccuracy
 from torch.nn.functional import one_hot
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
-from conf import general
+import time
 
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
 
-def train_loop(dataloader, model, loss_fn, optimizer):
+def train_loop(dataloader, model, loss_fn, optimizer, params):
     """Executes a train loop epoch
 
     Args:
@@ -24,19 +24,18 @@ def train_loop(dataloader, model, loss_fn, optimizer):
     Returns:
         float: average loss of the epoch
     """
-    train_loss, f1_sum, steps = 0, 0, 0
+    train_loss, steps = 0, 0
     pbar = tqdm(dataloader)
-    f1 = MulticlassF1Score(num_classes=general.N_CLASSES, ignore_index = 2)
+    metric = MulticlassAccuracy(num_classes=params['n_classes'], average = None)
     
     for (X, y) in pbar:
-        # Compute prediction and loss
         pred = model(X)
         loss = loss_fn(pred, y)
-        #loss = loss_fn(pred[:, :-1, :, :], one_hot(y, general.N_CLASSES).permute((0, 3, 1, 2))[:, :-1, :, :].float())
-        f1_sum += f1(pred.to('cpu'), y.to('cpu'))
         steps += 1
         train_loss += loss.item()
-        pbar.set_description(f'Train Loss: {train_loss/steps:.4f}, F1-Score:{f1_sum/steps:.4f}')
+        metric.update(pred.to('cpu'), y.to('cpu'))
+        acc = metric.compute()
+        pbar.set_description(f'Train Loss: {train_loss/steps:.4f}, Acc Classes: 0:{acc[0].item():.4f}, 1:{acc[1].item():.4f}, 2:{acc[2].item():.4f}')
 
         # Backpropagation
         optimizer.zero_grad()
@@ -44,11 +43,10 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         optimizer.step()
 
     loss = train_loss/steps
-    f1 = f1_sum/steps
-    print(f"Average Training Loss: {loss:.4f}, Average F1-Score: {f1:.4f}")
-    return loss, f1
+    #print(f'Train Loss: {train_loss/steps:.4f}, Acc: 0:{acc[0].item():.4f}, 1:{acc[1].item():.4f}, 2:{acc[2].item():.4f}')
+    return loss, acc[0].item(), acc[1].item()
 
-def val_loop(dataloader, model, loss_fn):
+def val_loop(dataloader, model, loss_fn, params):
     """Evaluates a validation loop epoch
 
     Args:
@@ -59,22 +57,23 @@ def val_loop(dataloader, model, loss_fn):
     Returns:
         float: average loss of the epoch
     """
-    val_loss, f1_sum, steps = 0, 0, 0
-    f1 = MulticlassF1Score(num_classes=general.N_CLASSES, ignore_index = 2)
+    val_loss, steps = 0, 0
+    #f1 = MulticlassF1Score(num_classes=params['n_classes'], ignore_index = params['loss_fn']['ignore_index']).to(device)
+    metric = MulticlassAccuracy(num_classes=params['n_classes'], average = None)
     with torch.no_grad():
         pbar = tqdm(dataloader)
         for (X, y) in pbar:
             pred = model(X)
             loss = loss_fn(pred, y)
             steps += 1
-            f1_sum += f1(pred.to('cpu'), y.to('cpu'))
             val_loss += loss.item()
-            pbar.set_description(f'Val Loss: {val_loss/steps:.4f}, F1-Score:{f1_sum/steps:.4f}  ')
+            metric.update(pred.to('cpu'), y.to('cpu'))
+            acc = metric.compute()
+            pbar.set_description(f'Validation Loss: {val_loss/steps:.4f}, Acc Classes: 0:{acc[0].item():.4f}, 1:{acc[1].item():.4f}, 2:{acc[2].item():.4f}')
 
     val_loss /= steps
-    val_f1 = f1_sum/steps
-    print(f"Average Validation Loss: {val_loss:.4f}, Average F1-Score: {val_f1:.4f}")
-    return val_loss, val_f1
+    #print(f'Validation Loss: {val_loss/steps:.4f}, Acc: 0:{acc[0].item():.4f}, 1:{acc[1].item():.4f}, 2:{acc[2].item():.4f}')
+    return val_loss, acc[0].item(), acc[1].item()
 
 def val_sample_image(dataloader, model, path_to_samples, epoch):
     sample = next(iter(dataloader))

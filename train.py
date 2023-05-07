@@ -2,7 +2,7 @@ import argparse
 import pathlib
 #from conf import default, general, paths
 #import os
-from utils.ops import count_parameters, get_model
+from utils.ops import count_parameters, save_json, save_yaml
 #from utils.dataloader import TrainDataSet
 import torch
 import logging, sys
@@ -17,6 +17,8 @@ from torch.utils.tensorboard import SummaryWriter
 from  pathlib import Path
 import yaml
 from utils.dataloader import TrainDataset, ValDataset
+from pydoc import locate
+
 
 parser = argparse.ArgumentParser(
     description='Train NUMBER_MODELS models based in the same parameters'
@@ -32,7 +34,7 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 1,
+    default = 3,
     help = 'The number of the experiment'
 )
 
@@ -40,48 +42,49 @@ parser.add_argument( # Model number
     '-m', '--model',
     type = int,
     default = -1,
-    help = 'The number of the model to be retrained'
+    help = 'Number of the model to be retrained'
 )
 
 
 args = parser.parse_args()
 
 with open(args.cfg, 'r') as file:
-    cfg = yaml.safe_load(file)
+    cfg = yaml.load(file, Loader=yaml.Loader)
 
-cfg_exp_file = Path('conf') / f'exp_{args.experiment}.yaml'
-with open(cfg_exp_file, 'r') as file:
-    model_cfg = yaml.safe_load(file)
+training_params = cfg['training_params']
+preparation_params = cfg['preparation_params']
+experiment_params = cfg['experiments'][f'exp_{args.experiment}']
 
-params = cfg['params']
-paths = cfg['paths']
+experiments_paths = training_params['experiments_paths']
 
-path_exp = Path(paths['experiments']) / f'exp_{args.experiment}'
-path_exp.mkdir(exist_ok=True)
+#create experiment folder structure
+exp_path = Path(experiments_paths['folder']) / f'exp_{args.experiment}'
 
-path_logs = path_exp / paths['exp_subpaths']['logs']
-path_models = path_exp / paths['exp_subpaths']['models']
-path_visual = path_exp / paths['exp_subpaths']['visual']
-path_predicted = path_exp / paths['exp_subpaths']['predicted']
-path_results = path_exp / paths['exp_subpaths']['results']
+models_path = exp_path / experiments_paths['models']
+logs_path = exp_path / experiments_paths['logs']
+visual_path = exp_path / experiments_paths['visual']
+predicted_path = exp_path / experiments_paths['predicted']
+results_path = exp_path / experiments_paths['results']
 
-path_logs.mkdir(exist_ok=True)
-path_models.mkdir(exist_ok=True)
-path_visual.mkdir(exist_ok=True)
-path_predicted.mkdir(exist_ok=True)
-path_results.mkdir(exist_ok=True)
+exp_path.mkdir(exist_ok=True)
+models_path.mkdir(exist_ok=True)
+logs_path.mkdir(exist_ok=True)
+visual_path.mkdir(exist_ok=True)
+predicted_path.mkdir(exist_ok=True)
+results_path.mkdir(exist_ok=True)
 
-path_prepared = Path(cfg['paths']['prepared']['main'])
-path_train = path_prepared / cfg['paths']['prepared']['train']
-path_val = path_prepared / cfg['paths']['prepared']['val']
-path_test = path_prepared / cfg['paths']['prepared']['test']
-path_general = path_prepared / cfg['paths']['prepared']['general']
+#setting up prepared data source
+prepared_folder = Path(preparation_params['folder'])
 
-patch_size = params['patch_size']
+train_csv = prepared_folder / preparation_params['train_data']
+test_csv = prepared_folder / preparation_params['test_data']
+validation_csv = prepared_folder / preparation_params['validation_data']
 
+patch_size = training_params['patch_size']
+batch_size = training_params['batch_size']
 
 def run(model_idx):
-    outfile = path_logs /  f'train_{args.experiment}_{model_idx}.txt'
+    outfile = logs_path /  f'train_{args.experiment}_{model_idx}.txt'
     logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s:%(levelname)s:%(name)s:%(message)s',
@@ -90,85 +93,83 @@ def run(model_idx):
             )
     log = logging.getLogger('training')
 
+    cfg_log_file = logs_path / f'cfg_{args.experiment}_{model_idx}.yaml'
+    save_yaml(cfg, cfg_log_file)
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    model = get_model(cfg, model_cfg)
-
-    log.info(cfg)
-
-    log.info('Loading data...')
-
-    #train_dp = get_datapipe(path_train, subset='train', patch_size=patch_size, device = device)
-    #val_dp = get_datapipe(path_train, subset='validation', patch_size=patch_size, device = device)
-    train_ds = TrainDataset(path_train/paths['prepared']['train_csv'], patch_size=patch_size,  device = device, params=params, n_patches_tile=params['n_patches_tile'])
-    val_ds = ValDataset(path_val/paths['prepared']['val_csv'], patch_size=patch_size, device = device, params=params, n_patches_tile=params['n_patches_tile'])
-    
-    train_sampler = RandomSampler(train_ds)
-
-    train_dl = DataLoader(dataset=train_ds, batch_size=params['batch_size'], num_workers=5, persistent_workers = True, drop_last = True, sampler = train_sampler)
-    val_dl = DataLoader(dataset=val_ds, batch_size=params['batch_size'], num_workers=5, persistent_workers = True)
-    
-    log.info('Data loaded.')
-
+    model = locate(experiment_params['model'])(experiment_params)
     model.to(device)
     log.info(f'Model trainable parameters: {count_parameters(model)}')
 
-    #torch.set_num_threads(args.threads)
-
-    loss_fn = nn.CrossEntropyLoss(ignore_index=2, weight=torch.tensor(params['classes_weights']).to(device))
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=params['learning_rate'])
-    path_model = path_models / f'model_{model_idx}.pth'
-    #model_path = os.path.join(models_path, f'model_{model_idx}.pth')
-    early_stop = EarlyStop(
-        train_patience=params['early_stop_patience'],
-        path_to_save = str(path_model),
-        min_delta = params['early_stop_min_delta'],
-        min_epochs = params['early_stop_min_epochs']
-        )
-
-    t0 = time.perf_counter()
+    train_ds = TrainDataset(train_csv, patch_size=patch_size,  device = device, params=training_params)
+    val_ds = ValDataset(validation_csv, patch_size=patch_size, device = device, params=training_params)
+    train_ds[0]
+    val_ds[0]
     
+    train_sampler = RandomSampler(train_ds)
 
-    path_tb_train_logdir = path_logs / f'train_model_{model_idx}'
-    path_tb_val_logdir = path_logs / f'val_model_{model_idx}'
-    #train_tb_logdir_path = os.path.join(logs_path, f'train_model_{model_idx}')
-    #val_tb_logdir_path = os.path.join(logs_path, f'val_model_{model_idx}')
-    #if not os.path.exists(tb_logdir_path):
-    #    os.mkdir(tb_logdir_path)
+    train_dl = DataLoader(dataset=train_ds, batch_size=batch_size, num_workers=2, persistent_workers = True, drop_last = True, sampler = train_sampler)
+    val_dl = DataLoader(dataset=val_ds, batch_size=batch_size, num_workers=2, persistent_workers = True)
+
+    #train_dl = DataLoader(dataset=train_ds, batch_size=batch_size, sampler = train_sampler, drop_last = True)
+    #val_dl = DataLoader(dataset=val_ds, batch_size=batch_size)
+
+    loss_params = training_params['loss_fn']
+    loss_fn = locate(loss_params['module'])(weight=torch.tensor(loss_params['weights']).to(device),  ignore_index = loss_params['ignore_index'])
+
+    optimizer_params = training_params['optimizer']
+    optimizer = locate(optimizer_params['module'])(model.parameters(),  **optimizer_params['params'])
+
+    model_path = models_path / f'model_{model_idx}.pth'
+
+    early_stop_params = training_params['early_stop']
+    early_stop = EarlyStop(
+        train_patience = early_stop_params['patience'],
+        path_to_save = str(model_path),
+        min_delta = early_stop_params['min_delta'],
+        min_epochs = early_stop_params['min_epochs']
+        )
+    
+    total_t0 = time.perf_counter()
+
+    path_tb_train_logdir = logs_path / f'train_model_{model_idx}'
+    path_tb_val_logdir = logs_path / f'val_model_{model_idx}'
+
     train_writer = SummaryWriter(log_dir=str(path_tb_train_logdir))
     val_writer = SummaryWriter(log_dir=str(path_tb_val_logdir))
-    for t in range(params['max_training_epochs']):
+
+    for t in range(training_params['max_epochs']):
         epoch = t+1
         print(f"-------------------------------\nEpoch {epoch}")
         model.train()
-        loss, f1 = train_loop(train_dl, model, loss_fn, optimizer)
+        loss, acc_0, acc_1 = train_loop(train_dl, model, loss_fn, optimizer, training_params)
         train_writer.add_scalar('Loss', loss, t)
-        train_writer.add_scalar('F1Score', f1, t)
-        #summary_writer.add_scalar('Loss/Train', loss)
-        #summary_writer.add_scalar('F1Score/Train', f1)
+        train_writer.add_scalar('Class0_Acc', acc_0, t)
+        train_writer.add_scalar('Class1_Acc', acc_1, t)
         model.eval()
-        val_loss, val_f1 = val_loop(val_dl, model, loss_fn)
+        val_loss, acc_0, acc_1 = val_loop(val_dl, model, loss_fn, training_params)
         val_writer.add_scalar('Loss', val_loss, t)
-        val_writer.add_scalar('F1Score', val_f1, t)
-        #summary_writer.add_scalar('Loss/Validation', loss)
-        #summary_writer.add_scalar('F1Score/Validation', f1)
-        #val_sample_image(dataloader_val, model, visual_path, t)
+        val_writer.add_scalar('Class0_Acc', acc_0, t)
+        val_writer.add_scalar('Class1_Acc', acc_1, t)
+
         if early_stop.testEpoch(model = model, val_value = val_loss):
             min_val = early_stop.better_value
             log.info(f'Min Validation Value:{min_val}')
             break
-    t_time = (time.perf_counter() - t0)/60
-    log.info(f'Training time: {t_time} mins, for {t} epochs, Avg Training Time per epoch:{t_time/t}')
+    t_time = (time.perf_counter() - total_t0)/60
+    log.info(f'Total Training time: {t_time} mins, for {t} epochs, Avg Training Time per epoch:{t_time/t}')
 
 if __name__=="__main__":
     freeze_support()
     
     if args.model == -1:
-        for model_idx in range(params['n_models']):
+        for model_idx in range(training_params['n_models']):
             p = Process(target=run, args=(model_idx,))
             p.start()
             p.join()
     else:
         run(args.model)
 
+
+    
