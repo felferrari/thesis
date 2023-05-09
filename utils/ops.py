@@ -33,6 +33,17 @@ def save_yaml(dict_:dict, file_path: Union[str, Path]) -> None:
 
     with open(file_path, 'w') as f:
         yaml.dump(dict_, f, default_flow_style=False)
+
+def load_yaml(file_path: Union[str, Path]) -> None:
+    """Save a dictionary into a file
+
+    Args:
+        dict_ (dict): Dictionaruy to be saved
+        file_path (Union[str, Path]): file path
+    """
+
+    with open(file_path, 'r') as f:
+        return yaml.safe_load(f)
     
     
 def load_opt_image(img_file):

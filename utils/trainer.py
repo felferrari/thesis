@@ -26,7 +26,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, params):
     """
     train_loss, steps = 0, 0
     pbar = tqdm(dataloader)
-    metric = MulticlassAccuracy(num_classes=params['n_classes'], average = None)
+    metric = MulticlassF1Score(num_classes=params['n_classes'], average = None)
     
     for (X, y) in pbar:
         pred = model(X)
@@ -35,7 +35,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, params):
         train_loss += loss.item()
         metric.update(pred.to('cpu'), y.to('cpu'))
         acc = metric.compute()
-        pbar.set_description(f'Train Loss: {train_loss/steps:.4f}, Acc Classes: 0:{acc[0].item():.4f}, 1:{acc[1].item():.4f}, 2:{acc[2].item():.4f}')
+        pbar.set_description(f'Train Loss: {train_loss/steps:.4f}, F1-Score Classes: 0:{acc[0].item():.4f}, 1:{acc[1].item():.4f}, 2:{acc[2].item():.4f}')
 
         # Backpropagation
         optimizer.zero_grad()
@@ -59,7 +59,8 @@ def val_loop(dataloader, model, loss_fn, params):
     """
     val_loss, steps = 0, 0
     #f1 = MulticlassF1Score(num_classes=params['n_classes'], ignore_index = params['loss_fn']['ignore_index']).to(device)
-    metric = MulticlassAccuracy(num_classes=params['n_classes'], average = None)
+    metric = MulticlassF1Score(num_classes=params['n_classes'], average = None)
+
     with torch.no_grad():
         pbar = tqdm(dataloader)
         for (X, y) in pbar:
@@ -69,7 +70,7 @@ def val_loop(dataloader, model, loss_fn, params):
             val_loss += loss.item()
             metric.update(pred.to('cpu'), y.to('cpu'))
             acc = metric.compute()
-            pbar.set_description(f'Validation Loss: {val_loss/steps:.4f}, Acc Classes: 0:{acc[0].item():.4f}, 1:{acc[1].item():.4f}, 2:{acc[2].item():.4f}')
+            pbar.set_description(f'Validation Loss: {val_loss/steps:.4f}, F1-Score Classes: 0:{acc[0].item():.4f}, 1:{acc[1].item():.4f}, 2:{acc[2].item():.4f}')
 
     val_loss /= steps
     #print(f'Validation Loss: {val_loss/steps:.4f}, Acc: 0:{acc[0].item():.4f}, 1:{acc[1].item():.4f}, 2:{acc[2].item():.4f}')
@@ -131,5 +132,5 @@ class EarlyStop():
         else:
             self.no_change_epochs += 1
             print(f'No improvement for {self.no_change_epochs}/{self.train_pat} epoch(s). Better Validation value is {self.better_value:.4f}' )
-            if self.no_change_epochs > self.train_pat:
+            if self.no_change_epochs >= self.train_pat:
                 return True

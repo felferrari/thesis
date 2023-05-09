@@ -1,5 +1,4 @@
 from torch.utils.data import Dataset
-import pandas as pd
 import numpy as np
 from torchvision.transforms import ToTensor
 from torchvision.transforms.functional import vflip, hflip
@@ -9,66 +8,159 @@ from utils.ops import load_sb_image, load_opt_image, load_SAR_image
 from skimage.util import view_as_windows
 
 
-class GenericDataset(Dataset):
-    def __init__(self, dataset_csv, patch_size, device, params):
-        self.data_df = pd.read_csv(dataset_csv)
-        #self.data_df = self.data_df.sample(frac=1).reset_index(drop=True)
+class GenericTrainDataset(Dataset):
+    def __init__(self, patch_size, device, params, data_folder, n_patches):
         self.device = device
         self.patch_size = patch_size
         self.params = params
+        self.n_patches = n_patches
+        self.data_folder = data_folder
 
+        self.n_opt_img_groups = len(params['train_opt_imgs'])
+        self.opt_imgs = params['train_opt_imgs']
+        
+        self.n_sar_img_groups = len(params['train_sar_imgs'])
+        self.sar_imgs = params['train_sar_imgs']
 
     def __len__(self):
-        return len(self.data_df)
+        return self.n_patches * self.n_opt_img_groups * self.n_sar_img_groups
     
-    def augment_data(self, data, label):
-        return data, label
+    def augment_data(self, *args):
+        return args
     
-    def split_data(self, data):
-        opt_bands = self.params['opt_bands']*self.params['n_opt_images']
-        sar_bands = self.params['sar_bands']*self.params['n_sar_images']
-        b1 = opt_bands
-        b2 = b1 + sar_bands
-        b3 = b2 + 1
-        return (
-            data[:b1],
-            data[b1:b2],
-            data[b2:b3]
-        )
     
     def __getitem__(self, index):
-        data_file, label_file = self.data_df['data'][index], self.data_df['label'][index]
-        data = np.load(data_file).astype(np.float32)
-        label = np.load(label_file).astype(np.int64)
-        
-        data = torch.from_numpy(data).moveaxis(2, 0).to(self.device)
-        label = torch.from_numpy(label).to(self.device)
-        data, label = self.augment_data(data, label)
+        patch_index = index // (self.n_opt_img_groups * self.n_sar_img_groups)
 
-        return self.split_data(data), label
+        group_idx = index % (self.n_opt_img_groups * self.n_sar_img_groups)
+        opt_group_index = group_idx // self.n_sar_img_groups
+        sar_group_index = group_idx % self.n_sar_img_groups
 
-class TrainDataset(GenericDataset):
-    def augment_data(self, data, label):
+        opt_images_idx = self.opt_imgs[opt_group_index]
+        sar_images_idx = self.sar_imgs[sar_group_index]
+
+        opt_patch = np.concatenate(
+            [np.load(self.data_folder / f'{self.params["prefixs"]["opt"]}_{patch_index:d}-{opt_idx}.npy') for opt_idx in opt_images_idx],
+            axis = -1
+            ).astype(np.float32)
+        opt_patch = torch.from_numpy(opt_patch).moveaxis(2, 0).to(self.device)
+
+        sar_patch = np.concatenate(
+            [np.load(self.data_folder / f'{self.params["prefixs"]["sar"]}_{patch_index:d}-{sar_idx}.npy') for sar_idx in sar_images_idx],
+            axis = -1
+            ).astype(np.float32)
+        sar_patch = torch.from_numpy(sar_patch).moveaxis(2, 0).to(self.device)
+
+        previous_patch = np.load(self.data_folder / f'{self.params["prefixs"]["previous"]}_{patch_index:d}.npy').astype(np.float32)
+        previous_patch = torch.from_numpy(previous_patch).moveaxis(2, 0).to(self.device)
+
+        label_patch = np.load(self.data_folder / f'{self.params["prefixs"]["label"]}_{patch_index:d}.npy').astype(np.int64)
+        label_patch = torch.from_numpy(label_patch).to(self.device)
+
+        opt_patch, sar_patch, previous_patch, label_patch = self.augment_data(opt_patch, sar_patch, previous_patch, label_patch)
+
+        return (
+            opt_patch,
+            sar_patch,
+            previous_patch,
+        ), label_patch
+
+class TrainDataset(GenericTrainDataset):
+    def augment_data(self, opt_patch, sar_patch, previous_patch, label_patch):
         k = random.randint(0, 3)
-        data = torch.rot90(data, k=k, dims=[1,2])
-        label = torch.rot90(label, k=k, dims=[0,1])
+        opt_patch = torch.rot90(opt_patch, k=k, dims=[1, 2])
+        sar_patch = torch.rot90(sar_patch, k=k, dims=[1, 2])
+        previous_patch = torch.rot90(previous_patch, k=k, dims=[1, 2])
+        label_patch = torch.rot90(label_patch, k=k, dims=[0, 1])
 
         if bool(random.getrandbits(1)):
-            data = hflip(data)
-            label = hflip(label)
+            opt_patch = hflip(opt_patch)
+            sar_patch = hflip(sar_patch)
+            previous_patch = hflip(previous_patch)
+            label_patch = hflip(label_patch)
 
         if bool(random.getrandbits(1)):
-            data = vflip(data)
-            label = vflip(label)
+            opt_patch = vflip(opt_patch)
+            sar_patch = vflip(sar_patch)
+            previous_patch = vflip(previous_patch)
+            label_patch = vflip(label_patch)
         
-        return data, label
+        return opt_patch, sar_patch, previous_patch, label_patch
 
-class ValDataset(GenericDataset):
+class ValDataset(GenericTrainDataset):
     pass
 
-class PredDataSet(GenericDataset):
-    pass
+
+class PredDataset(Dataset):
+    def __init__(self, patch_size, device, params, data_folder) -> None:
+        super().__init__()
+        self.patch_size = patch_size
+        self.device = device
+        self.params = params
+        self.data_folder = data_folder
+
+        previous = np.load(self.data_folder / f'{self.params["prefixs"]["previous"]}.npy').astype(np.float16)
+
+        label = np.load(self.data_folder / f'{self.params["prefixs"]["label"]}.npy').astype(np.uint8)
+        self.original_label = label
+
+        self.original_shape = label.shape
+
+        pad_shape = ((patch_size, patch_size),(patch_size, patch_size))
+        label = np.pad(label, pad_shape, mode='reflect')
+        previous = np.pad(previous, pad_shape, mode='reflect')
+
+        self.padded_shape = label.shape
+
+        self.label = label.flatten()
+        self.previous = previous.flatten()
+        #self.previous = torch.from_numpy(np.expand_dims(previous, axis=0)).to(self.device)
+
+    def load_opt_data(self, opt_images_idx):
+        pad_shape = ((self.patch_size, self.patch_size),(self.patch_size, self.patch_size), (0, 0))
+        opt_img = np.concatenate(
+            [np.load(self.data_folder / f'{self.params["prefixs"]["opt"]}_{opt_idx}.npy') for opt_idx in opt_images_idx],
+            axis = -1
+            ).astype(np.float16)
+        opt_img = np.pad(opt_img, pad_shape, mode='reflect')
+        #self.opt = torch.from_numpy(opt_img).moveaxis(2, 0).to(self.device)
+        self.opt = opt_img.reshape((-1, opt_img.shape[-1]))
+
+    
+    def load_sar_data(self, sar_images_idx):
+        pad_shape = ((self.patch_size, self.patch_size),(self.patch_size, self.patch_size), (0, 0))
+        sar_img = np.concatenate(
+            [np.load(self.data_folder / f'{self.params["prefixs"]["sar"]}_{sar_idx}.npy') for sar_idx in sar_images_idx],
+            axis = -1
+            ).astype(np.float16)
+        sar_img = np.pad(sar_img, pad_shape, mode='reflect')
+        #self.sar = torch.from_numpy(sar_img).moveaxis(2, 0).to(self.device)
+        self.sar = sar_img.reshape((-1, sar_img.shape[-1]))
+
+    def generate_overlap_patches(self, overlap):
+        window_shape = (self.patch_size, self.patch_size)
+        slide_step = int((1-overlap) * self.patch_size)
+        idx_patches = np.arange(self.padded_shape[0]*self.padded_shape[1]).reshape(self.padded_shape)
+        self.idx_patches = view_as_windows(idx_patches, window_shape, slide_step).reshape((-1, self.patch_size, self.patch_size))
+
+    def __len__(self):
+        return len(self.idx_patches)
+    
+    def __getitem__(self, index):
+        patch_idx = self.idx_patches[index]
+
+        opt_patch = np.moveaxis(self.opt[patch_idx], 2, 0)
+        sar_patch = np.moveaxis(self.sar[patch_idx], 2, 0)
+        previous_patch = np.expand_dims(self.previous[patch_idx], axis=0)
+        label_patch = self.label[patch_idx]
+
+        return (
+            torch.from_numpy(opt_patch.astype(np.float32)).to(self.device),
+            torch.from_numpy(sar_patch.astype(np.float32)).to(self.device),
+            torch.from_numpy(previous_patch.astype(np.float32)).to(self.device)
+        ), torch.from_numpy(label_patch.astype(np.int64)).to(self.device)
         
+
 
 class PredDataSet2(Dataset):
     def __init__(self, images, device, patch_size, stats, transformer = ToTensor()) -> None:

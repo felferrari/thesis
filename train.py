@@ -2,7 +2,7 @@ import argparse
 import pathlib
 #from conf import default, general, paths
 #import os
-from utils.ops import count_parameters, save_json, save_yaml
+from utils.ops import count_parameters, save_yaml, load_yaml
 #from utils.dataloader import TrainDataSet
 import torch
 import logging, sys
@@ -34,7 +34,7 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 3,
+    default = 6,
     help = 'The number of the experiment'
 )
 
@@ -54,6 +54,7 @@ with open(args.cfg, 'r') as file:
 training_params = cfg['training_params']
 preparation_params = cfg['preparation_params']
 experiment_params = cfg['experiments'][f'exp_{args.experiment}']
+original_data_params = cfg['original_data']
 
 experiments_paths = training_params['experiments_paths']
 
@@ -76,9 +77,13 @@ results_path.mkdir(exist_ok=True)
 #setting up prepared data source
 prepared_folder = Path(preparation_params['folder'])
 
-train_csv = prepared_folder / preparation_params['train_data']
-test_csv = prepared_folder / preparation_params['test_data']
-validation_csv = prepared_folder / preparation_params['validation_data']
+#train_csv = prepared_folder / preparation_params['train_data']
+#test_csv = prepared_folder / preparation_params['test_data']
+#validation_csv = prepared_folder / preparation_params['validation_data']
+train_folder = prepared_folder / preparation_params['train_folder']
+val_folder = prepared_folder / preparation_params['validation_folder']
+prepared_patches_file = prepared_folder / preparation_params['prepared_data']
+prepared_patches = load_yaml(prepared_patches_file)
 
 patch_size = training_params['patch_size']
 batch_size = training_params['batch_size']
@@ -102,15 +107,16 @@ def run(model_idx):
     model.to(device)
     log.info(f'Model trainable parameters: {count_parameters(model)}')
 
-    train_ds = TrainDataset(train_csv, patch_size=patch_size,  device = device, params=training_params)
-    val_ds = ValDataset(validation_csv, patch_size=patch_size, device = device, params=training_params)
-    train_ds[0]
-    val_ds[0]
+
+    train_ds = TrainDataset(patch_size, device, experiment_params, train_folder, prepared_patches['train'])
+    val_ds = ValDataset(patch_size, device, experiment_params, val_folder, prepared_patches['val'])
+    train_ds[1000]
+    #val_ds[10]
     
     train_sampler = RandomSampler(train_ds)
 
-    train_dl = DataLoader(dataset=train_ds, batch_size=batch_size, num_workers=2, persistent_workers = True, drop_last = True, sampler = train_sampler)
-    val_dl = DataLoader(dataset=val_ds, batch_size=batch_size, num_workers=2, persistent_workers = True)
+    train_dl = DataLoader(dataset=train_ds, batch_size=batch_size, num_workers=4, persistent_workers = True, drop_last = True, sampler = train_sampler)
+    val_dl = DataLoader(dataset=val_ds, batch_size=batch_size, num_workers=4, persistent_workers = True)
 
     #train_dl = DataLoader(dataset=train_ds, batch_size=batch_size, sampler = train_sampler, drop_last = True)
     #val_dl = DataLoader(dataset=val_ds, batch_size=batch_size)
@@ -143,15 +149,15 @@ def run(model_idx):
         epoch = t+1
         print(f"-------------------------------\nEpoch {epoch}")
         model.train()
-        loss, acc_0, acc_1 = train_loop(train_dl, model, loss_fn, optimizer, training_params)
+        loss, f1_0, f1_1 = train_loop(train_dl, model, loss_fn, optimizer, training_params)
         train_writer.add_scalar('Loss', loss, t)
-        train_writer.add_scalar('Class0_Acc', acc_0, t)
-        train_writer.add_scalar('Class1_Acc', acc_1, t)
+        train_writer.add_scalar('Class0_F1', f1_0, t)
+        train_writer.add_scalar('Class1_F1', f1_1, t)
         model.eval()
-        val_loss, acc_0, acc_1 = val_loop(val_dl, model, loss_fn, training_params)
+        val_loss, f1_0, f1_1 = val_loop(val_dl, model, loss_fn, training_params)
         val_writer.add_scalar('Loss', val_loss, t)
-        val_writer.add_scalar('Class0_Acc', acc_0, t)
-        val_writer.add_scalar('Class1_Acc', acc_1, t)
+        val_writer.add_scalar('Class0_F1', f1_0, t)
+        val_writer.add_scalar('Class1_F1', f1_1, t)
 
         if early_stop.testEpoch(model = model, val_value = val_loss):
             min_val = early_stop.better_value
