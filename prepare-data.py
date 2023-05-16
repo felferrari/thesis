@@ -78,18 +78,18 @@ test_folder = prepared_folder / preparation_params['test_folder']
 #prediction_folder = prepared_folder / preparation_params['prediction_folder']
 
 prepared_folder.mkdir(exist_ok=True)
-if (args.clear_train_folder and train_folder.exists()) or args.train_data:
+if (args.clear_train_folder or args.train_data) and train_folder.exists():
     rmtree(train_folder)
     rmtree(validation_folder)
     train_folder.mkdir()
     validation_folder.mkdir()
-if (args.clear_test_folder and test_folder.exists()) or args.test_data:
+if (args.clear_test_folder  or args.test_data) and test_folder.exists():
     rmtree(test_folder)
     test_folder.mkdir()
 
-#train_folder.mkdir(exist_ok=True)
-#validation_folder.mkdir(exist_ok=True)
-#test_folder.mkdir(exist_ok=True)
+train_folder.mkdir(exist_ok=True)
+validation_folder.mkdir(exist_ok=True)
+test_folder.mkdir(exist_ok=True)
 
 
 prepared_patches_file = prepared_folder / preparation_params['prepared_data']

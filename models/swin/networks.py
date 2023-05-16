@@ -3,202 +3,184 @@ import torch
 from .layers import SwinEncoder, SwinDecoder, SwinClassifier, SwinDecoderJF
 #from conf import general
 
-class SwinUnetOpt(nn.Module):
+class GenericModel(nn.Module):
     def __init__(self, params) -> None:
-        super(SwinUnetOpt, self).__init__()
-        input_depth = 2*params['opt_bands'] + 1 
-        img_size = params['img_size']
-        base_dim = params['swin_base_dim']
-        window_size = params['swin_window_size']
-        shift_size = params['swin_shift_size']
-        patch_size = params['swin_patch_size']
-        n_heads = params['swin_n_heads']
-        n_blocks = params['swin_n_blocks']
-        n_classes = params['n_classes']
+        super().__init__()
+        self.opt_input = len(params['train_opt_imgs'][0]) * params['opt_bands'] + 1
+        self.sar_input = len(params['train_sar_imgs'][0]) * params['sar_bands'] + 1
+        self.n_classes = params['n_classes']
+        self.img_size = params['swin_params']['img_size']
+        self.base_dim = params['swin_params']['base_dim']
+        self.window_size = params['swin_params']['window_size']
+        self.shift_size = params['swin_params']['shift_size']
+        self.patch_size = params['swin_params']['patch_size']
+        self.n_heads = params['swin_params']['n_heads']
+        self.n_blocks = params['swin_params']['n_blocks']
+
+
+class SwinUnetOpt(GenericModel):
+    def __init__(self, params) -> None:
+        super(SwinUnetOpt, self).__init__(params)
 
         self.encoder = SwinEncoder(
-            input_depth = input_depth, 
-            base_dim = base_dim, 
-            window_size = window_size,
-            shift_size = shift_size,
-            img_size = img_size,
-            patch_size = patch_size,
-            n_heads = n_heads,
-            n_blocks = n_blocks
+            input_depth = self.opt_input, 
+            base_dim = self.base_dim, 
+            window_size = self.window_size,
+            shift_size = self.shift_size,
+            img_size = self.img_size,
+            patch_size = self.patch_size,
+            n_heads = self.n_heads,
+            n_blocks = self.n_blocks
             )
     
         self.decoder = SwinDecoder(
-            base_dim=base_dim,
-            n_heads=n_heads,
-            n_blocks = n_blocks,
-            window_size = window_size,
-            shift_size = shift_size
+            base_dim=self.base_dim,
+            n_heads=self.n_heads,
+            n_blocks = self.n_blocks,
+            window_size = self.window_size,
+            shift_size = self.shift_size
             )
         
         self.classifier = SwinClassifier(
-            base_dim, 
-            n_heads=n_heads,
-            n_blocks = n_blocks,
-            window_size = window_size,
-            shift_size = shift_size,
-            n_classes = n_classes)
+            self.base_dim, 
+            n_heads=self.n_heads,
+            n_blocks = self.n_blocks,
+            window_size = self.window_size,
+            shift_size = self.shift_size,
+            n_classes = self.n_classes)
     
     def forward(self, x):
-        x = torch.cat((x[0], x[1], x[4]), dim=1)
+        x = torch.cat((x[0], x[2]), dim=1)
         x = self.encoder(x)
         x = self.decoder(x)
         #x = x.permute((0,3,1,2))
         x = self.classifier(x)
         return x
     
-class SwinUnetSAR(nn.Module):
+class SwinUnetSAR(GenericModel):
     def __init__(self, params) -> None:
-        super(SwinUnetSAR, self).__init__()
-        input_depth = 2*params['sar_bands'] + 1 
-        img_size = params['img_size']
-        base_dim = params['swin_base_dim']
-        window_size = params['swin_window_size']
-        shift_size = params['swin_shift_size']
-        patch_size = params['swin_patch_size']
-        n_heads = params['swin_n_heads']
-        n_blocks = params['swin_n_blocks']
-        n_classes = params['n_classes']
+        super(SwinUnetSAR, self).__init__(params)
+
         self.encoder = SwinEncoder(
-            input_depth = input_depth, 
-            base_dim = base_dim, 
-            window_size = window_size,
-            shift_size = shift_size,
-            img_size = img_size,
-            patch_size = patch_size,
-            n_heads = n_heads,
-            n_blocks = n_blocks
+            input_depth = self.sar_input, 
+            base_dim = self.base_dim, 
+            window_size = self.window_size,
+            shift_size = self.shift_size,
+            img_size = self.img_size,
+            patch_size = self.patch_size,
+            n_heads = self.n_heads,
+            n_blocks = self.n_blocks
             )
     
         self.decoder = SwinDecoder(
-            base_dim=base_dim,
-            n_heads=n_heads,
-            n_blocks = n_blocks,
-            window_size = window_size,
-            shift_size = shift_size
+            base_dim=self.base_dim,
+            n_heads=self.n_heads,
+            n_blocks = self.n_blocks,
+            window_size = self.window_size,
+            shift_size = self.shift_size
             )
         
         self.classifier = SwinClassifier(
-            base_dim, 
-            n_heads=n_heads,
-            n_blocks = n_blocks,
-            window_size = window_size,
-            shift_size = shift_size,
-            n_classes = n_classes)
+            self.base_dim, 
+            n_heads=self.n_heads,
+            n_blocks = self.n_blocks,
+            window_size = self.window_size,
+            shift_size = self.shift_size,
+            n_classes = self.n_classes)
     
     def forward(self, x):
-        x = torch.cat((x[2], x[3], x[4]), dim=1)
+        x = torch.cat((x[1], x[2]), dim=1)
         x = self.encoder(x)
         x = self.decoder(x)
         #x = x.permute((0,3,1,2))
         x = self.classifier(x)
         return x
 
-class SwinUnetEF(nn.Module):
+class SwinUnetEF(GenericModel):
     def __init__(self, params) -> None:
-        super(SwinUnetEF, self).__init__()
-        input_depth = 2*params['opt_bands'] + 2*params['sar_bands'] + 1 
-        img_size = params['img_size']
-        base_dim = params['swin_base_dim']
-        window_size = params['swin_window_size']
-        shift_size = params['swin_shift_size']
-        patch_size = params['swin_patch_size']
-        n_heads = params['swin_n_heads']
-        n_blocks = params['swin_n_blocks']
-        n_classes = params['n_classes']
+        super(SwinUnetEF, self).__init__(params)
+        input_depth = self.opt_input + self.sar_input - 1
+        
         self.encoder = SwinEncoder(
             input_depth = input_depth, 
-            base_dim = base_dim, 
-            window_size = window_size,
-            shift_size = shift_size,
-            img_size = img_size,
-            patch_size = patch_size,
-            n_heads = n_heads,
-            n_blocks = n_blocks
+            base_dim = self.base_dim, 
+            window_size = self.window_size,
+            shift_size = self.shift_size,
+            img_size = self.img_size,
+            patch_size = self.patch_size,
+            n_heads =self. n_heads,
+            n_blocks = self.n_blocks
             )
     
         self.decoder = SwinDecoder(
-            base_dim=base_dim,
-            n_heads=n_heads,
-            n_blocks = n_blocks,
-            window_size = window_size,
-            shift_size = shift_size
+            base_dim=self.base_dim,
+            n_heads=self.n_heads,
+            n_blocks = self.n_blocks,
+            window_size = self.window_size,
+            shift_size = self.shift_size
             )
         
         self.classifier = SwinClassifier(
-            base_dim, 
-            n_heads=n_heads,
-            n_blocks = n_blocks,
-            window_size = window_size,
-            shift_size = shift_size,
-            n_classes = n_classes)
+            self.base_dim, 
+            n_heads=self.n_heads,
+            n_blocks = self.n_blocks,
+            window_size = self.window_size,
+            shift_size = self.shift_size,
+            n_classes = self.n_classes)
     
     def forward(self, x):
-        x = torch.cat((x[0], x[1], x[2], x[3], x[4]), dim=1)
+        x = torch.cat((x[0], x[1], x[2]), dim=1)
         x = self.encoder(x)
         x = self.decoder(x)
         #x = x.permute((0,3,1,2))
         x = self.classifier(x)
         return x
 
-class SwinUnetJF(nn.Module):
+class SwinUnetJF(GenericModel):
     def __init__(self, params) -> None:
-        super(SwinUnetJF, self).__init__()
-        input_depth_0 = 2*params['opt_bands'] + 1 
-        input_depth_1 = 2*params['sar_bands'] + 1 
-        img_size = params['img_size']
-        base_dim = params['swin_base_dim']
-        window_size = params['swin_window_size']
-        shift_size = params['swin_shift_size']
-        patch_size = params['swin_patch_size']
-        n_heads = params['swin_n_heads']
-        n_blocks = params['swin_n_blocks']
-        n_classes = params['n_classes']
+        super(SwinUnetJF, self).__init__(params)
+
         self.encoder_0 = SwinEncoder(
-            input_depth = input_depth_0, 
-            base_dim = base_dim, 
-            window_size = window_size,
-            shift_size = shift_size,
-            img_size = img_size,
-            patch_size = patch_size,
-            n_heads = n_heads,
-            n_blocks = n_blocks
+            input_depth = self.opt_input, 
+            base_dim = self.base_dim, 
+            window_size = self.window_size,
+            shift_size = self.shift_size,
+            img_size = self.img_size,
+            patch_size = self.patch_size,
+            n_heads = self.n_heads,
+            n_blocks = self.n_blocks
             )
         
         self.encoder_1 = SwinEncoder(
-            input_depth = input_depth_1, 
-            base_dim = base_dim, 
-            window_size = window_size,
-            shift_size = shift_size,
-            img_size = img_size,
-            patch_size = patch_size,
-            n_heads = n_heads,
-            n_blocks = n_blocks
+            input_depth = self.sar_input, 
+            base_dim = self.base_dim, 
+            window_size = self.window_size,
+            shift_size = self.shift_size,
+            img_size = self.img_size,
+            patch_size = self.patch_size,
+            n_heads = self.n_heads,
+            n_blocks = self.n_blocks
             )
     
         self.decoder = SwinDecoderJF(
-            base_dim=base_dim,
-            n_heads=n_heads,
-            n_blocks = n_blocks,
-            window_size = window_size,
-            shift_size = shift_size
+            base_dim= self.base_dim,
+            n_heads= self.n_heads,
+            n_blocks = self.n_blocks,
+            window_size =self. window_size,
+            shift_size = self.shift_size
             )
         
         self.classifier = SwinClassifier(
-            base_dim, 
-            n_heads=n_heads,
-            n_blocks = n_blocks,
-            window_size = window_size,
-            shift_size = shift_size,
-            n_classes = n_classes)
+            self.base_dim, 
+            n_heads=self.n_heads,
+            n_blocks = self.n_blocks,
+            window_size = self.window_size,
+            shift_size = self.shift_size,
+            n_classes = self.n_classes)
     
     def forward(self, x):
-        x_0 = torch.cat((x[0], x[1], x[4]), dim=1)
-        x_1 = torch.cat((x[2], x[3], x[4]), dim=1)
+        x_0 = torch.cat((x[0], x[2]), dim=1)
+        x_1 = torch.cat((x[1], x[2]), dim=1)
 
         x_0 = self.encoder_0(x_0)
         x_1 = self.encoder_1(x_1)
@@ -208,68 +190,59 @@ class SwinUnetJF(nn.Module):
         x = self.classifier(x)
         return x
     
-class SwinUnetLF(nn.Module):
+class SwinUnetLF(GenericModel):
     def __init__(self, params) -> None:
-        super(SwinUnetLF, self).__init__()
-        input_depth_0 = 2*params['opt_bands'] + 1 
-        input_depth_1 = 2*params['sar_bands'] + 1 
-        img_size = params['img_size']
-        base_dim = params['swin_base_dim']
-        window_size = params['swin_window_size']
-        shift_size = params['swin_shift_size']
-        patch_size = params['swin_patch_size']
-        n_heads = params['swin_n_heads']
-        n_blocks = params['swin_n_blocks']
-        n_classes = params['n_classes']
+        super(SwinUnetLF, self).__init__(params)
+
         self.encoder_0 = SwinEncoder(
-            input_depth = input_depth_0, 
-            base_dim = base_dim, 
-            window_size = window_size,
-            shift_size = shift_size,
-            img_size = img_size,
-            patch_size = patch_size,
-            n_heads = n_heads,
-            n_blocks = n_blocks
+            input_depth = self.opt_input, 
+            base_dim = self.base_dim, 
+            window_size = self.window_size,
+            shift_size = self.shift_size,
+            img_size = self.img_size,
+            patch_size = self.patch_size,
+            n_heads = self.n_heads,
+            n_blocks = self.n_blocks
             )
         
         self.encoder_1 = SwinEncoder(
-            input_depth = input_depth_1, 
-            base_dim = base_dim, 
-            window_size = window_size,
-            shift_size = shift_size,
-            img_size = img_size,
-            patch_size = patch_size,
-            n_heads = n_heads,
-            n_blocks = n_blocks
+            input_depth = self.sar_input, 
+            base_dim = self.base_dim, 
+            window_size = self.window_size,
+            shift_size = self.shift_size,
+            img_size = self.img_size,
+            patch_size = self.patch_size,
+            n_heads = self.n_heads,
+            n_blocks = self.n_blocks
             )
     
         self.decoder_0 = SwinDecoder(
-            base_dim=base_dim,
-            n_heads=n_heads,
-            n_blocks = n_blocks,
-            window_size = window_size,
-            shift_size = shift_size
+            base_dim=self.base_dim,
+            n_heads=self.n_heads,
+            n_blocks = self.n_blocks,
+            window_size = self.window_size,
+            shift_size = self.shift_size
             )
         
         self.decoder_1 = SwinDecoder(
-            base_dim=base_dim,
-            n_heads=n_heads,
-            n_blocks = n_blocks,
-            window_size = window_size,
-            shift_size = shift_size
+            base_dim=self.base_dim,
+            n_heads=self.n_heads,
+            n_blocks = self.n_blocks,
+            window_size = self.window_size,
+            shift_size = self.shift_size
             )
         
         self.classifier = SwinClassifier(
-            2*base_dim, 
-            n_heads=n_heads,
-            n_blocks = n_blocks,
-            window_size = window_size,
-            shift_size = shift_size,
-            n_classes = n_classes)
+            2*self.base_dim, 
+            n_heads=self.n_heads,
+            n_blocks = self.n_blocks,
+            window_size = self.window_size,
+            shift_size = self.shift_size,
+            n_classes =self.n_classes)
     
     def forward(self, x):
-        x_0 = torch.cat((x[0], x[1], x[4]), dim=1)
-        x_1 = torch.cat((x[2], x[3], x[4]), dim=1)
+        x_0 = torch.cat((x[0], x[2]), dim=1)
+        x_1 = torch.cat((x[1], x[2]), dim=1)
 
         x_0 = self.encoder_0(x_0)
         x_1 = self.encoder_1(x_1)

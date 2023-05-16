@@ -24,15 +24,6 @@ general_params:
   n_classes: &n_classes 3 #number of classes
   n_models: &n_models 5 #number of models to be trained for each experiment
   resunet_depths: &resunet_depths [32, 64, 128, 256]
-  swin_params: &swin_params
-    img_size: *patch_size
-    base_dim: 96
-    window_size: [4, 4]
-    shift_size: [2, 2]
-    patch_size: [4, 4]
-    n_heads: [3, 6, 12, 24]
-    n_blocks: [2, 2, 2, 2]
-
 original_data:
   opt:
     n_bands: *opt_bands 
@@ -156,7 +147,7 @@ prediction_params:
 
 experiments:
   exp_X:
-    model: models.swin.networks.SwinUnetOpt 
+    model: models.resunet.networks.ResUnetOpt # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -169,10 +160,10 @@ experiments:
       - [0, 1, 2, 3, 4]
     test_sar_imgs:
       - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_21:
-    model: models.swin.networks.SwinUnetOpt 
+  exp_1:
+    model: models.resunet.networks.ResUnetOpt # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -185,10 +176,10 @@ experiments:
       - [0, 4]
     test_sar_imgs:
       - [0, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_22:
-    model: models.swin.networks.SwinUnetSAR 
+  exp_2:
+    model: models.resunet.networks.ResUnetSAR # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -201,10 +192,10 @@ experiments:
       - [0, 4]
     test_sar_imgs:
       - [0, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_23:
-    model: models.swin.networks.SwinUnetEF
+  exp_3:
+    model: models.resunet.networks.ResUnetEF # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -217,10 +208,10 @@ experiments:
       - [0, 4]
     test_sar_imgs:
       - [0, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_24:
-    model: models.swin.networks.SwinUnetJF 
+  exp_4:
+    model: models.resunet.networks.ResUnetJF # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -233,10 +224,10 @@ experiments:
       - [0, 4]
     test_sar_imgs:
       - [0, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_25:
-    model: models.swin.networks.SwinUnetLF 
+  exp_5:
+    model: models.resunet.networks.ResUnetLF # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -249,10 +240,10 @@ experiments:
       - [0, 4]
     test_sar_imgs:
       - [0, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_26:
-    model: models.swin.networks.SwinUnetOpt 
+  exp_6:
+    model: models.resunet.networks.ResUnetOpt # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -265,10 +256,10 @@ experiments:
       - [0, 1, 2, 3, 4]
     test_sar_imgs:
       - [0, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_27:
-    model: models.swin.networks.SwinUnetSAR 
+  exp_7:
+    model: models.resunet.networks.ResUnetSAR # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -281,10 +272,10 @@ experiments:
       - [0, 1, 2, 3, 4]
     test_sar_imgs:
       - [0, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_28:
-    model: models.swin.networks.SwinUnetEF 
+  exp_8:
+    model: models.resunet.networks.ResUnetEF # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -297,10 +288,10 @@ experiments:
       - [0, 1, 2, 3, 4]
     test_sar_imgs:
       - [0, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_29:
-    model: models.swin.networks.SwinUnetJF 
+  exp_9:
+    model: models.resunet.networks.ResUnetJF # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -313,10 +304,10 @@ experiments:
       - [0, 1, 2, 3, 4]
     test_sar_imgs:
       - [0, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_30:
-    model: models.swin.networks.SwinUnetLF 
+  exp_10:
+    model: models.resunet.networks.ResUnetLF # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -329,10 +320,10 @@ experiments:
       - [0, 1, 2, 3, 4]
     test_sar_imgs:
       - [0, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_31:
-    model: models.swin.networks.SwinUnetOpt 
+  exp_11:
+    model: models.resunet.networks.ResUnetOpt # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -345,10 +336,10 @@ experiments:
       - [0, 4]
     test_sar_imgs:
       - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_32:
-    model: models.swin.networks.SwinUnetSAR 
+  exp_12:
+    model: models.resunet.networks.ResUnetSAR # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -361,10 +352,10 @@ experiments:
       - [0, 4]
     test_sar_imgs:
       - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_33:
-    model: models.swin.networks.SwinUnetEF 
+  exp_13:
+    model: models.resunet.networks.ResUnetEF # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -377,10 +368,10 @@ experiments:
       - [0, 4]
     test_sar_imgs:
       - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_34:
-    model: models.swin.networks.SwinUnetJF
+  exp_14:
+    model: models.resunet.networks.ResUnetJF # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -393,10 +384,10 @@ experiments:
       - [0, 4]
     test_sar_imgs:
       - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_35:
-    model: models.swin.networks.SwinUnetLF 
+  exp_15:
+    model: models.resunet.networks.ResUnetLF # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -409,10 +400,10 @@ experiments:
       - [0, 4]
     test_sar_imgs:
       - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_36:
-    model: models.swin.networks.SwinUnetOpt 
+  exp_16:
+    model: models.resunet.networks.ResUnetOpt # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -425,10 +416,10 @@ experiments:
       - [0, 1, 2, 3, 4]
     test_sar_imgs:
       - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_37:
-    model: models.swin.networks.SwinUnetSAR
+  exp_17:
+    model: models.resunet.networks.ResUnetSAR # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -441,10 +432,10 @@ experiments:
       - [0, 1, 2, 3, 4]
     test_sar_imgs:
       - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_38:
-    model: models.swin.networks.SwinUnetEF
+  exp_18:
+    model: models.resunet.networks.ResUnetEF # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -457,10 +448,10 @@ experiments:
       - [0, 1, 2, 3, 4]
     test_sar_imgs:
       - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_39:
-    model: models.swin.networks.SwinUnetJF 
+  exp_19:
+    model: models.resunet.networks.ResUnetJF # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -473,10 +464,10 @@ experiments:
       - [0, 1, 2, 3, 4]
     test_sar_imgs:
       - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
-  exp_40:
-    model: models.swin.networks.SwinUnetLF
+  exp_20:
+    model: models.resunet.networks.ResUnetLF # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -489,5 +480,5 @@ experiments:
       - [0, 1, 2, 3, 4]
     test_sar_imgs:
       - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    swin_params: *swin_params
+    resunet_depths: *resunet_depths
 
