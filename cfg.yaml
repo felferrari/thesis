@@ -17,7 +17,7 @@ general_params:
     predicted: predicted
     visual: visual
     results: results
-  opt_bands: &opt_bands 13 #number of bands per optical image
+  opt_bands: &opt_bands 10 #number of bands per optical image
   sar_bands: &sar_bands 2 #number of bands per SAR image
   #n_opt_images: &n_opt_images 2 #!5 #number of optical images
   #n_sar_images: &n_sar_images 12 #number of optical images
