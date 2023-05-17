@@ -27,8 +27,7 @@ label_params = cfg['label_params']
 
 prodes_folder = Path(original_data['prodes']['folder'])
 
-base_image = Path(original_data['opt']['folder']) / original_data['opt']['imgs']['train'][0][0]
-
+base_image = Path(original_data['opt']['folder']) / original_data['opt']['imgs']['train'][0]
 f_yearly_def = prodes_folder / original_data['prodes']['yearly_deforestation']
 v_yearly_def = ogr.Open(str(f_yearly_def))
 l_yearly_def = v_yearly_def.GetLayer()
