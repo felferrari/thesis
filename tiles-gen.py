@@ -23,7 +23,7 @@ with open(args.cfg, 'r') as file:
 original_data = cfg['original_data']
 tiles_params = cfg['tiles_params']
 
-base_image = Path(original_data['opt']['folder']) / original_data['opt']['imgs']['train'][0][0]
+base_image = Path(original_data['opt']['folder']) / original_data['opt']['imgs']['train'][0]
 
 shape = load_opt_image(base_image).shape[0:2]
 

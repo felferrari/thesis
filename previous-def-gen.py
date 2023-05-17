@@ -24,7 +24,7 @@ original_data = cfg['original_data']
 
 prodes_folder = Path(original_data['prodes']['folder'])
 
-base_image = Path(original_data['opt']['folder']) / original_data['opt']['imgs']['train'][0][0]
+base_image = Path(original_data['opt']['folder']) / original_data['opt']['imgs']['train'][0]
 
 previous_def_params = cfg['previous_def_params']
 
