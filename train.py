@@ -34,12 +34,19 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 36,
+    default = 52,
     help = 'The number of the experiment'
 )
 
 parser.add_argument( # Model number
     '-m', '--model',
+    type = int,
+    default = -1,
+    help = 'Number of the model to be retrained'
+)
+
+parser.add_argument( # Model number
+    '-s', '--start-model',
     type = int,
     default = -1,
     help = 'Number of the model to be retrained'
@@ -110,7 +117,7 @@ def run(model_idx):
 
     train_ds = TrainDataset(patch_size, device, experiment_params, train_folder, prepared_patches['train'])
     val_ds = ValDataset(patch_size, device, experiment_params, val_folder, prepared_patches['val'])
-    train_ds[1000]
+    #train_ds[1000]
     #val_ds[10]
     
     train_sampler = RandomSampler(train_ds)
@@ -170,10 +177,17 @@ if __name__=="__main__":
     freeze_support()
     
     if args.model == -1:
-        for model_idx in range(training_params['n_models']):
-            p = Process(target=run, args=(model_idx,))
-            p.start()
-            p.join()
+        if args.start_model == -1:
+            for model_idx in range(training_params['n_models']):
+                p = Process(target=run, args=(model_idx,))
+                p.start()
+                p.join()
+        else:
+            for model_idx in range(args.start_model, training_params['n_models']):
+                p = Process(target=run, args=(model_idx,))
+                p.start()
+                p.join()
+    
     else:
         run(args.model)
 
