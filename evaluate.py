@@ -198,7 +198,7 @@ def eval_prediction(opt_imgs_groups_idx, sar_imgs_groups_idx, model_idx = None):
 if __name__=="__main__":
     
 
-    with Pool(8) as pool:
+    with Pool(9) as pool:
         metrics = pool.starmap(eval_prediction, imgs_groups_idxs)
 
     headers =  [
@@ -230,7 +230,7 @@ if __name__=="__main__":
     
     results_df = pd.DataFrame(metrics, columns=headers)
 
-    mean_results_df = results_df.groupby(['model_idx'], dropna=False)[[
+    sum_results_df = results_df.groupby(['model_idx'], dropna=False)[[
             'no_cloud_tns',
             'no_cloud_tps',
             'no_cloud_fns',
@@ -246,16 +246,16 @@ if __name__=="__main__":
         ]].apply(sum)
     
     for cloud_cond in ['no_cloud', 'cloud', 'global']:
-        mean_results_df[f'{cloud_cond}_precision'] = mean_results_df[f'{cloud_cond}_tps'] / (mean_results_df[f'{cloud_cond}_tps'] + mean_results_df[f'{cloud_cond}_fps'])
-        mean_results_df[f'{cloud_cond}_recall'] = mean_results_df[f'{cloud_cond}_tps'] / (mean_results_df[f'{cloud_cond}_tps'] + mean_results_df[f'{cloud_cond}_fns'])
-        mean_results_df[f'{cloud_cond}_f1'] = 2 * (mean_results_df[f'{cloud_cond}_precision'] * mean_results_df[f'{cloud_cond}_recall']) / (mean_results_df[f'{cloud_cond}_precision'] + mean_results_df[f'{cloud_cond}_recall'])
+        sum_results_df[f'{cloud_cond}_precision'] = sum_results_df[f'{cloud_cond}_tps'] / (sum_results_df[f'{cloud_cond}_tps'] + sum_results_df[f'{cloud_cond}_fps'])
+        sum_results_df[f'{cloud_cond}_recall'] = sum_results_df[f'{cloud_cond}_tps'] / (sum_results_df[f'{cloud_cond}_tps'] + sum_results_df[f'{cloud_cond}_fns'])
+        sum_results_df[f'{cloud_cond}_f1'] = 2 * (sum_results_df[f'{cloud_cond}_precision'] * sum_results_df[f'{cloud_cond}_recall']) / (sum_results_df[f'{cloud_cond}_precision'] + sum_results_df[f'{cloud_cond}_recall'])
 
     
     
     results_file = results_path / f'results_{args.experiment}.xlsx'
     with pd.ExcelWriter(results_file) as writer:     
         results_df.to_excel(writer, sheet_name='general results')
-        mean_results_df.to_excel(writer, sheet_name='models results')
+        sum_results_df.to_excel(writer, sheet_name='models results')
     
 
 

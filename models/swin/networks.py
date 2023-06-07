@@ -1,6 +1,7 @@
 from torch import nn
 import torch
 from .layers import SwinEncoder, SwinDecoder, SwinClassifier, SwinDecoderJF
+from abc import abstractmethod
 #from conf import general
 
 class GenericModel(nn.Module):
@@ -8,6 +9,7 @@ class GenericModel(nn.Module):
         super().__init__()
         self.opt_input = len(params['train_opt_imgs'][0]) * params['opt_bands'] + 1
         self.sar_input = len(params['train_sar_imgs'][0]) * params['sar_bands'] + 1
+        self.ef_input = self.opt_input + self.sar_input - 1
         self.n_classes = params['n_classes']
         self.img_size = params['swin_params']['img_size']
         self.base_dim = params['swin_params']['base_dim']
@@ -18,12 +20,11 @@ class GenericModel(nn.Module):
         self.n_blocks = params['swin_params']['n_blocks']
 
 
-class SwinUnetOpt(GenericModel):
-    def __init__(self, params) -> None:
-        super(SwinUnetOpt, self).__init__(params)
+class SwinUnetSI(GenericModel): #Single input
+    def prepare_model(self, in_channels) -> None:
 
         self.encoder = SwinEncoder(
-            input_depth = self.opt_input, 
+            input_depth = in_channels, 
             base_dim = self.base_dim, 
             window_size = self.window_size,
             shift_size = self.shift_size,
@@ -48,93 +49,50 @@ class SwinUnetOpt(GenericModel):
             window_size = self.window_size,
             shift_size = self.shift_size,
             n_classes = self.n_classes)
-    
-    def forward(self, x):
-        x = torch.cat((x[0], x[2]), dim=1)
-        x = self.encoder(x)
-        x = self.decoder(x)
-        #x = x.permute((0,3,1,2))
-        x = self.classifier(x)
-        return x
-    
-class SwinUnetSAR(GenericModel):
-    def __init__(self, params) -> None:
-        super(SwinUnetSAR, self).__init__(params)
-
-        self.encoder = SwinEncoder(
-            input_depth = self.sar_input, 
-            base_dim = self.base_dim, 
-            window_size = self.window_size,
-            shift_size = self.shift_size,
-            img_size = self.img_size,
-            patch_size = self.patch_size,
-            n_heads = self.n_heads,
-            n_blocks = self.n_blocks
-            )
-    
-        self.decoder = SwinDecoder(
-            base_dim=self.base_dim,
-            n_heads=self.n_heads,
-            n_blocks = self.n_blocks,
-            window_size = self.window_size,
-            shift_size = self.shift_size
-            )
         
-        self.classifier = SwinClassifier(
-            self.base_dim, 
-            n_heads=self.n_heads,
-            n_blocks = self.n_blocks,
-            window_size = self.window_size,
-            shift_size = self.shift_size,
-            n_classes = self.n_classes)
+    @abstractmethod
+    def prepare_input(self, x):
+        pass
     
     def forward(self, x):
-        x = torch.cat((x[1], x[2]), dim=1)
+        x = self.prepare_input(x)
         x = self.encoder(x)
         x = self.decoder(x)
-        #x = x.permute((0,3,1,2))
         x = self.classifier(x)
         return x
 
-class SwinUnetEF(GenericModel):
-    def __init__(self, params) -> None:
-        super(SwinUnetEF, self).__init__(params)
-        input_depth = self.opt_input + self.sar_input - 1
-        
-        self.encoder = SwinEncoder(
-            input_depth = input_depth, 
-            base_dim = self.base_dim, 
-            window_size = self.window_size,
-            shift_size = self.shift_size,
-            img_size = self.img_size,
-            patch_size = self.patch_size,
-            n_heads =self. n_heads,
-            n_blocks = self.n_blocks
-            )
-    
-        self.decoder = SwinDecoder(
-            base_dim=self.base_dim,
-            n_heads=self.n_heads,
-            n_blocks = self.n_blocks,
-            window_size = self.window_size,
-            shift_size = self.shift_size
-            )
-        
-        self.classifier = SwinClassifier(
-            self.base_dim, 
-            n_heads=self.n_heads,
-            n_blocks = self.n_blocks,
-            window_size = self.window_size,
-            shift_size = self.shift_size,
-            n_classes = self.n_classes)
-    
-    def forward(self, x):
-        x = torch.cat((x[0], x[1], x[2]), dim=1)
-        x = self.encoder(x)
-        x = self.decoder(x)
-        #x = x.permute((0,3,1,2))
-        x = self.classifier(x)
+class SwinUnetOpt(SwinUnetSI):
+    def __init__(self, params):
+        super().__init__(params)
+        self.prepare_model(self.opt_input)
+
+    def prepare_input(self, x):
+        x_img = torch.cat(x[0], dim=1)
+        x = torch.cat((x_img, x[2]), dim=1)
         return x
+    
+class SwinUnetSAR(SwinUnetSI):
+    def __init__(self, params):
+        super().__init__(params)
+        self.prepare_model(self.sar_input)
+
+    def prepare_input(self, x):
+        x_img = torch.cat(x[1], dim=1)
+        x = torch.cat((x_img, x[2]), dim=1)
+        return x
+    
+class SwinUnetEF(SwinUnetSI):
+    def __init__(self, params):
+        super().__init__(params)
+        self.prepare_model(self.ef_input)
+
+    def prepare_input(self, x):
+        x_0 = torch.cat(x[0], dim=1)
+        x_1 = torch.cat(x[1], dim=1)
+        x_img = torch.cat((x_0, x_1), dim=1)
+        x = torch.cat((x_img, x[2]), dim=1)
+        return x
+
 
 class SwinUnetJF(GenericModel):
     def __init__(self, params) -> None:
@@ -179,8 +137,11 @@ class SwinUnetJF(GenericModel):
             n_classes = self.n_classes)
     
     def forward(self, x):
-        x_0 = torch.cat((x[0], x[2]), dim=1)
-        x_1 = torch.cat((x[1], x[2]), dim=1)
+        x_0 = torch.cat(x[0], dim=1)
+        x_1 = torch.cat(x[1], dim=1)
+
+        x_0 = torch.cat((x_0, x[2]), dim=1)
+        x_1 = torch.cat((x_1, x[2]), dim=1)
 
         x_0 = self.encoder_0(x_0)
         x_1 = self.encoder_1(x_1)
@@ -241,8 +202,11 @@ class SwinUnetLF(GenericModel):
             n_classes =self.n_classes)
     
     def forward(self, x):
-        x_0 = torch.cat((x[0], x[2]), dim=1)
-        x_1 = torch.cat((x[1], x[2]), dim=1)
+        x_0 = torch.cat(x[0], dim=1)
+        x_1 = torch.cat(x[1], dim=1)
+
+        x_0 = torch.cat((x_0, x[2]), dim=1)
+        x_1 = torch.cat((x_1, x[2]), dim=1)
 
         x_0 = self.encoder_0(x_0)
         x_1 = self.encoder_1(x_1)

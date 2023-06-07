@@ -88,11 +88,9 @@ def load_SAR_image(img_file):
     img[np.isnan(img)] = 0
     return np.moveaxis(img, 0, -1)
 
-def load_SAR_DN_image(img_file):
-    '''Function to read SAR images'''
-    im = gdal_array.LoadFile(str(img_file))
-    im[np.isnan(im)] = 0
-    return np.expand_dims(im, axis=-1)
+def save_feature_map(path_to_file, tensor, index = None):
+    if index is not None:
+        fm = tensor[index]
 
 def create_exps_paths(exp_n):
     exps_path = 'exps'
@@ -136,25 +134,6 @@ def load_exp(exp_n = None):
     else:
         return load_json(os.path.join('conf', 'exps', f'exp_{exp_n}.json'))
     
-
-"""class LoggerWriter:
-    def __init__(self, level):
-        # self.level is really like using log.debug(message)
-        # at least in my case
-        self.level = level
-
-    def write(self, message):
-        # if statement reduces the amount of newlines that are
-        # printed to the logger
-        if message != '\n':
-            self.level(message)
-
-    def flush(self):
-        # create a flush method so things can be flushed when
-        # the system wants to. Not sure if simply 'printing'
-        # sys.stderr is the correct way to do it, but it seemed
-        # to work properly for me.
-        self.level(sys.stderr)"""
 
 def save_geotiff(base_image_path, dest_path, data, dtype):
     """Save data array as geotiff.

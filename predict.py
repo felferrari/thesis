@@ -29,7 +29,7 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 1,
+    default = 12,
     help = 'The number of the experiment'
 )
 
@@ -85,6 +85,7 @@ def run(model_idx):
 
     model_file = models_path / f'model_{model_idx}.pth'
     model.load_state_dict(torch.load(model_file))
+    model.eval()
 
     one_window = np.ones((patch_size, patch_size, n_classes))
     total_time = 0
@@ -97,9 +98,9 @@ def run(model_idx):
 
     pred_ds = PredDataset(patch_size, device, experiment_params, test_folder)
 
-    for opt_group_i, opt_group in enumerate(experiment_params['test_opt_imgs']):
+    for opt_group_i, opt_group in enumerate(tqdm(experiment_params['test_opt_imgs'], leave = False, desc = 'OPT group')):
         pred_ds.load_opt_data(opt_group)
-        for sar_group_i, sar_group in enumerate(experiment_params['test_sar_imgs']):
+        for sar_group_i, sar_group in enumerate(tqdm(experiment_params['test_sar_imgs'], leave = False, desc = 'SAR group')):
             pred_ds.load_sar_data(sar_group)
 
             pred_global_sum = np.zeros(pred_ds.original_shape+(n_classes,))

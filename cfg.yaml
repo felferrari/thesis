@@ -1,7 +1,7 @@
 general_params:
   train_year: &train_year 2020
   test_year: &test_year 2021
-  patch_size: &patch_size 128
+  patch_size: &patch_size 224
   prefixs: &prefixs
     opt: opt
     sar: sar
@@ -17,30 +17,41 @@ general_params:
     predicted: predicted
     visual: visual
     results: results
-  opt_bands: &opt_bands 10 #number of bands per optical image
+    visual_logs: visual_logs
+  opt_bands: &opt_bands 13 #number of bands per optical image
   sar_bands: &sar_bands 2 #number of bands per SAR image
   #n_opt_images: &n_opt_images 2 #!5 #number of optical images
   #n_sar_images: &n_sar_images 12 #number of optical images
   n_classes: &n_classes 3 #number of classes
   n_models: &n_models 5 #number of models to be trained for each experiment
   resunet_depths: &resunet_depths [32, 64, 128, 256]
+  swin_params: &swin_params
+    img_size: *patch_size
+    base_dim: 96
+    window_size: [4, 4]
+    shift_size: [2, 2]
+    patch_size: [4, 4]
+    n_heads: [3, 6, 12, 24]
+    n_blocks: [2, 2, 2, 2]
 original_data:
   opt:
     n_bands: *opt_bands 
-    folder: D:\Ferrari\Projects\thesis\data\opt_full_L2A
+    folder: D:\Ferrari\Projects\thesis\data\opt_full_L1C
     imgs:
       train:
         - 2019-08-06-2019-08-07.tif
-        - 2019-11-24-2019-11-25.tif
-        - 2020-02-17-2020-02-18.tif
-        - 2020-05-02-2020-05-03.tif
+        - 2019-08-11-2019-08-12.tif
+        - 2019-08-16-2019-08-17.tif
         - 2020-07-31-2020-08-01.tif
+        - 2020-08-05-2020-08-06.tif
+        - 2020-08-10-2020-08-11.tif
       test:
         - 2020-07-31-2020-08-01.tif
-        - 2020-11-03-2020-11-04.tif
-        - 2021-02-01-2021-02-02.tif
-        - 2021-05-27-2021-05-28.tif
-        - 2021-07-16-2021-07-17.tif
+        - 2020-08-05-2020-08-06.tif
+        - 2020-08-10-2020-08-11.tif
+        - 2021-06-26-2021-06-27.tif
+        - 2021-07-01-2021-07-02.tif
+        - 2021-07-11-2021-07-12.tif
   sar:
     n_bands: *sar_bands 
     folder: D:\Ferrari\Projects\thesis\data\sar
@@ -79,9 +90,9 @@ original_data:
     residual: residual.shp
     yearly_deforestation: yearly_deforestation.shp
 tiles_params:
-  lines: 3
-  columns: 3
-  train_tiles: [0, 1, 3, 5, 8]
+  lines: 4
+  columns: 4
+  train_tiles: [1, 2, 4, 5, 7, 8, 9, 10, 13, 15]
   path: D:\Ferrari\Projects\thesis\data\general\tiles.tif
 label_params:
   def_inner_buffer: 3
@@ -114,23 +125,30 @@ training_params:
   experiments_cfg_path: *experiments_cfg_path
   experiments_paths: *experiments_path
   patch_size: *patch_size
-  batch_size: 32
+  batch_size: 24
   opt_bands: *opt_bands 
   sar_bands: *sar_bands 
+  max_train_patches: 10000
+  max_val_patches: 5000
   loss_fn: 
     module: torch.nn.CrossEntropyLoss
     ignore_index: 2
-    weights: [0.2, 0.8, 0]
+    weights: [0.15, 0.85, 0]
   optimizer:
     module: torch.optim.Adam
     params:
-      lr: 2.0e-5
+      lr: 1.0e-5
   early_stop:
     patience: 10
     min_delta: 1.0e-5
     min_epochs: 0
   max_epochs: 500
   n_classes: *n_classes
+  scheduler:
+    module: torch.optim.lr_scheduler.ExponentialLR
+    params:
+      gamma: 0.98
+      verbose: True
 prediction_params:
   experiments_paths: *experiments_path
   patch_size: *patch_size
@@ -139,7 +157,7 @@ prediction_params:
   n_models: *n_models
   batch_size: 32
   prediction_remove_border: 8
-  prediction_overlaps: [0.2, 0.3]
+  prediction_overlaps: [0.2]
   opt_bands: *opt_bands 
   sar_bands: *sar_bands 
   #n_opt_images: *n_opt_images 
@@ -152,94 +170,134 @@ experiments:
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: 
-      - [0, 1 ,2 ,3 ,4]
-    train_sar_imgs: 
-      - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    test_opt_imgs: 
-      - [0, 1, 2, 3, 4]
-    test_sar_imgs:
-      - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     resunet_depths: *resunet_depths
 
-  exp_41:
+
+  exp_1:
     model: models.resunet.networks.ResUnetOpt # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: 
-      - [0, 4]
-    train_sar_imgs: 
-      - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    test_opt_imgs: 
-      - [0, 4]
-    test_sar_imgs:
-      - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     resunet_depths: *resunet_depths
 
-  exp_42:
+  exp_2:
     model: models.resunet.networks.ResUnetSAR # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: 
-      - [0, 4]
-    train_sar_imgs: 
-      - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    test_opt_imgs: 
-      - [0, 4]
-    test_sar_imgs:
-      - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     resunet_depths: *resunet_depths
 
-  exp_43:
+  exp_3:
     model: models.resunet.networks.ResUnetEF # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: 
-      - [0, 4]
-    train_sar_imgs: 
-      - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    test_opt_imgs: 
-      - [0, 4]
-    test_sar_imgs:
-      - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     resunet_depths: *resunet_depths
 
-  exp_44:
+  exp_4:
     model: models.resunet.networks.ResUnetJF # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: 
-      - [0, 4]
-    train_sar_imgs: 
-      - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    test_opt_imgs: 
-      - [0, 4]
-    test_sar_imgs:
-      - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     resunet_depths: *resunet_depths
 
-  exp_45:
+  exp_5:
     model: models.resunet.networks.ResUnetLF # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: 
-      - [0, 4]
-    train_sar_imgs: 
-      - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    test_opt_imgs: 
-      - [0, 4]
-    test_sar_imgs:
-      - [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     resunet_depths: *resunet_depths
 
+  exp_6:
+    model: models.timm.networks.NetOpt 
+    base_encoder: resnet50
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    #resunet_depths: *resunet_depths
+
+  exp_7:
+    model: models.timm.networks.NetSAR 
+    base_encoder: resnet50 
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    #resunet_depths: *resunet_depths
+
+  exp_8:
+    model: models.timm.networks.NetEF
+    base_encoder: resnet50 
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    #resunet_depths: *resunet_depths
   
+  exp_9:
+    model: models.timm.networks.NetJF
+    base_encoder: resnet50 
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    #resunet_depths: *resunet_depths
+
+  exp_10:
+    model: models.timm.networks.NetLF
+    base_encoder: resnet50 
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    #resunet_depths: *resunet_depths

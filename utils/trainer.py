@@ -6,6 +6,8 @@ from torch.nn.functional import one_hot
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import time
+from pathlib import Path
+from einops import rearrange
 
 import matplotlib
 matplotlib.use('Agg')
@@ -29,6 +31,8 @@ def train_loop(dataloader, model, loss_fn, optimizer, params):
     metric = MulticlassF1Score(num_classes=params['n_classes'], average = None)
     
     for (X, y) in pbar:
+        optimizer.zero_grad()
+        
         pred = model(X)
         loss = loss_fn(pred, y)
         steps += 1
@@ -38,7 +42,6 @@ def train_loop(dataloader, model, loss_fn, optimizer, params):
         pbar.set_description(f'Train Loss: {train_loss/steps:.4f}, F1-Score Classes: 0:{acc[0].item():.4f}, 1:{acc[1].item():.4f}, 2:{acc[2].item():.4f}')
 
         # Backpropagation
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
@@ -76,28 +79,77 @@ def val_loop(dataloader, model, loss_fn, params):
     #print(f'Validation Loss: {val_loss/steps:.4f}, Acc: 0:{acc[0].item():.4f}, 1:{acc[1].item():.4f}, 2:{acc[2].item():.4f}')
     return val_loss, acc[0].item(), acc[1].item()
 
-def val_sample_image(dataloader, model, path_to_samples, epoch):
-    sample = next(iter(dataloader))
-    label = sample[1]
-    x = sample[0]
-    pred = model(x).argmax(axis=1)
-    plt.close('all')
-    for i, l in enumerate(label):
-        figure, ax = plt.subplots(nrows=1, ncols=2, figsize = (10,5))
-        p = pred[i]
-        cmap = plt.get_cmap('tab20', 10)
-        im0 = ax[0].imshow(l.cpu(), cmap = cmap, vmin=-0.5, vmax = 9.5)
-        ax[0].title.set_text('Label')
-        im1 = ax[1].imshow(p.cpu(), cmap = cmap, vmin=-0.5, vmax = 9.5)
-        ax[1].title.set_text(f'Prediction Epoch {epoch+1:03d}')
-        
-        divider = make_axes_locatable(ax[1])
-        cax = divider.append_axes('right', size='5%', pad=0.05)
-        figure.colorbar(im1, cax=cax, orientation='vertical', ticks = np.arange(10))
+def sample_figures_loop(dataloader, model, n_batches, epoch, path_to_samples, model_idx):
 
-        figure.savefig(os.path.join(path_to_samples, f'sample_{i}_{epoch}.png'), bbox_inches='tight')
+    pbar = tqdm(desc = f'Sampling figures', total = n_batches)
+    for i_sample, sample in enumerate(dataloader):
+        if i_sample >= n_batches:
+            break
+        label = sample[1]
+        x = sample[0]
+        pred = model(x).argmax(axis=1)
+        cmap = plt.get_cmap('tab20', 3)
+
+        plt.close('all')
+
+        #for i, l in enumerate(label):
+        figure, ax = plt.subplots(nrows=2, ncols=4, figsize = (10,5))
+        p = pred[0]
+        l = label[0]
+        #cmap = plt.get_cmap('tab20', 1)
+        img_opt_0 = rearrange(x[0][0][0].cpu().numpy(), 'c h w -> h w c')[:,:,[3,2,1]]
+        img_opt_1 = rearrange(x[0][-1][0].cpu().numpy(), 'c h w -> h w c')[:,:,[3,2,1]]
+
+        img_sar_0 = rearrange(x[1][0][0].cpu().numpy(), 'c h w -> h w c')[:,:,0]
+        img_sar_1 = rearrange(x[1][-1][0].cpu().numpy(), 'c h w -> h w c')[:,:,1]
+
+        ax[0, 0].imshow(img_opt_0*5)
+        ax[0, 0].title.set_text('OPT 0')
+
+        ax[0, 1].imshow(img_opt_1*5)
+        ax[0, 1].title.set_text('OPT 1')
+
+        ax[1, 0].imshow(img_sar_0, cmap = 'gray')
+        ax[1, 0].title.set_text('SAR 0')
+
+        ax[1, 1].imshow(img_sar_1, cmap = 'gray')
+        ax[1, 1].title.set_text('SAR 1')
+
+        l0 = ax[0, 2].imshow(l.cpu(), cmap = cmap, vmin=0, vmax = 2)
+        ax[0, 2].title.set_text('Label')
+        divider = make_axes_locatable(ax[0, 2])
+        cax = divider.append_axes('right', size='5%', pad=0.05)
+        figure.colorbar(l0, cax=cax, orientation='vertical', ticks = np.arange(3))
+
+        l1 = ax[1, 2].imshow(l.cpu(), cmap = cmap, vmin=0, vmax = 2)
+        ax[1, 2].title.set_text('Label')
+        divider = make_axes_locatable(ax[1, 2])
+        cax = divider.append_axes('right', size='5%', pad=0.05)
+        figure.colorbar(l1, cax=cax, orientation='vertical', ticks = np.arange(3))
+
+        p0 = ax[0, 3].imshow(p.cpu(), cmap = cmap, vmin=0, vmax = 2)
+        ax[0, 3].title.set_text('Prediction')
+        divider = make_axes_locatable(ax[0, 3])
+        cax = divider.append_axes('right', size='5%', pad=0.05)
+        figure.colorbar(p0, cax=cax, orientation='vertical', ticks = np.arange(3))
+        
+        p1 = ax[1, 3].imshow(p.cpu(), cmap = cmap, vmin=0, vmax = 2)
+        ax[1, 3].title.set_text('Prediction')
+        divider = make_axes_locatable(ax[1, 3])
+        cax = divider.append_axes('right', size='5%', pad=0.05)
+        figure.colorbar(p1, cax=cax, orientation='vertical', ticks = np.arange(3))
+
+        plt.setp(ax, xticks=[], yticks=[])
+        figure.suptitle(f'Epoch {epoch}')
+
+        fig_path = path_to_samples / f'model_{model_idx}'
+        fig_path.mkdir(exist_ok=True)
+        fig_path = fig_path / f'sample_{i_sample}_{epoch}.png'
+        figure.savefig(fig_path, bbox_inches='tight')
         figure.clf()
         plt.close()
+
+        pbar.update(1)
 
 class EarlyStop():
     def __init__(self, train_patience, path_to_save, min_delta = 0, min_epochs = None) -> None:

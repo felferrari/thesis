@@ -39,15 +39,17 @@ class GenericTrainDataset(Dataset):
         opt_images_idx = self.opt_imgs[opt_group_index]
         sar_images_idx = self.sar_imgs[sar_group_index]
 
-        opt_patch = [
-            torch.from_numpy(np.load(self.data_folder / f'{self.params["prefixs"]["opt"]}_{patch_index:d}-{opt_idx}.npy').astype(np.float32)).moveaxis(2, 0).to(self.device)
-            for opt_idx in opt_images_idx
-            ]
-        
-        sar_patch = [
-            torch.from_numpy(np.load(self.data_folder / f'{self.params["prefixs"]["sar"]}_{patch_index:d}-{sar_idx}.npy').astype(np.float32)).moveaxis(2, 0).to(self.device)
-            for sar_idx in sar_images_idx
-            ]
+        opt_patch = np.concatenate(
+            [np.load(self.data_folder / f'{self.params["prefixs"]["opt"]}_{patch_index:d}-{opt_idx}.npy') for opt_idx in opt_images_idx],
+            axis = -1
+            ).astype(np.float32)
+        opt_patch = torch.from_numpy(opt_patch).moveaxis(2, 0).to(self.device)
+
+        sar_patch = np.concatenate(
+            [np.load(self.data_folder / f'{self.params["prefixs"]["sar"]}_{patch_index:d}-{sar_idx}.npy') for sar_idx in sar_images_idx],
+            axis = -1
+            ).astype(np.float32)
+        sar_patch = torch.from_numpy(sar_patch).moveaxis(2, 0).to(self.device)
 
         previous_patch = np.load(self.data_folder / f'{self.params["prefixs"]["previous"]}_{patch_index:d}.npy').astype(np.float32)
         previous_patch = torch.from_numpy(previous_patch).moveaxis(2, 0).to(self.device)
@@ -57,29 +59,29 @@ class GenericTrainDataset(Dataset):
 
         opt_patch, sar_patch, previous_patch, label_patch = self.augment_data(opt_patch, sar_patch, previous_patch, label_patch)
 
-        return [
+        return (
             opt_patch,
             sar_patch,
             previous_patch,
-        ], label_patch
+        ), label_patch
 
 class TrainDataset(GenericTrainDataset):
     def augment_data(self, opt_patch, sar_patch, previous_patch, label_patch):
         k = random.randint(0, 3)
-        opt_patch = [torch.rot90(p, k=k, dims=[1, 2]) for p in opt_patch]
-        sar_patch = [torch.rot90(p, k=k, dims=[1, 2]) for p in sar_patch]
+        opt_patch = torch.rot90(opt_patch, k=k, dims=[1, 2])
+        sar_patch = torch.rot90(sar_patch, k=k, dims=[1, 2])
         previous_patch = torch.rot90(previous_patch, k=k, dims=[1, 2])
         label_patch = torch.rot90(label_patch, k=k, dims=[0, 1])
 
         if bool(random.getrandbits(1)):
-            opt_patch = [hflip(p) for p in opt_patch]
-            sar_patch = [hflip(p) for p in sar_patch]
+            opt_patch = hflip(opt_patch)
+            sar_patch = hflip(sar_patch)
             previous_patch = hflip(previous_patch)
             label_patch = hflip(label_patch)
 
         if bool(random.getrandbits(1)):
-            opt_patch = [vflip(p) for p in opt_patch]
-            sar_patch = [vflip(p) for p in sar_patch]
+            opt_patch = vflip(opt_patch)
+            sar_patch = vflip(sar_patch)
             previous_patch = vflip(previous_patch)
             label_patch = vflip(label_patch)
         
@@ -116,19 +118,24 @@ class PredDataset(Dataset):
 
     def load_opt_data(self, opt_images_idx):
         pad_shape = ((self.patch_size, self.patch_size),(self.patch_size, self.patch_size), (0, 0))
-
-        self.opt_data = [
-            np.pad(np.load(self.data_folder / f'{self.params["prefixs"]["opt"]}_{opt_idx}.npy').astype(np.float16), pad_shape, mode='reflect').reshape((-1, self.params['opt_bands']))
-            for opt_idx in opt_images_idx
-            ]
+        opt_img = np.concatenate(
+            [np.load(self.data_folder / f'{self.params["prefixs"]["opt"]}_{opt_idx}.npy') for opt_idx in opt_images_idx],
+            axis = -1
+            ).astype(np.float16)
+        opt_img = np.pad(opt_img, pad_shape, mode='reflect')
+        #self.opt = torch.from_numpy(opt_img).moveaxis(2, 0).to(self.device)
+        self.opt = opt_img.reshape((-1, opt_img.shape[-1]))
 
     
     def load_sar_data(self, sar_images_idx):
         pad_shape = ((self.patch_size, self.patch_size),(self.patch_size, self.patch_size), (0, 0))
-        self.sar_data = [
-            np.pad(np.load(self.data_folder / f'{self.params["prefixs"]["sar"]}_{sar_idx}.npy').astype(np.float16), pad_shape, mode='reflect').reshape((-1, self.params['sar_bands']))
-            for sar_idx in sar_images_idx
-            ]
+        sar_img = np.concatenate(
+            [np.load(self.data_folder / f'{self.params["prefixs"]["sar"]}_{sar_idx}.npy') for sar_idx in sar_images_idx],
+            axis = -1
+            ).astype(np.float16)
+        sar_img = np.pad(sar_img, pad_shape, mode='reflect')
+        #self.sar = torch.from_numpy(sar_img).moveaxis(2, 0).to(self.device)
+        self.sar = sar_img.reshape((-1, sar_img.shape[-1]))
 
     def generate_overlap_patches(self, overlap):
         window_shape = (self.patch_size, self.patch_size)
@@ -142,20 +149,14 @@ class PredDataset(Dataset):
     def __getitem__(self, index):
         patch_idx = self.idx_patches[index]
 
-        opt_patch = [ 
-            torch.from_numpy(np.moveaxis(p[patch_idx], 2, 0).astype(np.float32)).to(self.device)
-            for p in self.opt_data 
-            ]
-        sar_patch = [ 
-            torch.from_numpy(np.moveaxis(p[patch_idx], 2, 0).astype(np.float32)).to(self.device)
-            for p in self.sar_data 
-            ]
+        opt_patch = np.moveaxis(self.opt[patch_idx], 2, 0)
+        sar_patch = np.moveaxis(self.sar[patch_idx], 2, 0)
         previous_patch = np.expand_dims(self.previous[patch_idx], axis=0)
         label_patch = self.label[patch_idx]
 
         return (
-            opt_patch,
-            sar_patch,
+            torch.from_numpy(opt_patch.astype(np.float32)).to(self.device),
+            torch.from_numpy(sar_patch.astype(np.float32)).to(self.device),
             torch.from_numpy(previous_patch.astype(np.float32)).to(self.device)
         ), torch.from_numpy(label_patch.astype(np.int64)).to(self.device)
         

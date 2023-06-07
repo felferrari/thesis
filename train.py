@@ -10,7 +10,7 @@ from torch.multiprocessing import Process, freeze_support
 import importlib
 from torch.utils.data import DataLoader, RandomSampler
 from torch import nn
-from utils.trainer import train_loop, val_loop, EarlyStop
+from utils.trainer import train_loop, val_loop, EarlyStop, sample_figures_loop
 import time
 from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.tensorboard import SummaryWriter
@@ -34,7 +34,7 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 52,
+    default = 2,
     help = 'The number of the experiment'
 )
 
@@ -73,6 +73,7 @@ logs_path = exp_path / experiments_paths['logs']
 visual_path = exp_path / experiments_paths['visual']
 predicted_path = exp_path / experiments_paths['predicted']
 results_path = exp_path / experiments_paths['results']
+visual_logs_path = exp_path / experiments_paths['visual_logs']
 
 exp_path.mkdir(exist_ok=True)
 models_path.mkdir(exist_ok=True)
@@ -80,6 +81,7 @@ logs_path.mkdir(exist_ok=True)
 visual_path.mkdir(exist_ok=True)
 predicted_path.mkdir(exist_ok=True)
 results_path.mkdir(exist_ok=True)
+visual_logs_path.mkdir(exist_ok=True)
 
 #setting up prepared data source
 prepared_folder = Path(preparation_params['folder'])
@@ -94,6 +96,8 @@ prepared_patches = load_yaml(prepared_patches_file)
 
 patch_size = training_params['patch_size']
 batch_size = training_params['batch_size']
+max_train_patches = training_params['max_train_patches']
+max_val_patches = training_params['max_val_patches']
 
 def run(model_idx):
     outfile = logs_path /  f'train_{args.experiment}_{model_idx}.txt'
@@ -112,18 +116,24 @@ def run(model_idx):
 
     model = locate(experiment_params['model'])(experiment_params)
     model.to(device)
+    a = [[torch.rand((32, 13, 224, 224)).to(device), torch.rand((32, 13, 224, 224)).to(device)], [torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device)], torch.rand((32, 1, 224, 224)).to(device) ]
+    model(a)
     log.info(f'Model trainable parameters: {count_parameters(model)}')
 
 
     train_ds = TrainDataset(patch_size, device, experiment_params, train_folder, prepared_patches['train'])
     val_ds = ValDataset(patch_size, device, experiment_params, val_folder, prepared_patches['val'])
+    samples_ds = ValDataset(patch_size, device, experiment_params, val_folder, prepared_patches['val'])
     #train_ds[1000]
     #val_ds[10]
     
-    train_sampler = RandomSampler(train_ds)
+    train_sampler = RandomSampler(train_ds, num_samples=max_train_patches)
+    val_sampler = RandomSampler(val_ds, num_samples=max_val_patches)
+    samples_sampler = RandomSampler(val_ds, num_samples=max_val_patches)
 
     train_dl = DataLoader(dataset=train_ds, batch_size=batch_size, num_workers=4, persistent_workers = True, drop_last = True, sampler = train_sampler)
-    val_dl = DataLoader(dataset=val_ds, batch_size=batch_size, num_workers=4, persistent_workers = True)
+    val_dl = DataLoader(dataset=val_ds, batch_size=batch_size, num_workers=4, persistent_workers = True, drop_last = True, sampler = val_sampler)
+    sampler_dl = DataLoader(dataset=samples_ds, batch_size=batch_size)#, sampler = samples_sampler)
 
     #train_dl = DataLoader(dataset=train_ds, batch_size=batch_size, sampler = train_sampler, drop_last = True)
     #val_dl = DataLoader(dataset=val_ds, batch_size=batch_size)
@@ -133,6 +143,9 @@ def run(model_idx):
 
     optimizer_params = training_params['optimizer']
     optimizer = locate(optimizer_params['module'])(model.parameters(),  **optimizer_params['params'])
+
+    optimizer_params = training_params['scheduler']
+    scheduler = locate(optimizer_params['module'])(optimizer, **optimizer_params['params'])
 
     model_path = models_path / f'model_{model_idx}.pth'
 
@@ -166,10 +179,14 @@ def run(model_idx):
         val_writer.add_scalar('Class0_F1', f1_0, t)
         val_writer.add_scalar('Class1_F1', f1_1, t)
 
+        #sample_figures_loop(sampler_dl, model, 16, epoch, visual_logs_path, model_idx)
+
         if early_stop.testEpoch(model = model, val_value = val_loss):
             min_val = early_stop.better_value
             log.info(f'Min Validation Value:{min_val}')
             break
+
+        scheduler.step()
     t_time = (time.perf_counter() - total_t0)/60
     log.info(f'Total Training time: {t_time} mins, for {t} epochs, Avg Training Time per epoch:{t_time/t}')
 
