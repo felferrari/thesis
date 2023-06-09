@@ -98,97 +98,102 @@ patch_size = training_params['patch_size']
 batch_size = training_params['batch_size']
 max_train_patches = training_params['max_train_patches']
 max_val_patches = training_params['max_val_patches']
+min_val_loss = training_params['min_val_loss']
 
 def run(model_idx):
-    outfile = logs_path /  f'train_{args.experiment}_{model_idx}.txt'
-    logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s:%(levelname)s:%(name)s:%(message)s',
-            filename=outfile,
-            filemode='w'
+    last_val_loss = float('inf')
+    while last_val_loss >= min_val_loss:
+        outfile = logs_path /  f'train_{args.experiment}_{model_idx}.txt'
+        logging.basicConfig(
+                level=logging.INFO,
+                format='%(asctime)s:%(levelname)s:%(name)s:%(message)s',
+                filename=outfile,
+                filemode='w'
+                )
+        log = logging.getLogger('training')
+
+        cfg_log_file = logs_path / f'cfg_{args.experiment}_{model_idx}.yaml'
+        save_yaml(cfg, cfg_log_file)
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        model = locate(experiment_params['model'])(experiment_params)
+        model.to(device)
+        #a = [[torch.rand((32, 13, 224, 224)).to(device), torch.rand((32, 13, 224, 224)).to(device)], [torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device)], torch.rand((32, 1, 224, 224)).to(device) ]
+        #model(a)
+        log.info(f'Model trainable parameters: {count_parameters(model)}')
+
+
+        train_ds = TrainDataset(patch_size, device, experiment_params, train_folder, prepared_patches['train'])
+        val_ds = ValDataset(patch_size, device, experiment_params, val_folder, prepared_patches['val'])
+        samples_ds = ValDataset(patch_size, device, experiment_params, val_folder, prepared_patches['val'])
+        train_ds[1000]
+        #val_ds[10]
+        
+        train_sampler = RandomSampler(train_ds, num_samples=max_train_patches)
+        val_sampler = RandomSampler(val_ds, num_samples=max_val_patches)
+        samples_sampler = RandomSampler(val_ds, num_samples=max_val_patches)
+
+        train_dl = DataLoader(dataset=train_ds, batch_size=batch_size, num_workers=4, persistent_workers = True, drop_last = True, sampler = train_sampler)
+        val_dl = DataLoader(dataset=val_ds, batch_size=batch_size, num_workers=4, persistent_workers = True, drop_last = True, sampler = val_sampler)
+        sampler_dl = DataLoader(dataset=samples_ds, batch_size=batch_size)#, sampler = samples_sampler)
+
+        #train_dl = DataLoader(dataset=train_ds, batch_size=batch_size, sampler = train_sampler, drop_last = True)
+        #val_dl = DataLoader(dataset=val_ds, batch_size=batch_size)
+
+        loss_params = training_params['loss_fn']
+        loss_fn = locate(loss_params['module'])(weight=torch.tensor(loss_params['weights']).to(device),  ignore_index = loss_params['ignore_index'])
+
+        optimizer_params = training_params['optimizer']
+        optimizer = locate(optimizer_params['module'])(model.parameters(),  **optimizer_params['params'])
+
+        optimizer_params = training_params['scheduler']
+        scheduler = locate(optimizer_params['module'])(optimizer, **optimizer_params['params'])
+
+        model_path = models_path / f'model_{model_idx}.pth'
+
+        early_stop_params = training_params['early_stop']
+        early_stop = EarlyStop(
+            train_patience = early_stop_params['patience'],
+            path_to_save = str(model_path),
+            min_delta = early_stop_params['min_delta'],
+            min_epochs = early_stop_params['min_epochs']
             )
-    log = logging.getLogger('training')
+        
+        total_t0 = time.perf_counter()
 
-    cfg_log_file = logs_path / f'cfg_{args.experiment}_{model_idx}.yaml'
-    save_yaml(cfg, cfg_log_file)
+        path_tb_train_logdir = logs_path / f'train_model_{model_idx}'
+        path_tb_val_logdir = logs_path / f'val_model_{model_idx}'
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+        train_writer = SummaryWriter(log_dir=str(path_tb_train_logdir))
+        val_writer = SummaryWriter(log_dir=str(path_tb_val_logdir))
 
-    model = locate(experiment_params['model'])(experiment_params)
-    model.to(device)
-    a = [[torch.rand((32, 13, 224, 224)).to(device), torch.rand((32, 13, 224, 224)).to(device)], [torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device), torch.rand((32, 2, 224, 224)).to(device)], torch.rand((32, 1, 224, 224)).to(device) ]
-    model(a)
-    log.info(f'Model trainable parameters: {count_parameters(model)}')
+        for t in range(training_params['max_epochs']):
+            epoch = t+1
+            print(f"-------------------------------\nEpoch {epoch}")
+            model.train()
+            loss, f1_0, f1_1 = train_loop(train_dl, model, loss_fn, optimizer, training_params)
+            train_writer.add_scalar('Loss', loss, t)
+            train_writer.add_scalar('Class0_F1', f1_0, t)
+            train_writer.add_scalar('Class1_F1', f1_1, t)
+            model.eval()
+            val_loss, f1_0, f1_1 = val_loop(val_dl, model, loss_fn, training_params)
+            val_writer.add_scalar('Loss', val_loss, t)
+            val_writer.add_scalar('Class0_F1', f1_0, t)
+            val_writer.add_scalar('Class1_F1', f1_1, t)
 
+            #sample_figures_loop(sampler_dl, model, 16, epoch, visual_logs_path, model_idx)
 
-    train_ds = TrainDataset(patch_size, device, experiment_params, train_folder, prepared_patches['train'])
-    val_ds = ValDataset(patch_size, device, experiment_params, val_folder, prepared_patches['val'])
-    samples_ds = ValDataset(patch_size, device, experiment_params, val_folder, prepared_patches['val'])
-    #train_ds[1000]
-    #val_ds[10]
-    
-    train_sampler = RandomSampler(train_ds, num_samples=max_train_patches)
-    val_sampler = RandomSampler(val_ds, num_samples=max_val_patches)
-    samples_sampler = RandomSampler(val_ds, num_samples=max_val_patches)
+            if early_stop.testEpoch(model = model, val_value = val_loss):
+                min_val = early_stop.better_value
+                log.info(f'Min Validation Value:{min_val}')
+                break
 
-    train_dl = DataLoader(dataset=train_ds, batch_size=batch_size, num_workers=4, persistent_workers = True, drop_last = True, sampler = train_sampler)
-    val_dl = DataLoader(dataset=val_ds, batch_size=batch_size, num_workers=4, persistent_workers = True, drop_last = True, sampler = val_sampler)
-    sampler_dl = DataLoader(dataset=samples_ds, batch_size=batch_size)#, sampler = samples_sampler)
+            scheduler.step()
+        t_time = (time.perf_counter() - total_t0)/60
+        log.info(f'Total Training time: {t_time} mins, for {t} epochs, Avg Training Time per epoch:{t_time/t}')
 
-    #train_dl = DataLoader(dataset=train_ds, batch_size=batch_size, sampler = train_sampler, drop_last = True)
-    #val_dl = DataLoader(dataset=val_ds, batch_size=batch_size)
-
-    loss_params = training_params['loss_fn']
-    loss_fn = locate(loss_params['module'])(weight=torch.tensor(loss_params['weights']).to(device),  ignore_index = loss_params['ignore_index'])
-
-    optimizer_params = training_params['optimizer']
-    optimizer = locate(optimizer_params['module'])(model.parameters(),  **optimizer_params['params'])
-
-    optimizer_params = training_params['scheduler']
-    scheduler = locate(optimizer_params['module'])(optimizer, **optimizer_params['params'])
-
-    model_path = models_path / f'model_{model_idx}.pth'
-
-    early_stop_params = training_params['early_stop']
-    early_stop = EarlyStop(
-        train_patience = early_stop_params['patience'],
-        path_to_save = str(model_path),
-        min_delta = early_stop_params['min_delta'],
-        min_epochs = early_stop_params['min_epochs']
-        )
-    
-    total_t0 = time.perf_counter()
-
-    path_tb_train_logdir = logs_path / f'train_model_{model_idx}'
-    path_tb_val_logdir = logs_path / f'val_model_{model_idx}'
-
-    train_writer = SummaryWriter(log_dir=str(path_tb_train_logdir))
-    val_writer = SummaryWriter(log_dir=str(path_tb_val_logdir))
-
-    for t in range(training_params['max_epochs']):
-        epoch = t+1
-        print(f"-------------------------------\nEpoch {epoch}")
-        model.train()
-        loss, f1_0, f1_1 = train_loop(train_dl, model, loss_fn, optimizer, training_params)
-        train_writer.add_scalar('Loss', loss, t)
-        train_writer.add_scalar('Class0_F1', f1_0, t)
-        train_writer.add_scalar('Class1_F1', f1_1, t)
-        model.eval()
-        val_loss, f1_0, f1_1 = val_loop(val_dl, model, loss_fn, training_params)
-        val_writer.add_scalar('Loss', val_loss, t)
-        val_writer.add_scalar('Class0_F1', f1_0, t)
-        val_writer.add_scalar('Class1_F1', f1_1, t)
-
-        #sample_figures_loop(sampler_dl, model, 16, epoch, visual_logs_path, model_idx)
-
-        if early_stop.testEpoch(model = model, val_value = val_loss):
-            min_val = early_stop.better_value
-            log.info(f'Min Validation Value:{min_val}')
-            break
-
-        scheduler.step()
-    t_time = (time.perf_counter() - total_t0)/60
-    log.info(f'Total Training time: {t_time} mins, for {t} epochs, Avg Training Time per epoch:{t_time/t}')
+        last_val_loss = min_val
 
 if __name__=="__main__":
     freeze_support()
