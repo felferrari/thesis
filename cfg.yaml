@@ -131,6 +131,7 @@ training_params:
   sar_bands: *sar_bands 
   max_train_patches: 10000
   max_val_patches: 5000
+  min_val_loss: 0.7
   loss_fn: 
     module: torch.nn.CrossEntropyLoss
     ignore_index: 2

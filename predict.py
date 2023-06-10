@@ -79,6 +79,7 @@ def run(model_idx):
             filemode='w'
             )
     log = logging.getLogger('predict')
+    print(f'Predicting Model {model_idx}...')
 
     model = locate(experiment_params['model'])(experiment_params)
     model.to(device)
