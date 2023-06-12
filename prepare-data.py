@@ -124,12 +124,14 @@ if args.statistics:
 
     opt_means, opt_stds = [], []
     sar_means, sar_stds = [], []
-    for opt_img_i, opt_img_file in enumerate(tqdm(original_data_params['opt']['imgs']['train'], desc = 'Generating OPT statistics')):
+    pbar = tqdm(list(set(original_data_params['opt']['imgs']['test']+original_data_params['opt']['imgs']['train'])), desc = 'Generating OPT statistics')
+    for opt_img_i, opt_img_file in enumerate(pbar):
         data_file = opt_path / opt_img_file
         data = load_opt_image(data_file)
         opt_means.append(data.mean(axis=(0,1)))
         opt_stds.append(data.std(axis=(0,1)))
-    for sar_img_i, sar_img_file in enumerate(tqdm(original_data_params['sar']['imgs']['train'], desc = 'Generating SAR statistics')):
+    pbar = tqdm(list(set(original_data_params['sar']['imgs']['test']+original_data_params['sar']['imgs']['train'])), desc = 'Generating SAR statistics')
+    for sar_img_i, sar_img_file in enumerate(pbar):
         data_file = sar_path / sar_img_file
         data = load_SAR_image(data_file)
         sar_means.append(data.mean(axis=(0,1)))
@@ -175,7 +177,7 @@ if args.train_data:
     keep_args = np.argwhere(keep == True).flatten() #args with at least min_prop deforestation
     no_keep_args = np.argwhere(keep == False).flatten() #args with less than min_prop of deforestation
 
-    no_keep_args = np.random.choice(no_keep_args, (keep==True).sum() // 5)
+    no_keep_args = np.random.choice(no_keep_args, (keep==True).sum())
 
     keep_final = np.concatenate((keep_args, no_keep_args))
 

@@ -33,6 +33,20 @@ parser.add_argument( # Experiment number
     help = 'The number of the experiment'
 )
 
+parser.add_argument( # Model number
+    '-m', '--model',
+    type = int,
+    default = -1,
+    help = 'Number of the model to be retrained'
+)
+
+parser.add_argument( # Model number
+    '-s', '--start-model',
+    type = int,
+    default = -1,
+    help = 'Number of the model to be retrained'
+)
+
 args = parser.parse_args()
 
 with open(args.cfg, 'r') as file:
@@ -79,7 +93,7 @@ def run(model_idx):
             filemode='w'
             )
     log = logging.getLogger('predict')
-    print(f'Predicting Model {model_idx}...')
+    print(f'\nPredicting Model {model_idx}...')
 
     model = locate(experiment_params['model'])(experiment_params)
     model.to(device)
@@ -157,7 +171,18 @@ def run(model_idx):
 if __name__=="__main__":
     freeze_support()
     
-    for model_idx in trange(prediction_params['n_models'], desc = 'Model'):
-        p = Process(target=run, args=(model_idx,))
-        p.start()
-        p.join()
+
+    if args.model == -1:
+        if args.start_model == -1:
+            for model_idx in range(prediction_params['n_models']):
+                p = Process(target=run, args=(model_idx,))
+                p.start()
+                p.join()
+        else:
+            for model_idx in range(args.start_model, prediction_params['n_models']):
+                p = Process(target=run, args=(model_idx,))
+                p.start()
+                p.join()
+    
+    else:
+        run(args.model)    
