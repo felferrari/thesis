@@ -16,7 +16,7 @@ from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.tensorboard import SummaryWriter
 from  pathlib import Path
 import yaml
-from utils.dataloader import TrainDataset, ValDataset
+from utils.dataloader import TrainDataset, ValDataset#, to_gpu
 from pydoc import locate
 
 
@@ -134,9 +134,28 @@ def run(model_idx):
         val_sampler = RandomSampler(val_ds, num_samples=max_val_patches)
         samples_sampler = RandomSampler(val_ds, num_samples=max_val_patches)
 
-        train_dl = DataLoader(dataset=train_ds, batch_size=batch_size, num_workers=4, persistent_workers = True, drop_last = True, sampler = train_sampler)
-        val_dl = DataLoader(dataset=val_ds, batch_size=batch_size, num_workers=4, persistent_workers = True, drop_last = True, sampler = val_sampler)
-        sampler_dl = DataLoader(dataset=samples_ds, batch_size=batch_size)#, sampler = samples_sampler)
+        train_dl = DataLoader(
+            dataset=train_ds, 
+            batch_size=batch_size, 
+            num_workers=4, 
+            persistent_workers = True, 
+            drop_last = True, 
+            sampler = train_sampler#,
+            #collate_fn = to_gpu
+            )
+        val_dl = DataLoader(
+            dataset=val_ds, 
+            batch_size=batch_size, 
+            num_workers=4, 
+            persistent_workers = True, 
+            drop_last = True, 
+            sampler = val_sampler#,
+            #collate_fn = to_gpu
+            )
+        sampler_dl = DataLoader(
+            dataset=samples_ds, 
+            batch_size=batch_size
+            )#, sampler = samples_sampler)
 
         #train_dl = DataLoader(dataset=train_ds, batch_size=batch_size, sampler = train_sampler, drop_last = True)
         #val_dl = DataLoader(dataset=val_ds, batch_size=batch_size)

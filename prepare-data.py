@@ -2,7 +2,7 @@ import argparse
 from  pathlib import Path
 import yaml
 import logging
-from utils.ops import load_opt_image, load_SAR_image, load_sb_image, save_yaml, load_yaml
+from utils.ops import load_opt_image, load_SAR_image, load_sb_image, save_yaml, load_yaml, remove_outliers
 import numpy as np
 from skimage.util import view_as_windows
 from tqdm import tqdm
@@ -122,31 +122,46 @@ if args.statistics:
     opt_path = Path(original_data_params['opt']['folder'])
     sar_path = Path(original_data_params['sar']['folder'])
 
-    opt_means, opt_stds = [], []
-    sar_means, sar_stds = [], []
+    opt_means, opt_stds, opt_maxs, opt_mins = [], [], [], []
+    sar_means, sar_stds, sar_maxs, sar_mins = [], [], [], []
     pbar = tqdm(list(set(original_data_params['opt']['imgs']['test']+original_data_params['opt']['imgs']['train'])), desc = 'Generating OPT statistics')
     for opt_img_i, opt_img_file in enumerate(pbar):
         data_file = opt_path / opt_img_file
         data = load_opt_image(data_file)
+        data = remove_outliers(data)
         opt_means.append(data.mean(axis=(0,1)))
         opt_stds.append(data.std(axis=(0,1)))
+        opt_maxs.append(data.max(axis=(0,1)))
+        opt_mins.append(data.min(axis=(0,1)))
     pbar = tqdm(list(set(original_data_params['sar']['imgs']['test']+original_data_params['sar']['imgs']['train'])), desc = 'Generating SAR statistics')
     for sar_img_i, sar_img_file in enumerate(pbar):
         data_file = sar_path / sar_img_file
         data = load_SAR_image(data_file)
+        data = remove_outliers(data)
         sar_means.append(data.mean(axis=(0,1)))
         sar_stds.append(data.std(axis=(0,1)))
+        sar_maxs.append(data.max(axis=(0,1)))
+        sar_mins.append(data.min(axis=(0,1)))
+
     opt_means = np.array(opt_means).mean(axis=0)
     opt_stds = np.array(opt_stds).mean(axis=0)
+    opt_maxs = np.array(opt_maxs).max(axis=0)
+    opt_mins = np.array(opt_mins).min(axis=0)
 
     sar_means = np.array(sar_means).mean(axis=0)
     sar_stds = np.array(sar_stds).mean(axis=0)
+    sar_maxs = np.array(sar_maxs).max(axis=0)
+    sar_mins = np.array(sar_mins).min(axis=0)
 
     statistics = {
         'opt_means': opt_means.tolist(),
         'opt_stds': opt_stds.tolist(),
+        'opt_maxs': opt_maxs.tolist(),
+        'opt_mins': opt_mins.tolist(),
         'sar_means': sar_means.tolist(),
-        'sar_stds': sar_stds.tolist()
+        'sar_stds': sar_stds.tolist(),
+        'sar_maxs': sar_maxs.tolist(),
+        'sar_mins': sar_mins.tolist(),
     }
 
     save_yaml(statistics, statistics_file)
@@ -210,12 +225,15 @@ if args.train_data:
     for opt_img_i, opt_img_file in enumerate(tqdm(original_data_params['opt']['imgs']['train'], desc = 'Reading OPT Training files')):
         data_file = opt_path / opt_img_file
         data = load_opt_image(data_file)
-        data = (data - opt_means) / opt_stds
+        data = remove_outliers(data)
+        #data = (data - opt_means) / opt_stds
+        data = data / 10000
         opt_imgs.append(data.astype(np.float16).reshape((-1, opt_bands)))
     for sar_img_i, sar_img_file in enumerate(tqdm(original_data_params['sar']['imgs']['train'], desc = 'Reading SAR Training files')):
         data_file = sar_path / sar_img_file
         data = load_SAR_image(data_file)
-        data = (data - sar_means) / sar_stds
+        data = remove_outliers(data)
+        #data = (data - sar_means) / sar_stds
         sar_imgs.append(data.astype(np.float16).reshape((-1, sar_bands)))
 
     previous_map = previous_map.astype(np.float16).reshape(-1, 1)
@@ -280,13 +298,16 @@ if args.test_data:
     for opt_img_i, opt_img_file in enumerate(tqdm(original_data_params['opt']['imgs']['test'], desc = 'Converting OPT Testing files')):
         data_file = opt_path / opt_img_file
         data = load_opt_image(data_file)
-        data = (data - opt_means) / opt_stds
+        data = remove_outliers(data)
+        #data = (data - opt_means) / opt_stds
+        data = data / 10000
         data_patch_file = test_folder / f'{opt_prefix}_{opt_img_i}.npy'
         np.save(data_patch_file, data.astype(np.float16))
     for sar_img_i, sar_img_file in enumerate(tqdm(original_data_params['sar']['imgs']['test'], desc = 'Converting SAR Testing files')):
         data_file = sar_path / sar_img_file
         data = load_SAR_image(data_file)
-        data = (data - sar_means) / sar_stds
+        data = remove_outliers(data)
+        #data = (data - sar_means) / sar_stds
         data_patch_file = test_folder / f'{sar_prefix}_{sar_img_i}.npy'
         np.save(data_patch_file, data.astype(np.float16))
 

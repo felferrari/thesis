@@ -8,6 +8,11 @@ from pathlib import Path
 from typing import Union
 import yaml 
 
+def remove_outliers(img, signficance = 0.01):
+    outliers = np.quantile(img, [signficance, 1-signficance])
+    img = np.clip(img, outliers[0], outliers[1])
+    return img
+
 def load_json(fp):
     with open(fp) as f:
         return json.load(f)

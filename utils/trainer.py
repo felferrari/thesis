@@ -14,6 +14,7 @@ matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
 
+
 def train_loop(dataloader, model, loss_fn, optimizer, params):
     """Executes a train loop epoch
 
@@ -30,7 +31,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, params):
     pbar = tqdm(dataloader)
     metric = MulticlassF1Score(num_classes=params['n_classes'], average = None)
     
-    for (X, y) in pbar:
+    for X, y in pbar:
         optimizer.zero_grad()
         
         pred = model(X)
