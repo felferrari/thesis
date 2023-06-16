@@ -124,7 +124,7 @@ def run(model_idx):
             for overlap in tqdm(overlaps, leave=False, desc='Overlap'):
                 pred_ds.generate_overlap_patches(overlap)
                 pred_ds[0]
-                #dataloader = DataLoader(pred_ds, batch_size=batch_size, num_workers=2, shuffle=False)
+                #dataloader = DataLoader(pred_ds, batch_size=batch_size, num_workers=3, shuffle=False)
                 dataloader = DataLoader(pred_ds, batch_size=batch_size, shuffle=False)
                 
                 pbar = tqdm(dataloader, desc='Prediction', leave = False)
