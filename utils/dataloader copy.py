@@ -6,7 +6,7 @@ import torch
 import random
 from utils.ops import load_sb_image, load_opt_image, load_SAR_image
 from skimage.util import view_as_windows
-import h5py
+
 
 class GenericTrainDataset(Dataset):
     def __init__(self, device, params, data_folder, n_patches):
@@ -38,47 +38,51 @@ class GenericTrainDataset(Dataset):
         opt_images_idx = self.opt_imgs[opt_group_index]
         sar_images_idx = self.sar_imgs[sar_group_index]
 
-        data = h5py.File(self.data_folder / f'{patch_index:d}.h5', 'r', rdcc_nbytes = 10*(1024**2))
+        opt_patch = [
+            torch.from_numpy(np.load(self.data_folder / f'{self.params["prefixs"]["opt"]}_{patch_index:d}-{opt_idx}.npy').astype(np.float32)).moveaxis(2, 0).to(self.device)
+            for opt_idx in opt_images_idx
+            ]
+        
+        sar_patch = [
+            torch.from_numpy(np.load(self.data_folder / f'{self.params["prefixs"]["sar"]}_{patch_index:d}-{sar_idx}.npy').astype(np.float32)).moveaxis(2, 0).to(self.device)
+            for sar_idx in sar_images_idx
+            ]
 
-        opt_patch = torch.from_numpy(data['opt'][()][opt_images_idx].astype(np.float32)).moveaxis(-1, -3).to(self.device)
-        sar_patch = torch.from_numpy(data['sar'][()][sar_images_idx].astype(np.float32)).moveaxis(-1, -3).to(self.device)
-        previous_patch = torch.from_numpy(data['previous'][()].astype(np.float32)).moveaxis(-1, -3).to(self.device)
-        cloud_patch = torch.from_numpy(data['cloud'][()][opt_images_idx].astype(np.float32)).moveaxis(-1, -3).to(self.device)
-        label_patch = torch.from_numpy(data['label'][()].astype(np.int64)).to(self.device)
+        previous_patch = np.load(self.data_folder / f'{self.params["prefixs"]["previous"]}_{patch_index:d}.npy').astype(np.float32)
+        previous_patch = torch.from_numpy(previous_patch).moveaxis(2, 0).to(self.device)
 
+        label_patch = np.load(self.data_folder / f'{self.params["prefixs"]["label"]}_{patch_index:d}.npy').astype(np.int64)
+        label_patch = torch.from_numpy(label_patch).to(self.device)
 
-        opt_patch, sar_patch, previous_patch, cloud_patch, label_patch = self.augment_data(opt_patch, sar_patch, previous_patch, cloud_patch, label_patch)
+        opt_patch, sar_patch, previous_patch, label_patch = self.augment_data(opt_patch, sar_patch, previous_patch, label_patch)
 
         return [
             opt_patch,
             sar_patch,
             previous_patch,
-        ], (label_patch, cloud_patch)
+        ], label_patch
 
 class TrainDataset(GenericTrainDataset):
-    def augment_data(self, opt_patch, sar_patch, previous_patch, cloud_patch, label_patch):
+    def augment_data(self, opt_patch, sar_patch, previous_patch, label_patch):
         k = random.randint(0, 3)
-        opt_patch = torch.rot90(opt_patch, k=k, dims=[-2, -1])
-        sar_patch = torch.rot90(sar_patch, k=k, dims=[-2, -1])
-        previous_patch = torch.rot90(previous_patch, k=k, dims=[-2, -1])
-        cloud_patch = torch.rot90(cloud_patch, k=k, dims=[-2, -1])
-        label_patch = torch.rot90(label_patch, k=k, dims=[-2, -1])
+        opt_patch = [torch.rot90(p, k=k, dims=[1, 2]) for p in opt_patch]
+        sar_patch = [torch.rot90(p, k=k, dims=[1, 2]) for p in sar_patch]
+        previous_patch = torch.rot90(previous_patch, k=k, dims=[1, 2])
+        label_patch = torch.rot90(label_patch, k=k, dims=[0, 1])
 
         if bool(random.getrandbits(1)):
-            opt_patch = hflip(opt_patch)
-            sar_patch = hflip(sar_patch)
+            opt_patch = [hflip(p) for p in opt_patch]
+            sar_patch = [hflip(p) for p in sar_patch]
             previous_patch = hflip(previous_patch)
-            cloud_patch = hflip(cloud_patch)
             label_patch = hflip(label_patch)
 
         if bool(random.getrandbits(1)):
-            opt_patch = vflip(opt_patch)
-            sar_patch = vflip(sar_patch)
+            opt_patch = [vflip(p) for p in opt_patch]
+            sar_patch = [vflip(p) for p in sar_patch]
             previous_patch = vflip(previous_patch)
-            cloud_patch = vflip(cloud_patch)
             label_patch = vflip(label_patch)
         
-        return opt_patch, sar_patch, previous_patch, cloud_patch, label_patch
+        return opt_patch, sar_patch, previous_patch, label_patch
 
 class ValDataset(GenericTrainDataset):
     pass

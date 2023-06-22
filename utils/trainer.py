@@ -1,21 +1,71 @@
+from typing import Any
+from lightning.pytorch.utilities.types import STEP_OUTPUT
 from tqdm import tqdm
 import torch
 import os
 from torchmetrics.classification import MulticlassF1Score, MulticlassAccuracy
-from torch.nn.functional import one_hot
+#from torch.nn.functional import one_hot
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
-import time
-from pathlib import Path
 from einops import rearrange
-
+from mlflow import log_metric, log_param, log_params, log_artifacts
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
+import lightning as L
 
+class ModelTrainer(L.LightningModule):
+    def __init__(self, model, class_weights):
+        super().__init__()
+        self.model = model
+        self.class_weights = class_weights
 
-def train_loop(dataloader, model, loss_fn, optimizer, params):
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        def_target = y[0]
+        def_prev = self.model(x)
+        loss = torch.nn.functional.cross_entropy(def_prev, def_target, weight=self.class_weights, ignore_index = 2)
+        self.log("train_loss", loss, prog_bar=True, logger = True, on_step=True, on_epoch=True)
+        return loss
+    
+    def test_step(self, batch, batch_idx):
+        x, y = batch
+        def_target = y[0]
+        def_prev = self.model(x)
+        loss = torch.nn.functional.cross_entropy(def_prev, def_target, weight=self.class_weights, ignore_index = 2)
+        self.log("test_loss", loss, prog_bar=True)
+        return loss
+    
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        def_target = y[0]
+        def_prev = self.model(x)
+        loss = torch.nn.functional.cross_entropy(def_prev, def_target, weight=self.class_weights, ignore_index = 2)
+        self.log("val_loss", loss, prog_bar=True, logger = True, on_step=True, on_epoch=True)
+        return loss
+    
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-5)
+        return optimizer
+
+def train_model(model, training_params, early_stop, loss_fn, optimizer, train_dl, val_dl, lr_scheduler):
+    for epoch in range(training_params['max_epochs']):
+        print(f"-------------------------------\nEpoch {epoch}")
+        model.train()
+        loss, f1_0, f1_1 = train_loop(epoch, train_dl, model, loss_fn, optimizer, training_params)
+        model.eval()
+        val_loss, f1_0, f1_1 = val_loop(epoch, val_dl, model, loss_fn, training_params)
+
+        if early_stop.testEpoch(model = model, val_value = val_loss):
+            min_val = early_stop.better_value
+            break
+
+        lr_scheduler.step()
+
+    return epoch, min_val
+
+def train_loop(epoch, dataloader, model, loss_fn, optimizer, params):
     """Executes a train loop epoch
 
     Args:
@@ -31,26 +81,29 @@ def train_loop(dataloader, model, loss_fn, optimizer, params):
     pbar = tqdm(dataloader)
     metric = MulticlassF1Score(num_classes=params['n_classes'], average = None)
     
-    for X, y in pbar:
+    for X, y, cloud in pbar:
         optimizer.zero_grad()
         
         pred = model(X)
         loss = loss_fn(pred, y)
         steps += 1
         train_loss += loss.item()
-        metric.update(pred.to('cpu'), y.to('cpu'))
-        acc = metric.compute()
-        pbar.set_description(f'Train Loss: {train_loss/steps:.4f}, F1-Score Classes: 0:{acc[0].item():.4f}, 1:{acc[1].item():.4f}, 2:{acc[2].item():.4f}')
 
-        # Backpropagation
         loss.backward()
         optimizer.step()
 
-    loss = train_loss/steps
-    #print(f'Train Loss: {train_loss/steps:.4f}, Acc: 0:{acc[0].item():.4f}, 1:{acc[1].item():.4f}, 2:{acc[2].item():.4f}')
-    return loss, acc[0].item(), acc[1].item()
+        f1 = metric(pred.cpu(), y.cpu())
+        m_train_loss = train_loss/steps
+        pbar.set_description(f'Train Loss: {m_train_loss:.4f}, F1-Score Classes: 0:{f1[0].item():.4f}, 1:{f1[1].item():.4f}, 2:{f1[2].item():.4f}')
+        
 
-def val_loop(dataloader, model, loss_fn, params):
+    train_loss /= steps
+    f1 = metric.compute()
+    print(f'Train Loss: {train_loss/steps:.4f}, Acc: 0:{f1[0].item():.4f}, 1:{f1[1].item():.4f}, 2:{f1[2].item():.4f}')
+    metric.reset()
+    return train_loss, f1[0].item(), f1[1].item()
+
+def val_loop(epoch, dataloader, model, loss_fn, params):
     """Evaluates a validation loop epoch
 
     Args:
@@ -67,18 +120,19 @@ def val_loop(dataloader, model, loss_fn, params):
 
     with torch.no_grad():
         pbar = tqdm(dataloader)
-        for (X, y) in pbar:
+        for X, y, cloud in pbar:
             pred = model(X)
             loss = loss_fn(pred, y)
             steps += 1
             val_loss += loss.item()
-            metric.update(pred.to('cpu'), y.to('cpu'))
-            acc = metric.compute()
-            pbar.set_description(f'Validation Loss: {val_loss/steps:.4f}, F1-Score Classes: 0:{acc[0].item():.4f}, 1:{acc[1].item():.4f}, 2:{acc[2].item():.4f}')
+            f1 = metric(pred.cpu(), y.cpu())
+            m_val_loss = val_loss/steps
+            pbar.set_description(f'Validation Loss: {m_val_loss:.4f}, F1-Score Classes: 0:{f1[0].item():.4f}, 1:{f1[1].item():.4f}, 2:{f1[2].item():.4f}')
 
     val_loss /= steps
-    #print(f'Validation Loss: {val_loss/steps:.4f}, Acc: 0:{acc[0].item():.4f}, 1:{acc[1].item():.4f}, 2:{acc[2].item():.4f}')
-    return val_loss, acc[0].item(), acc[1].item()
+    f1 = metric.compute()
+    print(f'Validation Loss: {val_loss/steps:.4f}, F1-Score Classes: 0:{f1[0].item():.4f}, 1:{f1[1].item():.4f}, 2:{f1[2].item():.4f}')
+    return val_loss, f1[0].item(), f1[1].item()
 
 def sample_figures_loop(dataloader, model, n_batches, epoch, path_to_samples, model_idx):
 

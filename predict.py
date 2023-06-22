@@ -1,19 +1,18 @@
 import argparse
 from pathlib import Path
-import importlib
-#from conf import general, paths
-import os
 import time
 from utils.dataloader import PredDataset
 from torch.utils.data import DataLoader
 import torch
-from tqdm import tqdm, trange
+from tqdm import tqdm
 import numpy as np
-from utils.ops import save_geotiff, load_json, load_sb_image
+from utils.ops import save_geotiff, load_yaml
 import logging
 import yaml
 from multiprocessing import Process, freeze_support
 from pydoc import locate
+from neptune_key import api_token
+import neptune
 
 parser = argparse.ArgumentParser(
     description='Train NUMBER_MODELS models based in the same parameters'
@@ -58,6 +57,7 @@ experiment_params = cfg['experiments'][f'exp_{args.experiment}']
 label_params = cfg['label_params']
 previous_def_params = cfg['previous_def_params']
 original_data_params = cfg['original_data']
+neptune_params = cfg['neptune_params']
 
 experiments_paths = prediction_params['experiments_paths']
 prepared_folder = Path(preparation_params['folder'])
@@ -82,17 +82,30 @@ test_folder = prepared_folder / preparation_params['test_folder']
 prediction_prefix = experiment_params['prefixs']['prediction']
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+neptune_project_name = neptune_params['name']
+
+#runs_file = Path(experiments_paths['folder']) / 'runs.yaml'
+#runs_dict = load_yaml(runs_file)
     
 def run(model_idx):
 
-    outfile = logs_path / f'pred_{args.experiment}_{model_idx}.txt'
-    logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s:%(levelname)s:%(name)s:%(message)s',
-            filename=outfile,
-            filemode='w'
-            )
-    log = logging.getLogger('predict')
+    neptune_project = neptune.init_project(
+        project=neptune_project_name,
+        api_token=api_token
+        )
+    neptune_runs_df = neptune_project.fetch_runs_table().to_pandas()
+    neptune_run = neptune_runs_df.loc[
+        (neptune_runs_df['experiment_run/exp_n'] == args.experiment) & 
+        (neptune_runs_df['experiment_run/run_n'] == model_idx) &
+        (neptune_runs_df['experiment_run/converged'] == True)
+        ]
+    neptune_run = neptune.init_run(
+        project=neptune_project_name,
+        with_id=neptune_run['sys/id'],
+        api_token=api_token,
+    ) 
+
     print(f'\nPredicting Model {model_idx}...')
 
     model = locate(experiment_params['model'])(experiment_params)
@@ -105,11 +118,6 @@ def run(model_idx):
     one_window = np.ones((patch_size, patch_size, n_classes))
     total_time = 0
     n_processed_images = 0
-
-    #label = load_sb_image(Path(label_params['test_path'])).astype(np.uint8)
-    #original_shape = label.shape
-    #pad_shape = ((patch_size, patch_size),(patch_size, patch_size))
-    #padded_shape = np.pad(label, pad_shape, mode='reflect').shape
 
     pred_ds = PredDataset(patch_size, device, experiment_params, test_folder)
 
@@ -153,7 +161,7 @@ def run(model_idx):
             p_time = (time.perf_counter() - t0)/60
             total_time += p_time
             n_processed_images += 1
-            log.info(f'Prediction time: {p_time} mins')
+            neptune_run['experiment_run/prediction_runtime'].append(p_time)
             pred_global = pred_global_sum / len(overlaps)
 
             pred_global_file = predicted_path / f'{prediction_prefix}_prob_{opt_group_i}_{sar_group_i}_{model_idx}.npy'
@@ -166,7 +174,10 @@ def run(model_idx):
             prediction_tif_file = visual_path / f'{prediction_prefix}_{args.experiment}_{opt_group_i}_{sar_group_i}_{model_idx}.tif'
             save_geotiff(base_data, prediction_tif_file, pred_b2, dtype = 'byte')
     m_time = total_time / n_processed_images
-    log.info(f'Mean Prediction time: {m_time} mins')
+    neptune_run['experiment_run/mean_prediction_time'] = m_time
+    neptune_run['experiment_run/total_prediction_time'] = total_time
+
+    neptune_run.stop()
 
 if __name__=="__main__":
     freeze_support()

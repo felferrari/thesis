@@ -8,7 +8,6 @@ from skimage.util import view_as_windows
 from tqdm import tqdm
 import pandas as pd
 from shutil import rmtree
-import h5py
 
 parser = argparse.ArgumentParser(
     description='Prepare the original files, generating .npy files to be used in the training/testing steps'
@@ -117,8 +116,6 @@ idx_patches = view_as_windows(idx, window_shape, slide_step).reshape((-1, patch_
 
 np.random.seed(123)
 
-cloud_prefix = preparation_params['prefixs']['cloud']
-
 
 if args.statistics:
 
@@ -225,7 +222,6 @@ if args.train_data:
 
     opt_imgs = []
     sar_imgs = []
-    cloud_imgs = []
     for opt_img_i, opt_img_file in enumerate(tqdm(original_data_params['opt']['imgs']['train'], desc = 'Reading OPT Training files')):
         data_file = opt_path / opt_img_file
         data = load_opt_image(data_file)
@@ -233,13 +229,6 @@ if args.train_data:
         #data = (data - opt_means) / opt_stds
         data = data / 10000
         opt_imgs.append(data.astype(np.float16).reshape((-1, opt_bands)))
-
-    for opt_img_i, opt_img_file in enumerate(tqdm(original_data_params['opt']['imgs']['train'], desc = 'Reading Cloud Training files')):
-        data_file = opt_path / f'{cloud_prefix}_{opt_img_file}'
-        data = load_opt_image(data_file)
-        data = remove_outliers(data)
-        cloud_imgs.append(data.astype(np.float16).reshape((-1, 1)))
-
     for sar_img_i, sar_img_file in enumerate(tqdm(original_data_params['sar']['imgs']['train'], desc = 'Reading SAR Training files')):
         data_file = sar_path / sar_img_file
         data = load_SAR_image(data_file)
@@ -251,69 +240,44 @@ if args.train_data:
     del data
     
     for patch_i, idx_patch in enumerate(tqdm(train_idx_patches, desc='Training Patches')):
-        opt_patchs = []
-        cloud_patchs = []
-        sar_patchs = []
         for opt_img_i, opt_img in enumerate(opt_imgs):
             data_i = opt_img[idx_patch]
-            opt_patchs.append(data_i)
-        for cloud_img_i, cloud_img in enumerate(cloud_imgs):
-            data_i = cloud_img[idx_patch]
-            cloud_patchs.append(data_i)
+            data_patch_file = train_folder / f'{opt_prefix}_{patch_i:d}-{opt_img_i}.npy'
+            np.save(data_patch_file, data_i)
         for sar_img_i, sar_img in enumerate(sar_imgs):
             data_i = sar_img[idx_patch]
-            sar_patchs.append(data_i)
-
-        opt_patchs = np.array(opt_patchs)
-        cloud_patchs = np.array(cloud_patchs)
-        sar_patchs = np.array(sar_patchs)
+            data_patch_file = train_folder / f'{sar_prefix}_{patch_i:d}-{sar_img_i}.npy'
+            np.save(data_patch_file, data_i)
 
         label_patch = train_label[idx_patch]
-        
-        #np.save(label_patch_file, label_patch)
+        label_patch_file = train_folder / f'{label_prefix}_{patch_i:d}.npy'
+        np.save(label_patch_file, label_patch)
 
         previous_patch = previous_map[idx_patch]
-        patch_file = train_folder / f'{patch_i:d}.h5'
-
-        with h5py.File(patch_file, "w") as f:
-            f.create_dataset('opt', data=opt_patchs, compression='lzf', chunks=(1, 224, 224, 1))
-            f.create_dataset('cloud', data=cloud_patchs, compression='lzf', chunks=(1, 224, 224, 1))
-            f.create_dataset('sar', data=sar_patchs, compression='lzf', chunks=(1, 224, 224, 1))
-            f.create_dataset('previous', data=previous_patch, compression='lzf', chunks=(224, 224, 1))
-            f.create_dataset('label', data=label_patch, compression='lzf', chunks=(224, 224))
+        previous_patch_file = train_folder / f'{previous_prefix}_{patch_i:d}.npy'
+        np.save(previous_patch_file, previous_patch)
         
         #train_dataset['patch_idx'].append(patch_i)
 
     for patch_i, idx_patch in enumerate(tqdm(val_idx_patches, desc='Validation Patches')):
-        opt_patchs = []
-        cloud_patchs = []
-        sar_patchs = []
         for opt_img_i, opt_img in enumerate(opt_imgs):
             data_i = opt_img[idx_patch]
-            opt_patchs.append(data_i)
-        for cloud_img_i, cloud_img in enumerate(cloud_imgs):
-            data_i = cloud_img[idx_patch]
-            cloud_patchs.append(data_i)
+            data_patch_file = validation_folder / f'{opt_prefix}_{patch_i:d}-{opt_img_i}.npy'
+            np.save(data_patch_file, data_i)
         for sar_img_i, sar_img in enumerate(sar_imgs):
             data_i = sar_img[idx_patch]
-            sar_patchs.append(data_i)
-
-        opt_patchs = np.array(opt_patchs)
-        cloud_patchs = np.array(cloud_patchs)
-        sar_patchs = np.array(sar_patchs)
+            data_patch_file = validation_folder / f'{sar_prefix}_{patch_i:d}-{sar_img_i}.npy'
+            np.save(data_patch_file, data_i)
 
         label_patch = train_label[idx_patch]
-        
-        #np.save(label_patch_file, label_patch)
+        label_patch_file = validation_folder / f'{label_prefix}_{patch_i:d}.npy'
+        np.save(label_patch_file, label_patch)
 
         previous_patch = previous_map[idx_patch]
-        patch_file = validation_folder / f'{patch_i:d}.h5'
-        with h5py.File(patch_file, "w") as f:
-            f.create_dataset('opt', data=opt_patchs, compression='lzf', chunks=(1, 224, 224, 1))
-            f.create_dataset('cloud', data=cloud_patchs, compression='lzf', chunks=(1, 224, 224, 1))
-            f.create_dataset('sar', data=sar_patchs, compression='lzf', chunks=(1, 224, 224, 1))
-            f.create_dataset('previous', data=previous_patch, compression='lzf', chunks=(224, 224, 1))
-            f.create_dataset('label', data=label_patch, compression='lzf', chunks=(224, 224))
+        previous_patch_file = validation_folder / f'{previous_prefix}_{patch_i:d}.npy'
+        np.save(previous_patch_file, previous_patch)
+        
+        #val_dataset['patch_idx'].append(patch_i)
         
     del train_label
     data = None
@@ -337,24 +301,20 @@ if args.test_data:
         data = remove_outliers(data)
         #data = (data - opt_means) / opt_stds
         data = data / 10000
-        data_patch_file = test_folder / f'{opt_prefix}_{opt_img_i}.h5'
-        with h5py.File(data_patch_file, "w") as f:
-            f.create_dataset('opt', data=data.astype(np.float16), compression='lzf')
+        data_patch_file = test_folder / f'{opt_prefix}_{opt_img_i}.npy'
+        np.save(data_patch_file, data.astype(np.float16))
     for sar_img_i, sar_img_file in enumerate(tqdm(original_data_params['sar']['imgs']['test'], desc = 'Converting SAR Testing files')):
         data_file = sar_path / sar_img_file
         data = load_SAR_image(data_file)
         data = remove_outliers(data)
         #data = (data - sar_means) / sar_stds
         data_patch_file = test_folder / f'{sar_prefix}_{sar_img_i}.npy'
-        with h5py.File(data_patch_file, "w") as f:
-            f.create_dataset('sar', data=data.astype(np.float16), compression='lzf')
+        np.save(data_patch_file, data.astype(np.float16))
 
     previous_map = load_sb_image(Path(previous_def_params['test_path'])).astype(np.float16)
-    data_patch_file = test_folder / f'{previous_prefix}.h5'
-    with h5py.File(data_patch_file, "w") as f:
-        f.create_dataset('previous', data=previous_map.astype(np.float16), compression='lzf')
+    data_patch_file = test_folder / f'{previous_prefix}.npy'
+    np.save(data_patch_file, previous_map.astype(np.float16))
 
     test_label = load_sb_image(Path(label_params['test_path'])).astype(np.uint8)
-    data_patch_file = test_folder / f'{label_prefix}.h5'
-    with h5py.File(data_patch_file, "w") as f:
-        f.create_dataset('label', data=test_label, compression='lzf')
+    data_patch_file = test_folder / f'{label_prefix}.npy'
+    np.save(data_patch_file, test_label)

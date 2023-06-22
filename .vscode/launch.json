@@ -12,6 +12,8 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             //"args": ["--statistics"]
+            //"args": ["--train-data"],
+            "args": ["-e", "1"]
         }
     ]
 }

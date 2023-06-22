@@ -41,8 +41,8 @@ class ResUnetOpt(GenericResunet):
         self.prepare_model(self.opt_input)
 
     def prepare_input(self, x):
-        x_img = torch.cat(x[0], dim=1)
-        #x_img = rearrange(x[0], 'b i c h w -> b (i c) h w')
+        #x_img = torch.cat(x[0], dim=1)
+        x_img = rearrange(x[0], 'b i c h w -> b (i c) h w')
         x = torch.cat((x_img, x[2]), dim=1)
         return x
     
@@ -53,8 +53,8 @@ class ResUnetSAR(GenericResunet):
         self.prepare_model(self.sar_input)
 
     def prepare_input(self, x):
-        x_img = torch.cat(x[1], dim=1)
-        #x_img = rearrange(x[1], 'b i c h w -> b (i c) h w')
+        #x_img = torch.cat(x[1], dim=1)
+        x_img = rearrange(x[1], 'b i c h w -> b (i c) h w')
         x = torch.cat((x_img, x[2]), dim=1)
         return x
     

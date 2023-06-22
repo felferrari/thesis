@@ -202,6 +202,6 @@ def count_parameters(model):
         total_params+=params
         text += f'{name}: {params:,}\n'
     text+=f'Total: {total_params:,}\n'
-    return text
+    return total_params
 
 
