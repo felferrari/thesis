@@ -3,18 +3,24 @@ from torch import nn
 import torch
 from abc import abstractmethod
 from einops import rearrange
+from ..utils import ModelModule
 
-
-class GenericModel(nn.Module):
-    def __init__(self, params) -> None:
-        super(GenericModel, self).__init__()
+class GenericModel(ModelModule):
+    def __init__(self, params, training_params) -> None:
+        super(GenericModel, self).__init__(training_params)
         self.opt_input = len(params['train_opt_imgs'][0]) * params['opt_bands'] + 1
         self.sar_input = len(params['train_sar_imgs'][0]) * params['sar_bands'] + 1
 
-        self.opt_imgs = len(params['train_opt_imgs'][0])
-        self.sar_imgs = len(params['train_sar_imgs'][0])
+        #self.opt_imgs = len(params['train_opt_imgs'][0])
+        #self.sar_imgs = len(params['train_sar_imgs'][0])
         self.n_classes = params['n_classes']
         self.depths = params['resunet_depths']
+
+    def get_opt(self, x):
+        return rearrange(x[0], 'b i c h w -> b (i c) h w')
+    
+    def get_sar(self, x):
+        return rearrange(x[1], 'b i c h w -> b (i c) h w')
 
 
 class GenericResunet(GenericModel):
@@ -36,43 +42,43 @@ class GenericResunet(GenericModel):
 
 
 class ResUnetOpt(GenericResunet):
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
         self.prepare_model(self.opt_input)
 
     def prepare_input(self, x):
         #x_img = torch.cat(x[0], dim=1)
-        x_img = rearrange(x[0], 'b i c h w -> b (i c) h w')
+        x_img = self.get_opt(x)
         x = torch.cat((x_img, x[2]), dim=1)
         return x
     
    
 class ResUnetSAR(GenericResunet):
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
         self.prepare_model(self.sar_input)
 
     def prepare_input(self, x):
         #x_img = torch.cat(x[1], dim=1)
-        x_img = rearrange(x[1], 'b i c h w -> b (i c) h w')
+        x_img = self.get_sar(x)
         x = torch.cat((x_img, x[2]), dim=1)
         return x
     
 class ResUnetEF(GenericResunet):    
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
         self.prepare_model(self.opt_input + self.sar_input - 1)
 
     def prepare_input(self, x):
-        x_img_0 = torch.cat(x[0], dim=1)
-        x_img_1 = torch.cat(x[1], dim=1)
+        x_img_0 = self.get_opt(x)
+        x_img_1 = self.get_sar(x)
         x = torch.cat((x_img_0, x_img_1, x[2]), dim=1)
         return x
     
 
 class ResUnetJF(GenericModel):
-    def __init__(self, params):
-        super(ResUnetJF, self).__init__(params)
+    def __init__(self, *args, **kargs):
+        super(ResUnetJF, self).__init__(*args, **kargs)
         self.encoder_0 = ResUnetEncoder(self.opt_input, self.depths)
         self.encoder_1 = ResUnetEncoder(self.sar_input, self.depths)
         self.decoder = ResUnetDecoderJF(self.depths)
@@ -80,10 +86,10 @@ class ResUnetJF(GenericModel):
 
 
     def forward(self, x):
-        x_img_0 = torch.cat(x[0], dim=1)
+        x_img_0 = self.get_opt(x)
         x_0 = torch.cat((x_img_0, x[2]), dim=1)
 
-        x_img_1 = torch.cat(x[1], dim=1)
+        x_img_1 = self.get_sar(x)
         x_1 = torch.cat((x_img_1, x[2]), dim=1)
 
         x_0 = self.encoder_0(x_0)
@@ -99,8 +105,8 @@ class ResUnetJF(GenericModel):
         return x
     
 class ResUnetJFNoSkip(GenericModel):
-    def __init__(self, params):
-        super(ResUnetJFNoSkip, self).__init__(params)
+    def __init__(self, *args, **kargs):
+        super(ResUnetJFNoSkip, self).__init__(*args, **kargs)
 
         self.encoder_0 = ResUnetEncoder(self.opt_input, self.depths)
         self.encoder_1 = ResUnetEncoder(self.sar_input, self.depths)
@@ -109,10 +115,10 @@ class ResUnetJFNoSkip(GenericModel):
 
 
     def forward(self, x):
-        x_img_0 = torch.cat(x[0], dim=1)
+        x_img_0 = self.get_opt(x)
         x_0 = torch.cat((x_img_0, x[2]), dim=1)
 
-        x_img_1 = torch.cat(x[1], dim=1)
+        x_img_1 = self.get_sar(x)
         x_1 = torch.cat((x_img_1, x[2]), dim=1)
 
         x_0 = self.encoder_0(x_0)
@@ -125,8 +131,8 @@ class ResUnetJFNoSkip(GenericModel):
         return x
     
 class ResUnetLF(GenericModel):
-    def __init__(self, params):
-        super(ResUnetLF, self).__init__(params)
+    def __init__(self, *args, **kargs):
+        super(ResUnetLF, self).__init__(*args, **kargs)
 
         self.encoder_0 = ResUnetEncoder(self.opt_input, self.depths)
         self.encoder_1 = ResUnetEncoder(self.sar_input, self.depths)
@@ -135,10 +141,10 @@ class ResUnetLF(GenericModel):
         self.classifier = ResUnetClassifier(2*self.depths[0], self.n_classes)
 
     def forward(self, x):
-        x_img_0 = torch.cat(x[0], dim=1)
+        x_img_0 = self.get_opt(x)
         x_0 = torch.cat((x_img_0, x[2]), dim=1)
 
-        x_img_1 = torch.cat(x[1], dim=1)
+        x_img_1 = self.get_sar(x)
         x_1 = torch.cat((x_img_1, x[2]), dim=1)
 
         x_0 = self.encoder_0(x_0)
@@ -151,5 +157,5 @@ class ResUnetLF(GenericModel):
 
         x = self.classifier(x)
 
-        return x    
+        return x
 

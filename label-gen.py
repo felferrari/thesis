@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 from osgeo import ogr, gdal, gdalconst
-from skimage.morphology import disk, dilation, erosion
+from skimage.morphology import disk, dilation, erosion, area_opening
 import numpy as np
 import yaml
 
@@ -130,7 +130,13 @@ def_inner_buffer = label_params['def_inner_buffer']
 def_outer_buffer = label_params['def_outer_buffer']
 border_data = dilation(defor_data, disk(def_inner_buffer)) - erosion(defor_data, disk(def_outer_buffer))
 
+del defor_data
+
 rasterized_data[border_data==1] = 2
+
+defor_label = (rasterized_data==1).astype(np.uint8)
+defor_remove = defor_label - area_opening(defor_label, 625)
+rasterized_data[defor_remove == 1] = 2
 
 target_test.GetRasterBand(1).WriteArray(rasterized_data)
 target_test = None

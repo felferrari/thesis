@@ -160,8 +160,10 @@ cython_debug/
 #.idea/
 
 prepared
-neptune_key.py
+keys.py
 mlruns
+ml-runs
 lightning_logs
 .neptune
 .vscode
+.cometml-runs

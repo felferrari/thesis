@@ -8,7 +8,6 @@ from torchmetrics.classification import MulticlassF1Score, MulticlassAccuracy
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from einops import rearrange
-from mlflow import log_metric, log_param, log_params, log_artifacts
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
@@ -18,8 +17,13 @@ import lightning as L
 class ModelTrainer(L.LightningModule):
     def __init__(self, model, class_weights):
         super().__init__()
+        self.save_hyperparameters()
         self.model = model
         self.class_weights = class_weights
+
+    def to(self, *args, **kargs):
+        super().to(*args, **kargs)
+        self.class_weights = self.class_weights.to(*args, **kargs)
 
     def training_step(self, batch, batch_idx):
         x, y = batch

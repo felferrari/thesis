@@ -1,18 +1,16 @@
 import argparse
 from pathlib import Path
 import time
-from utils.dataloader import PredDataset
+from utils.datasets import PredDataset, ImageWriter
 from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
 import numpy as np
 from utils.ops import save_geotiff, load_yaml
-import logging
 import yaml
 from multiprocessing import Process, freeze_support
 from pydoc import locate
-from neptune_key import api_token
-import neptune
+import lightning.pytorch as pl
 
 parser = argparse.ArgumentParser(
     description='Train NUMBER_MODELS models based in the same parameters'
@@ -28,7 +26,7 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 12,
+    default = 1,
     help = 'The number of the experiment'
 )
 
@@ -57,7 +55,8 @@ experiment_params = cfg['experiments'][f'exp_{args.experiment}']
 label_params = cfg['label_params']
 previous_def_params = cfg['previous_def_params']
 original_data_params = cfg['original_data']
-neptune_params = cfg['neptune_params']
+training_params = cfg['training_params']
+
 
 experiments_paths = prediction_params['experiments_paths']
 prepared_folder = Path(preparation_params['folder'])
@@ -77,107 +76,69 @@ n_models = prediction_params['n_models']
 batch_size = prediction_params['batch_size']
 overlaps = prediction_params['prediction_overlaps']
 
+
 prepared_folder = Path(preparation_params['folder'])
 test_folder = prepared_folder / preparation_params['test_folder']
 prediction_prefix = experiment_params['prefixs']['prediction']
+opt_prefix = preparation_params['prefixs']['opt']
+sar_prefix = preparation_params['prefixs']['sar']
+label_prefix = preparation_params['prefixs']['label']
+previous_prefix = preparation_params['prefixs']['previous']
+
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-neptune_project_name = neptune_params['name']
-
-#runs_file = Path(experiments_paths['folder']) / 'runs.yaml'
-#runs_dict = load_yaml(runs_file)
-    
 def run(model_idx):
-
-    neptune_project = neptune.init_project(
-        project=neptune_project_name,
-        api_token=api_token
-        )
-    neptune_runs_df = neptune_project.fetch_runs_table().to_pandas()
-    neptune_run = neptune_runs_df.loc[
-        (neptune_runs_df['experiment_run/exp_n'] == args.experiment) & 
-        (neptune_runs_df['experiment_run/run_n'] == model_idx) &
-        (neptune_runs_df['experiment_run/converged'] == True)
-        ]
-    neptune_run = neptune.init_run(
-        project=neptune_project_name,
-        with_id=neptune_run['sys/id'],
-        api_token=api_token,
-    ) 
 
     print(f'\nPredicting Model {model_idx}...')
 
-    model = locate(experiment_params['model'])(experiment_params)
-    model.to(device)
+    run_results = load_yaml(logs_path / f'model_{model_idx}' / 'train_results.yaml')
+    model_class = locate(experiment_params['model'])#(experiment_params, training_params)
+    model = model_class.load_from_checkpoint(run_results['model_path'])
 
-    model_file = models_path / f'model_{model_idx}.pth'
-    model.load_state_dict(torch.load(model_file))
-    model.eval()
+    images_combinations = []
+    for opt_group in experiment_params['test_opt_imgs']:
+        for sar_group in experiment_params['test_sar_imgs']:
+            images_combinations.append([opt_group, sar_group])
 
-    one_window = np.ones((patch_size, patch_size, n_classes))
-    total_time = 0
-    n_processed_images = 0
+    prev_img_file = test_folder / f'{previous_prefix}.h5'
+    #label_img_file = test_folder / f'{label_prefix}.h5'
+    for img_group in images_combinations:
+        opt_img_idxs, sar_img_idxs =  img_group
+        opt_img_files = [test_folder / f'{opt_prefix}_{img_idx}.h5' for img_idx in opt_img_idxs]
+        sar_img_files = [test_folder / f'{sar_prefix}_{img_idx}.h5' for img_idx in sar_img_idxs]
 
-    pred_ds = PredDataset(patch_size, device, experiment_params, test_folder)
+        pred_ds = PredDataset(
+            opt_img_files,
+            sar_img_files,
+            prev_img_file,
+            patch_size)
+        
+        pred_dl = DataLoader(
+            dataset=pred_ds,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=5
+        )
 
-    for opt_group_i, opt_group in enumerate(tqdm(experiment_params['test_opt_imgs'], leave = False, desc = 'OPT group')):
-        pred_ds.load_opt_data(opt_group)
-        for sar_group_i, sar_group in enumerate(tqdm(experiment_params['test_sar_imgs'], leave = False, desc = 'SAR group')):
-            pred_ds.load_sar_data(sar_group)
+        img_writer_callback = ImageWriter(
+            pred_ds.get_original_size(),
+            patch_size,
+            n_classes
+        )
 
-            pred_global_sum = np.zeros(pred_ds.original_shape+(n_classes,))
-            t0 = time.perf_counter()
+        trainer = pl.Trainer(
+            accelerator  = 'gpu',
+            callbacks = [img_writer_callback], 
+            )
+        
+        trainer.predict(
+            model = model,
+            dataloaders = pred_dl
+        )
 
-            for overlap in tqdm(overlaps, leave=False, desc='Overlap'):
-                pred_ds.generate_overlap_patches(overlap)
-                pred_ds[0]
-                #dataloader = DataLoader(pred_ds, batch_size=batch_size, num_workers=3, shuffle=False)
-                dataloader = DataLoader(pred_ds, batch_size=batch_size, shuffle=False)
                 
-                pbar = tqdm(dataloader, desc='Prediction', leave = False)
-                #preds = None
-                preds = torch.zeros((len(pred_ds), n_classes, patch_size, patch_size))
-                for i, X in enumerate(pbar):
-                    with torch.no_grad():
-                        preds[batch_size*i: batch_size*(i+1)] =  model(X[0]).to('cpu')
-                preds = np.moveaxis(preds.numpy().astype(np.float16), 1, -1)
-                pred_sum = np.zeros(pred_ds.padded_shape+(n_classes,)).reshape((-1, n_classes))
-                pred_count = np.zeros(pred_ds.padded_shape+(n_classes,)).reshape((-1, n_classes))
-                for idx, idx_patch in enumerate(tqdm(pred_ds.idx_patches, desc = 'Rebuild', leave = False)):
-                    crop_val = prediction_remove_border
-                    idx_patch_crop = idx_patch[crop_val:-crop_val, crop_val:-crop_val]
-                    pred_sum[idx_patch_crop] += preds[idx][crop_val:-crop_val, crop_val:-crop_val]
-                    pred_count[idx_patch_crop] += one_window[crop_val:-crop_val, crop_val:-crop_val]
-
-                pred_sum = pred_sum.reshape(pred_ds.padded_shape+(n_classes,))
-                pred_count = pred_count.reshape(pred_ds.padded_shape+(n_classes,))
-
-                pred_sum = pred_sum[patch_size:-patch_size, patch_size:-patch_size,:]
-                pred_count = pred_count[patch_size:-patch_size, patch_size:-patch_size,:]
-
-                pred_global_sum += pred_sum / pred_count
-
-            p_time = (time.perf_counter() - t0)/60
-            total_time += p_time
-            n_processed_images += 1
-            neptune_run['experiment_run/prediction_runtime'].append(p_time)
-            pred_global = pred_global_sum / len(overlaps)
-
-            pred_global_file = predicted_path / f'{prediction_prefix}_prob_{opt_group_i}_{sar_group_i}_{model_idx}.npy'
-            np.save(pred_global_file, pred_global[:,:,1].astype(np.float16))
-
-            pred_b2 = (pred_global[:,:,1] > 0.5).astype(np.uint8)
-            pred_b2[pred_ds.original_label == 2] = 2
-
-            base_data = Path(original_data_params['opt']['folder']) / original_data_params['opt']['imgs']['test'][0]
-            prediction_tif_file = visual_path / f'{prediction_prefix}_{args.experiment}_{opt_group_i}_{sar_group_i}_{model_idx}.tif'
-            save_geotiff(base_data, prediction_tif_file, pred_b2, dtype = 'byte')
-    m_time = total_time / n_processed_images
-    neptune_run['experiment_run/mean_prediction_time'] = m_time
-    neptune_run['experiment_run/total_prediction_time'] = total_time
-
-    neptune_run.stop()
 
 if __name__=="__main__":
     freeze_support()

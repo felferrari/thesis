@@ -6,11 +6,11 @@ import torch
 import random
 from utils.ops import load_sb_image, load_opt_image, load_SAR_image
 from skimage.util import view_as_windows
-
+import h5py
 
 class GenericTrainDataset(Dataset):
-    def __init__(self, device, params, data_folder, n_patches):
-        self.device = device
+    def __init__(self, params, data_folder, n_patches):
+        #self.device = device
         self.params = params
         self.n_patches = n_patches
         self.data_folder = data_folder
@@ -38,51 +38,47 @@ class GenericTrainDataset(Dataset):
         opt_images_idx = self.opt_imgs[opt_group_index]
         sar_images_idx = self.sar_imgs[sar_group_index]
 
-        opt_patch = [
-            torch.from_numpy(np.load(self.data_folder / f'{self.params["prefixs"]["opt"]}_{patch_index:d}-{opt_idx}.npy').astype(np.float32)).moveaxis(2, 0).to(self.device)
-            for opt_idx in opt_images_idx
-            ]
-        
-        sar_patch = [
-            torch.from_numpy(np.load(self.data_folder / f'{self.params["prefixs"]["sar"]}_{patch_index:d}-{sar_idx}.npy').astype(np.float32)).moveaxis(2, 0).to(self.device)
-            for sar_idx in sar_images_idx
-            ]
+        data = h5py.File(self.data_folder / f'{patch_index:d}.h5', 'r', rdcc_nbytes = 10*(1024**2))
 
-        previous_patch = np.load(self.data_folder / f'{self.params["prefixs"]["previous"]}_{patch_index:d}.npy').astype(np.float32)
-        previous_patch = torch.from_numpy(previous_patch).moveaxis(2, 0).to(self.device)
+        opt_patch = torch.from_numpy(data['opt'][()][opt_images_idx].astype(np.float32)).moveaxis(-1, -3)#.to(self.device)
+        sar_patch = torch.from_numpy(data['sar'][()][sar_images_idx].astype(np.float32)).moveaxis(-1, -3)#.to(self.device)
+        previous_patch = torch.from_numpy(data['previous'][()].astype(np.float32)).moveaxis(-1, -3)#.to(self.device)
+        cloud_patch = torch.from_numpy(data['cloud'][()][opt_images_idx].astype(np.float32)).moveaxis(-1, -3)#.to(self.device)
+        label_patch = torch.from_numpy(data['label'][()].astype(np.int64))#.to(self.device)
 
-        label_patch = np.load(self.data_folder / f'{self.params["prefixs"]["label"]}_{patch_index:d}.npy').astype(np.int64)
-        label_patch = torch.from_numpy(label_patch).to(self.device)
 
-        opt_patch, sar_patch, previous_patch, label_patch = self.augment_data(opt_patch, sar_patch, previous_patch, label_patch)
+        opt_patch, sar_patch, previous_patch, cloud_patch, label_patch = self.augment_data(opt_patch, sar_patch, previous_patch, cloud_patch, label_patch)
 
         return [
             opt_patch,
             sar_patch,
             previous_patch,
-        ], label_patch
+        ], (label_patch, cloud_patch)
 
 class TrainDataset(GenericTrainDataset):
-    def augment_data(self, opt_patch, sar_patch, previous_patch, label_patch):
+    def augment_data(self, opt_patch, sar_patch, previous_patch, cloud_patch, label_patch):
         k = random.randint(0, 3)
-        opt_patch = [torch.rot90(p, k=k, dims=[1, 2]) for p in opt_patch]
-        sar_patch = [torch.rot90(p, k=k, dims=[1, 2]) for p in sar_patch]
-        previous_patch = torch.rot90(previous_patch, k=k, dims=[1, 2])
-        label_patch = torch.rot90(label_patch, k=k, dims=[0, 1])
+        opt_patch = torch.rot90(opt_patch, k=k, dims=[-2, -1])
+        sar_patch = torch.rot90(sar_patch, k=k, dims=[-2, -1])
+        previous_patch = torch.rot90(previous_patch, k=k, dims=[-2, -1])
+        cloud_patch = torch.rot90(cloud_patch, k=k, dims=[-2, -1])
+        label_patch = torch.rot90(label_patch, k=k, dims=[-2, -1])
 
         if bool(random.getrandbits(1)):
-            opt_patch = [hflip(p) for p in opt_patch]
-            sar_patch = [hflip(p) for p in sar_patch]
+            opt_patch = hflip(opt_patch)
+            sar_patch = hflip(sar_patch)
             previous_patch = hflip(previous_patch)
+            cloud_patch = hflip(cloud_patch)
             label_patch = hflip(label_patch)
 
         if bool(random.getrandbits(1)):
-            opt_patch = [vflip(p) for p in opt_patch]
-            sar_patch = [vflip(p) for p in sar_patch]
+            opt_patch = vflip(opt_patch)
+            sar_patch = vflip(sar_patch)
             previous_patch = vflip(previous_patch)
+            cloud_patch = vflip(cloud_patch)
             label_patch = vflip(label_patch)
         
-        return opt_patch, sar_patch, previous_patch, label_patch
+        return opt_patch, sar_patch, previous_patch, cloud_patch, label_patch
 
 class ValDataset(GenericTrainDataset):
     pass
@@ -96,9 +92,11 @@ class PredDataset(Dataset):
         self.params = params
         self.data_folder = data_folder
 
-        previous = np.load(self.data_folder / f'{self.params["prefixs"]["previous"]}.npy').astype(np.float16)
+        #previous = np.load(self.data_folder / f'{self.params["prefixs"]["previous"]}.npy').astype(np.float16)
+        previous = h5py.File(self.data_folder / f'{self.params["prefixs"]["previous"]}.h5')['previous'][()]
 
-        label = np.load(self.data_folder / f'{self.params["prefixs"]["label"]}.npy').astype(np.uint8)
+        #label = np.load(self.data_folder / f'{self.params["prefixs"]["label"]}.npy').astype(np.uint8)
+        label = h5py.File(self.data_folder / f'{self.params["prefixs"]["label"]}.h5')['label'][()].astype(np.uint8)
         self.original_label = label
 
         self.original_shape = label.shape
@@ -117,7 +115,7 @@ class PredDataset(Dataset):
         pad_shape = ((self.patch_size, self.patch_size),(self.patch_size, self.patch_size), (0, 0))
 
         self.opt_data = [
-            np.pad(np.load(self.data_folder / f'{self.params["prefixs"]["opt"]}_{opt_idx}.npy').astype(np.float16), pad_shape, mode='reflect').reshape((-1, self.params['opt_bands']))
+            np.pad(h5py.File(self.data_folder / f'{self.params["prefixs"]["opt"]}_{opt_idx}.h5')['opt'][()].astype(np.float16), pad_shape, mode='reflect').reshape((-1, self.params['opt_bands']))
             for opt_idx in opt_images_idx
             ]
 
@@ -125,7 +123,7 @@ class PredDataset(Dataset):
     def load_sar_data(self, sar_images_idx):
         pad_shape = ((self.patch_size, self.patch_size),(self.patch_size, self.patch_size), (0, 0))
         self.sar_data = [
-            np.pad(np.load(self.data_folder / f'{self.params["prefixs"]["sar"]}_{sar_idx}.npy').astype(np.float16), pad_shape, mode='reflect').reshape((-1, self.params['sar_bands']))
+            np.pad(h5py.File(self.data_folder / f'{self.params["prefixs"]["sar"]}_{sar_idx}.h5')['sar'][()].astype(np.float16), pad_shape, mode='reflect').reshape((-1, self.params['sar_bands']))
             for sar_idx in sar_images_idx
             ]
 
@@ -141,22 +139,23 @@ class PredDataset(Dataset):
     def __getitem__(self, index):
         patch_idx = self.idx_patches[index]
 
-        opt_patch = [ 
+        opt_patch = torch.stack([ 
             torch.from_numpy(np.moveaxis(p[patch_idx], 2, 0).astype(np.float32)).to(self.device)
             for p in self.opt_data 
-            ]
-        sar_patch = [ 
+            ])
+        
+        sar_patch = torch.stack([ 
             torch.from_numpy(np.moveaxis(p[patch_idx], 2, 0).astype(np.float32)).to(self.device)
             for p in self.sar_data 
-            ]
+            ])
         previous_patch = np.expand_dims(self.previous[patch_idx], axis=0)
         label_patch = self.label[patch_idx]
 
-        return (
+        return [
             opt_patch,
             sar_patch,
             torch.from_numpy(previous_patch.astype(np.float32)).to(self.device)
-        ), torch.from_numpy(label_patch.astype(np.int64)).to(self.device)
+        ], torch.from_numpy(label_patch.astype(np.int64)).to(self.device)
         
 
 

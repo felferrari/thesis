@@ -17,9 +17,9 @@ from pydoc import locate
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.callbacks import ModelCheckpoint
+import comet_ml
+from pytorch_lightning.loggers import CometLogger
 from lightning.pytorch.core import LightningDataModule
-from lightning.pytorch.loggers.csv_logs import CSVLogger
-from lightning.pytorch.loggers.tensorboard import TensorBoardLogger
 
 parser = argparse.ArgumentParser(
     description='Train NUMBER_MODELS models based in the same parameters'
@@ -35,7 +35,7 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 1,
+    default = 3,
     help = 'The number of the experiment'
 )
 
@@ -64,6 +64,7 @@ training_params = cfg['training_params']
 preparation_params = cfg['preparation_params']
 experiment_params = cfg['experiments'][f'exp_{args.experiment}']
 original_data_params = cfg['original_data']
+comet_params = cfg['comet_params']
 
 experiments_paths = training_params['experiments_paths']
 
@@ -98,50 +99,40 @@ patch_size = training_params['patch_size']
 batch_size = training_params['batch_size']
 min_val_loss = training_params['min_val_loss']
 
+workspace_name = comet_params['workspace_name']
+project_name = comet_params['project_name']
+
 def run(model_idx):
     last_val_loss = float('inf')
     
     while True:
 
         model = locate(experiment_params['model'])(experiment_params, training_params)
-
-        csv_logger = CSVLogger(
-            save_dir = logs_path,
-            name = f'model_{model_idx}',
-            version = ''
-        )
-
-        tb_logger = TensorBoardLogger(
-            save_dir = logs_path,
-            name = f'tb_model_{model_idx}',
-            version = ''
-        )
+        comet_api = locate('keys.comet_ml')
 
         train_ds = TrainDataset(experiment_params, train_folder, prepared_patches['train'])
         val_ds = ValDataset(experiment_params, val_folder, prepared_patches['val'])
         
-        #data_module = LightningDataModule.from_datasets(
-        #    train_dataset=train_ds,
-        #    val_dataset=val_ds,
-        #    batch_size=batch_size,
-        #    num_workers=5
-        #)
-
-        train_dl = DataLoader(
-            dataset=train_ds,
+        data_module = LightningDataModule.from_datasets(
+            train_dataset=train_ds,
+            val_dataset=val_ds,
             batch_size=batch_size,
-            shuffle=True,
-            num_workers=5,
-            persistent_workers=True
+            num_workers=4
         )
 
-        val_dl = DataLoader(
-            dataset=val_ds,
-            batch_size=batch_size,
-            num_workers=5,
-            persistent_workers=True
-        )
+        comet_api = locate('keys.comet_ml')
+        api = comet_ml.API(api_key=comet_api)
+        exp = api.get(workspace=workspace_name, project_name=project_name, experiment=f'exp_{args.experiment}_run_{model_idx}')
+        if exp is not None:
+            exp_key = exp.get_metadata()['experimentKey']
+            api.archive_experiment(exp_key)
 
+        comet_logger = CometLogger(
+            api_key= comet_api,
+            project_name = project_name,
+            experiment_name = f'exp_{args.experiment}_run_{model_idx}'
+        )
+        comet_logger.experiment.log_parameter('model_name', experiment_params['model'])
         early_stop_callback = EarlyStopping(monitor="val_loss", verbose = True, mode="min", **training_params['early_stop'])
         monitor_checkpoint_callback = ModelCheckpoint(
             str(models_path), 
@@ -153,26 +144,23 @@ def run(model_idx):
             accelerator  = 'gpu',
             limit_train_batches = training_params['max_train_batches'], 
             limit_val_batches = training_params['max_val_batches'], 
-            max_epochs = training_params['max_epochs'], 
+            max_epochs = 2, #training_params['max_epochs'], 
             callbacks = [early_stop_callback, monitor_checkpoint_callback], 
-            logger = [csv_logger, tb_logger], #mlflow_logger,
+            logger = comet_logger,
             log_every_n_steps = 1,
             )
         
         t0 = time.time()
-        trainer.fit(model = model, train_dataloaders=train_dl, val_dataloaders=val_dl) #, datamodule=data_module)
+        trainer.fit(model = model, datamodule=data_module)
         train_time = time.time() - t0
         
         last_val_loss = monitor_checkpoint_callback.best_model_score.item()
 
         if last_val_loss <= min_val_loss:
-            run_results = {
-                'model_path': monitor_checkpoint_callback.best_model_path,
-                'total_train_time': train_time,
-                'train_per_epoch': train_time / trainer.current_epoch,
-                'converged': True
-            }
-            save_yaml(run_results, logs_path / f'model_{model_idx}' / 'train_results.yaml')
+            comet_logger.experiment.log_parameter(f'model_file_path', monitor_checkpoint_callback.best_model_path)
+            comet_logger.experiment.log_parameter(f'train_time', train_time)
+            comet_logger.experiment.add_tag(f'trained')
+            #comet_logger.experiment.log_model(f'exp_{args.experiment}-{model_idx}', monitor_checkpoint_callback.best_model_path)
             break
         else:
             print('Model didn\'t converged. Repeating the training...')

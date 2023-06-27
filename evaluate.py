@@ -1,22 +1,12 @@
 import argparse
 from  pathlib import Path
-import importlib
-#from conf import default, general, paths
-import os
-import time
-import sys
-from torch.utils.data import DataLoader
-import torch
-from tqdm import tqdm
 import numpy as np
-from osgeo import ogr, gdal, gdalconst
 from utils.ops import save_geotiff, load_sb_image
-from multiprocessing import Process
 from skimage.morphology import area_opening
 import pandas as pd
 import yaml
 from multiprocessing import Pool
-from itertools import combinations, product, repeat
+import tqdm
 
 parser = argparse.ArgumentParser(
     description='Train NUMBER_MODELS models based in the same parameters'
@@ -32,7 +22,7 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 1,
+    default = 2,
     help = 'The number of the experiment'
 )
 
@@ -93,7 +83,10 @@ original_opt_files = original_data_params['opt']['imgs']['test']
 #sar_imgs_groups = experiment_params['test_sar_imgs']
 
 #mean prediction
-def eval_prediction(opt_imgs_groups_idx, sar_imgs_groups_idx, model_idx = None):
+def eval_prediction(data):
+
+    opt_imgs_groups_idx, sar_imgs_groups_idx, model_idx = data
+
     label = load_sb_image(Path(label_params['test_path'])).astype(np.uint8)
     
     if model_idx is None:
@@ -199,7 +192,8 @@ if __name__=="__main__":
     
 
     with Pool(9) as pool:
-        metrics = pool.starmap(eval_prediction, imgs_groups_idxs)
+        #metrics = pool.imap(eval_prediction, imgs_groups_idxs)
+        metrics = list(tqdm.tqdm(pool.imap(eval_prediction, imgs_groups_idxs), total=len(imgs_groups_idxs), desc = 'Evaluating Predictions'))
 
     headers =  [
         'opt_imgs_groups_idx', 
@@ -250,14 +244,16 @@ if __name__=="__main__":
         sum_results_df[f'{cloud_cond}_recall'] = sum_results_df[f'{cloud_cond}_tps'] / (sum_results_df[f'{cloud_cond}_tps'] + sum_results_df[f'{cloud_cond}_fns'])
         sum_results_df[f'{cloud_cond}_f1'] = 2 * (sum_results_df[f'{cloud_cond}_precision'] * sum_results_df[f'{cloud_cond}_recall']) / (sum_results_df[f'{cloud_cond}_precision'] + sum_results_df[f'{cloud_cond}_recall'])
 
-    
-    
-    results_file = results_path / f'results_{args.experiment}.xlsx'
+    sum_results_df = sum_results_df.reset_index()
+    final_results_df = sum_results_df[sum_results_df['model_idx'].isnull()].reset_index()
+
+    results_file = results_path / f'final_results_{args.experiment}.xlsx'
     with pd.ExcelWriter(results_file) as writer:     
         results_df.to_excel(writer, sheet_name='general results')
         sum_results_df.to_excel(writer, sheet_name='models results')
-    
+        final_results_df.to_excel(writer, sheet_name='final results')
 
-
+    final_results_file = results_path / f'results_{args.experiment}.data'
+    final_results_df.to_pickle(final_results_file)
 
         
