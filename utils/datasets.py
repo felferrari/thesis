@@ -90,78 +90,75 @@ class ValDataset(GenericTrainDataset):
 
 
 class PredDataset(Dataset):
-    def __init__(self, 
-                 opt_imgs_files,
-                 sar_imgs_files,
-                 previous_img_file,
-                 patch_size, ) -> None:
+    def __init__(self, patch_size, device, params, data_folder) -> None:
         super().__init__()
-
-        self.opt_imgs = [h5py.File(opt_img_file)['opt'][()].astype(np.float32) for opt_img_file in opt_imgs_files]
-        self.opt_imgs = np.stack(self.opt_imgs, axis = -1)
-        self.sar_imgs = [h5py.File(sar_img_file)['sar'][()].astype(np.float32) for sar_img_file in sar_imgs_files]
-        self.sar_imgs = np.stack(self.sar_imgs, axis = -1)
-        self.previous_img = h5py.File(previous_img_file)['previous'][()].astype(np.float32)
-        self.previous_img = np.expand_dims(self.previous_img, axis = -1)
-        self.original_size = self.previous_img.shape[:2]
-
-
         self.patch_size = patch_size
-        img_pad_shape = ((patch_size, patch_size), (patch_size, patch_size), (0, 0), (0, 0))
+        self.device = device
+        self.params = params
+        self.data_folder = data_folder
 
-        self.opt_imgs = np.pad(self.opt_imgs, img_pad_shape, 'reflect')
-        self.sar_imgs = np.pad(self.sar_imgs, img_pad_shape, 'reflect')
+        #previous = np.load(self.data_folder / f'{self.params["prefixs"]["previous"]}.npy').astype(np.float16)
+        previous = h5py.File(self.data_folder / f'{self.params["prefixs"]["previous"]}.h5')['previous'][()]
 
-        img_pad_shape = ((patch_size, patch_size), (patch_size, patch_size), (0, 0))
+        #label = np.load(self.data_folder / f'{self.params["prefixs"]["label"]}.npy').astype(np.uint8)
+        label = h5py.File(self.data_folder / f'{self.params["prefixs"]["label"]}.h5')['label'][()].astype(np.uint8)
+        self.original_label = label
 
-        self.previous_img = np.pad(self.previous_img, img_pad_shape, 'reflect')
-        self.padded_size = self.previous_img.shape[:2]
+        self.original_shape = label.shape
 
-        self.opt_imgs = rearrange(self.opt_imgs, 'h w c n -> (h w) c n')
-        self.sar_imgs = rearrange(self.sar_imgs, 'h w c n -> (h w) c n')
-        self.previous_img = rearrange(self.previous_img, 'h w n -> (h w) n')
+        pad_shape = ((patch_size, patch_size),(patch_size, patch_size))
+        label = np.pad(label, pad_shape, mode='reflect')
+        previous = np.pad(previous, pad_shape, mode='reflect')
 
-    def set_overlap(self, overlap):
+        self.padded_shape = label.shape
 
-        idx = np.arange(self.padded_size[0] * self.padded_size[1]).reshape(self.padded_size)
+        self.label = label.flatten()
+        self.previous = previous.flatten()
+        #self.previous = torch.from_numpy(np.expand_dims(previous, axis=0)).to(self.device)
+
+    def load_opt_data(self, opt_images_idx):
+        pad_shape = ((self.patch_size, self.patch_size),(self.patch_size, self.patch_size), (0, 0))
+
+        self.opt_data = [
+            np.pad(h5py.File(self.data_folder / f'{self.params["prefixs"]["opt"]}_{opt_idx}.h5')['opt'][()].astype(np.float16), pad_shape, mode='reflect').reshape((-1, self.params['opt_bands']))
+            for opt_idx in opt_images_idx
+            ]
+
+    
+    def load_sar_data(self, sar_images_idx):
+        pad_shape = ((self.patch_size, self.patch_size),(self.patch_size, self.patch_size), (0, 0))
+        self.sar_data = [
+            np.pad(h5py.File(self.data_folder / f'{self.params["prefixs"]["sar"]}_{sar_idx}.h5')['sar'][()].astype(np.float16), pad_shape, mode='reflect').reshape((-1, self.params['sar_bands']))
+            for sar_idx in sar_images_idx
+            ]
+
+    def generate_overlap_patches(self, overlap):
         window_shape = (self.patch_size, self.patch_size)
-        slide_step = int((1-overlap)*self.patch_size)
-        self.idx_patches = view_as_windows(idx, window_shape, slide_step).reshape((-1, self.patch_size, self.patch_size))
-    
-    def get_original_size(self):
-        return self.original_size
-    
-    def get_padded_size(self):
-        return self.padded_size
-    
+        slide_step = int((1-overlap) * self.patch_size)
+        idx_patches = np.arange(self.padded_shape[0]*self.padded_shape[1]).reshape(self.padded_shape)
+        self.idx_patches = view_as_windows(idx_patches, window_shape, slide_step).reshape((-1, self.patch_size, self.patch_size))
+
     def __len__(self):
-        return self.idx_patches.shape[0]
+        return len(self.idx_patches)
     
     def __getitem__(self, index):
-        patch_idxs = self.idx_patches[index]
+        patch_idx = self.idx_patches[index]
 
-        opt_patch = self.opt_imgs[patch_idxs]
-        opt_patch = torch.from_numpy(rearrange(opt_patch, 'h w c n -> n c h w'))
-        sar_patch = self.sar_imgs[patch_idxs]
-        sar_patch = torch.from_numpy(rearrange(sar_patch, 'h w c n -> n c h w'))
-        previous_patch = self.previous_img[patch_idxs]
-        previous_patch = torch.from_numpy(rearrange(previous_patch, 'h w n -> n h w'))
+        opt_patch = torch.stack([ 
+            torch.from_numpy(np.moveaxis(p[patch_idx], 2, 0).astype(np.float32)).to(self.device)
+            for p in self.opt_data 
+            ])
+        
+        sar_patch = torch.stack([ 
+            torch.from_numpy(np.moveaxis(p[patch_idx], 2, 0).astype(np.float32)).to(self.device)
+            for p in self.sar_data 
+            ])
+        previous_patch = np.expand_dims(self.previous[patch_idx], axis=0)
+        label_patch = self.label[patch_idx]
 
-        return (opt_patch, sar_patch, previous_patch), patch_idxs
-
-
-class ImageWriter(BasePredictionWriter):
-    def __init__(self, original_size, patch_size, n_classes):
-        pred_size = original_size + (n_classes, )
-        self.sum_predictions = torch.zeros(pred_size, dtype=torch.float32)        
-        self.count_predictions = torch.zeros(original_size, dtype = torch.int16)
-        self.ones = torch.ones((patch_size, patch_size))
-
-    def get_image(self):
-        padded_img = self.sum_predictions / self.count_predictions
-        return padded_img
-
-    def write_on_batch_end(self, trainer, pl_module, prediction: Any, batch_indices, batch: Any, batch_idx, dataloader_idx):
-        return super().write_on_batch_end(trainer, pl_module, prediction, batch_indices, batch, batch_idx, dataloader_idx)
-
-
+        return [
+            opt_patch,
+            sar_patch,
+            torch.from_numpy(previous_patch.astype(np.float32)).to(self.device)
+        ], torch.from_numpy(label_patch.astype(np.int64)).to(self.device)
+        

@@ -1,14 +1,8 @@
 import argparse
-import pathlib
-#from conf import default, general, paths
-#import os
 from utils.ops import count_parameters, save_yaml, load_yaml
-#from utils.dataloader import TrainDataSet
 import torch
-import logging, sys
 from torch.multiprocessing import Process, freeze_support
 from torch.utils.data import DataLoader, RandomSampler
-from utils.trainer import EarlyStop, train_model, ModelTrainer
 import time
 from  pathlib import Path
 import yaml
@@ -17,7 +11,6 @@ from pydoc import locate
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.callbacks import ModelCheckpoint
-from lightning.pytorch.core import LightningDataModule
 from lightning.pytorch.loggers.csv_logs import CSVLogger
 from lightning.pytorch.loggers.tensorboard import TensorBoardLogger
 
@@ -35,7 +28,7 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 1,
+    default = 2,
     help = 'The number of the experiment'
 )
 
@@ -105,40 +98,27 @@ def run(model_idx):
 
         model = locate(experiment_params['model'])(experiment_params, training_params)
 
-        csv_logger = CSVLogger(
-            save_dir = logs_path,
-            name = f'model_{model_idx}',
-            version = ''
-        )
-
         tb_logger = TensorBoardLogger(
             save_dir = logs_path,
-            name = f'tb_model_{model_idx}',
+            name = f'model_{model_idx}',
             version = ''
         )
 
         train_ds = TrainDataset(experiment_params, train_folder, prepared_patches['train'])
         val_ds = ValDataset(experiment_params, val_folder, prepared_patches['val'])
         
-        #data_module = LightningDataModule.from_datasets(
-        #    train_dataset=train_ds,
-        #    val_dataset=val_ds,
-        #    batch_size=batch_size,
-        #    num_workers=5
-        #)
-
         train_dl = DataLoader(
             dataset=train_ds,
             batch_size=batch_size,
             shuffle=True,
-            num_workers=5,
+            num_workers=8,
             persistent_workers=True
         )
 
         val_dl = DataLoader(
             dataset=val_ds,
             batch_size=batch_size,
-            num_workers=5,
+            num_workers=8,
             persistent_workers=True
         )
 
@@ -155,8 +135,9 @@ def run(model_idx):
             limit_val_batches = training_params['max_val_batches'], 
             max_epochs = training_params['max_epochs'], 
             callbacks = [early_stop_callback, monitor_checkpoint_callback], 
-            logger = [csv_logger, tb_logger], #mlflow_logger,
+            logger = [tb_logger],
             log_every_n_steps = 1,
+            #num_sanity_val_steps = 0
             )
         
         t0 = time.time()
@@ -170,6 +151,7 @@ def run(model_idx):
                 'model_path': monitor_checkpoint_callback.best_model_path,
                 'total_train_time': train_time,
                 'train_per_epoch': train_time / trainer.current_epoch,
+                'n_paramters': count_parameters(model), 
                 'converged': True
             }
             save_yaml(run_results, logs_path / f'model_{model_idx}' / 'train_results.yaml')

@@ -8,12 +8,14 @@ echo python prepare-data.py --train-data --clear-test-folder
 
 
 
-python train.py -e 1
 python train.py -e 2
-echo python train.py -e 3
-echo python train.py -e 4
-echo python train.py -e 5
+python train.py -e 12
+python train.py -e 22
 
-echo python predict.py -e 11
+python predict.py -e 2
+python predict.py -e 12
+python predict.py -e 22
 
-echo python evaluate.py -e 11
+python evaluate.py -e 2
+python evaluate.py -e 12
+python evaluate.py -e 22
