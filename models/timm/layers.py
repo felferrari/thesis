@@ -1,5 +1,6 @@
 from torch import nn
 import torch
+from ..resunet.layers import ResidualBlock
 
 class Decoder(nn.Module):
     def __init__(self, chan_in, chan_out, last_upsample, *args, **kwargs) -> None:
@@ -11,18 +12,22 @@ class Decoder(nn.Module):
         ])
 
         self.convs = nn.ModuleList([
-            nn.Sequential(
-                nn.Conv2d(chan_in[i] + chan_out[i+1], chan_out[i], 3, padding = 1),
-                #nn.BatchNorm2d(chan_out[i]),
-                nn.ReLU()
-            )
+            #nn.Sequential(
+            #    nn.Conv2d(chan_in[i] + chan_out[i+1], chan_out[i], 3, padding = 1),
+            #    #nn.BatchNorm2d(chan_out[i]),
+            #    nn.ReLU()
+            #)
+            ResidualBlock(chan_in[i] + chan_out[i+1], chan_out[i])
             for i in range(len(chan_in)-2)
         ])
-        self.convs.append(nn.Sequential(
-            nn.Conv2d(chan_in[-1] + chan_in[-2], chan_out[-2], 3, padding = 1),
-            #nn.BatchNorm2d(chan_out[-2]),
-            nn.ReLU()
-        ))
+        self.convs.append(
+            #nn.Sequential(
+            #    nn.Conv2d(chan_in[-1] + chan_in[-2], chan_out[-2], 3, padding = 1),
+            #    #nn.BatchNorm2d(chan_out[-2]),
+            #    nn.ReLU()
+            #)
+            ResidualBlock(chan_in[-1] + chan_in[-2], chan_out[-2])
+        )
 
         self.last_up = None
         if last_upsample > 1:

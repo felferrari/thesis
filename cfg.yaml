@@ -139,7 +139,7 @@ training_params:
   optimizer:
     module: torch.optim.Adam
     params:
-      lr: 2.0e-4
+      lr: 2.0e-5
   early_stop:
     patience: 10
     min_delta: 1.0e-5
