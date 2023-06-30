@@ -11,9 +11,9 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            //"args": ["--statistics"]
+            "args": ["--statistics"],
             //"args": ["--train-data"],
-            "args": ["-e", "1"]
+            //"args": ["-e", "1"]
         }
     ]
 }

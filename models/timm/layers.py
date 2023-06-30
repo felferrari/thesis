@@ -11,10 +11,18 @@ class Decoder(nn.Module):
         ])
 
         self.convs = nn.ModuleList([
-            nn.Conv2d(chan_in[i] + chan_out[i+1], chan_out[i], 3, padding = 1)
+            nn.Sequential(
+                nn.Conv2d(chan_in[i] + chan_out[i+1], chan_out[i], 3, padding = 1),
+                #nn.BatchNorm2d(chan_out[i]),
+                nn.ReLU()
+            )
             for i in range(len(chan_in)-2)
         ])
-        self.convs.append(nn.Conv2d(chan_in[-1] + chan_in[-2], chan_out[-2], 3, padding = 1))
+        self.convs.append(nn.Sequential(
+            nn.Conv2d(chan_in[-1] + chan_in[-2], chan_out[-2], 3, padding = 1),
+            #nn.BatchNorm2d(chan_out[-2]),
+            nn.ReLU()
+        ))
 
         self.last_up = None
         if last_upsample > 1:

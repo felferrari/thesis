@@ -3,15 +3,18 @@ import numpy as np
 import os
 import sys
 from osgeo import gdal_array
-from osgeo import ogr, gdal, gdalconst
+from osgeo import gdal, gdalconst
 from pathlib import Path
 from typing import Union
 import yaml 
+from sklearn.preprocessing import QuantileTransformer
 
 def remove_outliers(img, signficance = 0.01):
-    outliers = np.quantile(img, [signficance, 1-signficance])
-    img = np.clip(img, outliers[0], outliers[1])
+    outliers = np.quantile(img, [signficance, 1-signficance], axis = (0,1))
+    for channel in range(img.shape[-1]):
+        img[:,:,channel] = np.clip(img[:,:,channel], outliers[0, channel],  outliers[1, channel])
     return img
+
 
 def load_json(fp):
     with open(fp) as f:

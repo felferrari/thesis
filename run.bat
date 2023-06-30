@@ -4,11 +4,11 @@ echo python label-gen.py
 echo python cloud-map-gen.py
 
 echo python prepare-data.py --statistics
-echo python prepare-data.py --train-data --clear-test-folder
+echo python prepare-data.py --train-data
 
 
 
-python train.py -e 2
+echo python train.py -e 2
 python train.py -e 12
 python train.py -e 22
 

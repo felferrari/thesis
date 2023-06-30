@@ -237,7 +237,6 @@ if args.train_data:
     for opt_img_i, opt_img_file in enumerate(tqdm(original_data_params['opt']['imgs']['train'], desc = 'Reading Cloud Training files')):
         data_file = opt_path / f'{cloud_prefix}_{opt_img_file}'
         data = load_opt_image(data_file)
-        #data = remove_outliers(data)
         cloud_imgs.append(data.astype(np.float16).reshape((-1, 1)))
 
     for sar_img_i, sar_img_file in enumerate(tqdm(original_data_params['sar']['imgs']['train'], desc = 'Reading SAR Training files')):
