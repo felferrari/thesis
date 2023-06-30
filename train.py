@@ -46,8 +46,6 @@ parser.add_argument( # Model number
     help = 'Number of the model to be retrained'
 )
 
-torch.set_float32_matmul_precision('highest')
-
 args = parser.parse_args()
 
 with open(args.cfg, 'r') as file:
