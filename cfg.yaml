@@ -133,8 +133,8 @@ training_params:
   max_val_batches: 100
   min_val_loss: 0.7
   loss_fn: 
-    module: torchvision.ops.sigmoid_focal_loss #torch.nn.CrossEntropyLoss #torch.nn.functional.cross_entropy
-    #ignore_index: 2
+    module: torch.nn.CrossEntropyLoss #torch.nn.functional.cross_entropy
+    ignore_index: 2
     weights: [0.15, 0.85, 0]
   optimizer:
     module: torch.optim.Adam
