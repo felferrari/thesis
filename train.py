@@ -28,7 +28,7 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 2,
+    default = 1,
     help = 'The number of the experiment'
 )
 
