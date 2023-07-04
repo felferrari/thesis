@@ -11,7 +11,6 @@ import logging
 import yaml
 from multiprocessing import Process, freeze_support
 from pydoc import locate
-import mlflow
 import lightning.pytorch as pl
 
 parser = argparse.ArgumentParser(
