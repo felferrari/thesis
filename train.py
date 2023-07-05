@@ -106,9 +106,24 @@ def run(model_idx):
             version = ''
         )
 
-        #train_image_groups = (experiment_params['train_opt_imgs'], experiment_params['train_sar_imgs'])
-        #train_ds, val_ds = get_datasets(train_folder, train_image_groups, patch_size)
-        #train_ds[0]
+        loggers = [tb_logger]
+
+        log_cfg = Path('loggers.yaml')
+        if log_cfg.exists():
+            if 'neptune' in log_cfg.keys():
+                neptune_cfg = log_cfg['neptune']
+                neptune_logger = locate(neptune_cfg['module'])(
+                    project = neptune_cfg['project'],
+                    api_key = neptune_cfg['api_key']
+                )
+                params = {
+                    'experiment': args.experiment,
+                    'model_idx': model_idx,
+                    'model': experiment_params['model']
+                }
+                neptune_logger.log_hyperparams(params=params)
+                loggers.append(neptune_logger)
+
 
         train_ds = TrainDataset(experiment_params, train_folder, prepared_patches['train'])
         val_ds = ValDataset(experiment_params, val_folder, prepared_patches['val'])
@@ -141,7 +156,7 @@ def run(model_idx):
             limit_val_batches = training_params['max_val_batches'], 
             max_epochs = training_params['max_epochs'], 
             callbacks = [early_stop_callback, monitor_checkpoint_callback], 
-            logger = [tb_logger],
+            logger = loggers,
             log_every_n_steps = 1,
             devices = 1,
             #num_sanity_val_steps = 0
