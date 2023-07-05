@@ -106,6 +106,8 @@ def run(model_idx):
         torch.manual_seed(torch_seed)
         torch.set_float32_matmul_precision('high')
 
+        accelerator = args.accelerator
+
         model = locate(experiment_params['model'])(experiment_params, training_params)
 
         tb_logger = TensorBoardLogger(
@@ -161,7 +163,7 @@ def run(model_idx):
             )
         trainer = pl.Trainer(
             #accelerator  = 'gpu',
-            accelerator  = 'cuda:0',
+            accelerator  = accelerator,
             limit_train_batches = training_params['max_train_batches'], 
             limit_val_batches = training_params['max_val_batches'], 
             max_epochs = training_params['max_epochs'], 
