@@ -46,6 +46,14 @@ parser.add_argument( # Model number
     help = 'Number of the model to be retrained'
 )
 
+parser.add_argument( # Accelerator
+    '-a', '--accelerator',
+    type = str,
+    default = 'gpu',
+    help = 'Accelerator to be used'
+)
+
+
 args = parser.parse_args()
 
 with open(args.cfg, 'r') as file:
@@ -152,7 +160,8 @@ def run(model_idx):
             filename = f'model_{model_idx}'
             )
         trainer = pl.Trainer(
-            accelerator  = 'gpu',
+            #accelerator  = 'gpu',
+            accelerator  = 'cuda:0',
             limit_train_batches = training_params['max_train_batches'], 
             limit_val_batches = training_params['max_val_batches'], 
             max_epochs = training_params['max_epochs'], 
