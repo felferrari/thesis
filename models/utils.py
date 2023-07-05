@@ -26,7 +26,8 @@ class ModelModule(L.LightningModule):
         def_target = y[0]
         def_prev = self.forward(x)
         def_target_one = torch.nn.functional.one_hot(def_target, self.n_classes).moveaxis(-1, -3).float()
-        loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
+        #loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
+        loss_batch = self.loss(def_prev[:, [0, 1]], def_target_one[:, [0, 1]], reduction = 'mean')
         #loss_batch = self.loss(def_prev, def_target)
         #self.train_metric.to('cpu')
         #f1 = self.train_metric(def_prev.to('cpu'), def_target.to('cpu'))
@@ -44,7 +45,8 @@ class ModelModule(L.LightningModule):
         def_target = y[0]
         def_prev = self.forward(x)
         def_target_one = torch.nn.functional.one_hot(def_target, self.n_classes).moveaxis(-1, -3).float()
-        loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
+        #loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
+        loss_batch = self.loss(def_prev[:, [0, 1]], def_target_one[:, [0, 1]], reduction = 'mean')
         #loss_batch = self.loss(def_prev, def_target)
         #self.val_metric.to('cpu')
         #f1 = self.val_metric(def_prev.to('cpu'), def_target.to('cpu'))
