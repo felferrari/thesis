@@ -110,6 +110,7 @@ def run(model_idx):
 
         log_cfg = Path('loggers.yaml')
         if log_cfg.exists():
+            log_cfg = load_yaml(log_cfg)
             if 'neptune' in log_cfg.keys():
                 neptune_cfg = log_cfg['neptune']
                 neptune_logger = locate(neptune_cfg['module'])(
