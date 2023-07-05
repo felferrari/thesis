@@ -47,10 +47,11 @@ parser.add_argument( # Model number
 )
 
 parser.add_argument( # Accelerator
-    '-a', '--accelerator',
-    type = str,
-    default = 'gpu',
-    help = 'Accelerator to be used'
+    '-d', '--devices',
+    type = int,
+    nargs='+',
+    default = [0],
+    help = 'Accelerator devices to be used'
 )
 
 
@@ -106,8 +107,6 @@ def run(model_idx):
         torch.manual_seed(torch_seed)
         torch.set_float32_matmul_precision('high')
 
-        accelerator = args.accelerator
-
         model = locate(experiment_params['model'])(experiment_params, training_params)
 
         tb_logger = TensorBoardLogger(
@@ -162,15 +161,14 @@ def run(model_idx):
             filename = f'model_{model_idx}'
             )
         trainer = pl.Trainer(
-            #accelerator  = 'gpu',
-            accelerator  = accelerator,
+            accelerator  = 'gpu',
+            devices = args.devices,
             limit_train_batches = training_params['max_train_batches'], 
             limit_val_batches = training_params['max_val_batches'], 
             max_epochs = training_params['max_epochs'], 
             callbacks = [early_stop_callback, monitor_checkpoint_callback], 
             logger = loggers,
             log_every_n_steps = 1,
-            devices = 1,
             #num_sanity_val_steps = 0
             )
         
