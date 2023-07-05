@@ -88,11 +88,15 @@ prepared_patches = load_yaml(prepared_patches_file)
 patch_size = training_params['patch_size']
 batch_size = training_params['batch_size']
 min_val_loss = training_params['min_val_loss']
+n_classes = training_params['n_classes']
 
 def run(model_idx):
     last_val_loss = float('inf')
     
     while True:
+        torch_seed = int(1000*time.time())
+        torch.manual_seed(torch_seed)
+        torch.set_float32_matmul_precision('high')
 
         model = locate(experiment_params['model'])(experiment_params, training_params)
 
@@ -101,6 +105,10 @@ def run(model_idx):
             name = f'model_{model_idx}',
             version = ''
         )
+
+        #train_image_groups = (experiment_params['train_opt_imgs'], experiment_params['train_sar_imgs'])
+        #train_ds, val_ds = get_datasets(train_folder, train_image_groups, patch_size)
+        #train_ds[0]
 
         train_ds = TrainDataset(experiment_params, train_folder, prepared_patches['train'])
         val_ds = ValDataset(experiment_params, val_folder, prepared_patches['val'])
@@ -135,6 +143,7 @@ def run(model_idx):
             callbacks = [early_stop_callback, monitor_checkpoint_callback], 
             logger = [tb_logger],
             log_every_n_steps = 1,
+            devices = 1,
             #num_sanity_val_steps = 0
             )
         

@@ -9,9 +9,9 @@ class ModelModule(L.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         #self.class_weights = torch.tensor(training_params['loss_fn']['weights'])
-        self.loss = locate(training_params['loss_fn']['module'])(weight = torch.tensor(training_params['loss_fn']['weights']), ignore_index = training_params['loss_fn']['ignore_index'])
-        #self.loss = locate(training_params['loss_fn']['module'])
-        #self.n_classes = training_params['n_classes']
+        #self.loss = locate(training_params['loss_fn']['module'])(weight = torch.tensor(training_params['loss_fn']['weights']), ignore_index = training_params['loss_fn']['ignore_index'])
+        self.loss = locate(training_params['loss_fn']['module'])
+        self.n_classes = training_params['n_classes']
         #self.loss_weights = torch.tensor(training_params['loss_fn']['weights'])
         #self.loss_ignore_index = training_params['loss_fn']['ignore_index']
         #self.train_metric = MulticlassF1Score(num_classes = training_params['n_classes'], average= 'none')
@@ -25,9 +25,9 @@ class ModelModule(L.LightningModule):
         x, y = batch
         def_target = y[0]
         def_prev = self.forward(x)
-        #def_target_one = torch.nn.functional.one_hot(def_target, self.n_classes).moveaxis(-1, -3).float()
-        #loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
-        loss_batch = self.loss(def_prev, def_target)
+        def_target_one = torch.nn.functional.one_hot(def_target, self.n_classes).moveaxis(-1, -3).float()
+        loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
+        #loss_batch = self.loss(def_prev, def_target)
         #self.train_metric.to('cpu')
         #f1 = self.train_metric(def_prev.to('cpu'), def_target.to('cpu'))
         self.log("train_loss", loss_batch, prog_bar=True, logger = True, on_step=True, on_epoch=True)
@@ -43,9 +43,9 @@ class ModelModule(L.LightningModule):
         x, y = batch
         def_target = y[0]
         def_prev = self.forward(x)
-        #def_target_one = torch.nn.functional.one_hot(def_target, self.n_classes).moveaxis(-1, -3).float()
-        #loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
-        loss_batch = self.loss(def_prev, def_target)
+        def_target_one = torch.nn.functional.one_hot(def_target, self.n_classes).moveaxis(-1, -3).float()
+        loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
+        #loss_batch = self.loss(def_prev, def_target)
         #self.val_metric.to('cpu')
         #f1 = self.val_metric(def_prev.to('cpu'), def_target.to('cpu'))
         self.log("val_loss", loss_batch, prog_bar=True, logger = True, on_step=True, on_epoch=True)
