@@ -11,7 +11,7 @@ from shutil import rmtree
 import h5py
 
 parser = argparse.ArgumentParser(
-    description='Prepare the original files, generating .npy files to be used in the training/testing steps'
+    description='Prepare the original files, generating .h5 files to be used in the training/testing steps'
 )
 
 parser.add_argument( # The path to the config file (.yaml)
