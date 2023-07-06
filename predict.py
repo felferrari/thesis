@@ -45,6 +45,13 @@ parser.add_argument( # Model number
     help = 'Number of the model to be retrained'
 )
 
+parser.add_argument( # Model number
+    '-d', '--device',
+    type = int,
+    default = 0,
+    help = 'Number of the model to be retrained'
+)
+
 args = parser.parse_args()
 
 with open(args.cfg, 'r') as file:
@@ -81,7 +88,7 @@ prepared_folder = Path(preparation_params['folder'])
 test_folder = prepared_folder / preparation_params['test_folder']
 prediction_prefix = experiment_params['prefixs']['prediction']
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+device = f"cuda:{args.device}" if torch.cuda.is_available() else "cpu"
 
 def run(model_idx):
 

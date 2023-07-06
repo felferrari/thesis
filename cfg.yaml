@@ -137,9 +137,9 @@ training_params:
     #ignore_index: 2
     weights: [0.15, 0.85, 0]
   optimizer:
-    module: torch.optim.Adam
+    module: torch.optim.AdamW
     params:
-      lr: 2.0e-5
+      lr: 2.0e-4
   early_stop:
     patience: 10
     min_delta: 1.0e-5

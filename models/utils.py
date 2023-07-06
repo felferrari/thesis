@@ -29,16 +29,15 @@ class ModelModule(L.LightningModule):
         def_target = y[0]
         def_prev = self.forward(x)
         def_target_one = torch.nn.functional.one_hot(def_target, self.n_classes).moveaxis(-1, -3).float()
-        #loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
+        loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
         #loss_batch = self.loss(def_prev, def_target_one, reduction = 'none')
         #loss_batch = loss_batch * self.loss_weights
         #loss_batch = loss_batch[:, [0, 1]].mean()
         #loss_batch = self.loss(def_prev[:, [0, 1]], def_target_one[:, [0, 1]], reduction = 'mean')
         #loss_batch = self.loss(def_prev, def_target)
-        loss_batch = self.loss(def_prev[:, 1], def_target_one[:, 1], reduction = 'none')
         #loss_batch = loss_batch.mean(1)
-        loss_batch = loss_batch.flatten()[def_target.flatten()!=2].mean()
-        loss_batch = torch.nan_to_num(loss_batch)
+        #loss_batch = loss_batch.flatten()[def_target.flatten()!=2].mean()
+        #loss_batch = torch.nan_to_num(loss_batch)
         self.log("train_loss", loss_batch, prog_bar=True, logger = True, on_step=True, on_epoch=True)
         if batch_idx % 10 == 0:
             self.train_metric.to('cpu')
@@ -57,15 +56,15 @@ class ModelModule(L.LightningModule):
         def_target = y[0]
         def_prev = self.forward(x)
         def_target_one = torch.nn.functional.one_hot(def_target, self.n_classes).moveaxis(-1, -3).float()
-        #loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
+        loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
         #loss_batch = self.loss(def_prev, def_target_one, reduction = 'none')
         #loss_batch = loss_batch * self.loss_weights
         #loss_batch = loss_batch[:, [0, 1]].mean()
         #loss_batch = self.loss(def_prev[:, [0, 1]], def_target_one[:, [0, 1]], reduction = 'mean')
-        loss_batch = self.loss(def_prev[:, 1], def_target_one[:, 1], reduction = 'none')
+        #loss_batch = self.loss(def_prev[:, 1], def_target_one[:, 1], reduction = 'none')
         #loss_batch = loss_batch.mean(1)
-        loss_batch = loss_batch.flatten()[def_target.flatten()!=2].mean()
-        loss_batch = torch.nan_to_num(loss_batch)
+        #loss_batch = loss_batch.flatten()[def_target.flatten()!=2].mean()
+        #loss_batch = torch.nan_to_num(loss_batch)
         #loss_batch = self.loss(def_prev, def_target)
         self.log("val_loss", loss_batch, prog_bar=True, logger = True, on_step=True, on_epoch=True)
         if batch_idx % 10 == 0:
