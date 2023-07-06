@@ -27,7 +27,7 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 1,
+    default = 2,
     help = 'The number of the experiment'
 )
 
@@ -143,7 +143,8 @@ def run(model_idx):
             pred_global_file = predicted_path / f'{prediction_prefix}_prob_{opt_group_i}_{sar_group_i}_{model_idx}.npy'
             np.save(pred_global_file, pred_global[:,:,1].astype(np.float16))
 
-            pred_b2 = (pred_global[:,:,1] > 0.5).astype(np.uint8)
+            #pred_b2 = (pred_global[:,:,1] > 0.5).astype(np.uint8)
+            pred_b2 = (np.argmax(pred_global, -1)==1).astype(np.uint8)
             pred_b2[pred_ds.original_label == 2] = 2
 
             base_data = Path(original_data_params['opt']['folder']) / original_data_params['opt']['imgs']['test'][0]

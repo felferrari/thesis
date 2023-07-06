@@ -135,11 +135,11 @@ training_params:
   loss_fn: 
     module: torchvision.ops.sigmoid_focal_loss #torch.nn.CrossEntropyLoss #torch.nn.functional.cross_entropy
     #ignore_index: 2
-    #weights: [0.15, 0.85, 0]
+    weights: [0.15, 0.85, 0]
   optimizer:
-    module: torch.optim.AdamW
+    module: torch.optim.Adam
     params:
-      lr: 2.0e-4
+      lr: 2.0e-5
   early_stop:
     patience: 10
     min_delta: 1.0e-5
