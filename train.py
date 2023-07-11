@@ -193,15 +193,10 @@ def run(model_idx):
                 'converged': True
             }
             save_yaml(run_results, logs_path / f'model_{model_idx}' / 'train_results.yaml')
-            if 'neptune' in log_cfg.keys():
-                neptune_logger.finalize('success')
-            break
         else:
             print('Model didn\'t converged. Repeating the training...')
             model_file = Path(monitor_checkpoint_callback.best_model_path)
             model_file.unlink()
-            if 'neptune' in log_cfg.keys():
-                neptune_logger.finalize('failed')
 
 if __name__=="__main__":
     freeze_support()
