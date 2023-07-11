@@ -39,19 +39,19 @@ original_data:
     folder: D:\Ferrari\Projects\thesis\data\opt_full_L1C
     imgs:
       train:
-        - 2019-08-06-2019-08-07.tif
-        - 2019-08-11-2019-08-12.tif
-        - 2019-08-16-2019-08-17.tif
-        - 2020-07-31-2020-08-01.tif
-        - 2020-08-05-2020-08-06.tif
-        - 2020-08-10-2020-08-11.tif
+        - 2019-08-06-2019-08-07.tif # .10 *
+        - 2019-08-11-2019-08-12.tif # .46
+        - 2019-08-16-2019-08-17.tif # .6
+        - 2020-07-31-2020-08-01.tif # .018 *
+        - 2020-08-05-2020-08-06.tif # .19
+        - 2020-08-10-2020-08-11.tif #.82
       test:
-        - 2020-07-31-2020-08-01.tif
-        - 2020-08-05-2020-08-06.tif
-        - 2020-08-10-2020-08-11.tif
-        - 2021-06-26-2021-06-27.tif
-        - 2021-07-01-2021-07-02.tif
-        - 2021-07-11-2021-07-12.tif
+        - 2020-07-31-2020-08-01.tif # 0.018 *
+        - 2020-08-05-2020-08-06.tif # .19
+        - 2020-08-10-2020-08-11.tif #.82
+        - 2021-06-26-2021-06-27.tif #.655
+        - 2021-07-01-2021-07-02.tif # .28
+        - 2021-07-11-2021-07-12.tif # .009 *
   sar:
     n_bands: *sar_bands 
     folder: D:\Ferrari\Projects\thesis\data\sar
@@ -240,10 +240,32 @@ experiments:
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     resunet_depths: *resunet_depths
 
+  exp_6:
+    model: models.resunet.networks.ResUnetOpt # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 5] ]
+    test_sar_imgs: [ [0, 11] ]
+    resunet_depths: *resunet_depths
+
+  exp_7:
+    model: models.resunet.networks.ResUnetSAR # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 11] ]
+    resunet_depths: *resunet_depths
  
   exp_11:
-    model: models.timm.networks.NetOpt 
-    base_encoder: resnet18
+    model: models.swin.networks.SwinUnetLF
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -252,111 +274,4 @@ experiments:
     train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-
-  exp_12:
-    model: models.timm.networks.NetSAR
-    base_encoder: resnet18
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-
-  exp_13:
-    model: models.timm.networks.NetEF 
-    base_encoder: resnet18
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-
-  exp_14:
-    model: models.timm.networks.NetJF 
-    base_encoder: resnet18
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-
-  exp_15:
-    model: models.timm.networks.NetLF 
-    base_encoder: resnet18
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-
-  exp_21:
-    model: models.timm.networks.NetOpt 
-    base_encoder: resnet50
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-
-  exp_22:
-    model: models.timm.networks.NetSAR
-    base_encoder: resnet50
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-
-  exp_23:
-    model: models.timm.networks.NetEF 
-    base_encoder: resnet50
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-
-  exp_24:
-    model: models.timm.networks.NetJF 
-    base_encoder: resnet50
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-
-  exp_25:
-    model: models.timm.networks.NetLF 
-    base_encoder: resnet50
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    swin_params: *swin_params

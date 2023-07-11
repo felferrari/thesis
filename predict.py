@@ -52,6 +52,8 @@ parser.add_argument( # Model number
     help = 'Number of the model to be retrained'
 )
 
+
+
 args = parser.parse_args()
 
 with open(args.cfg, 'r') as file:

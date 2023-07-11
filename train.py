@@ -28,7 +28,7 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 2,
+    default = 11,
     help = 'The number of the experiment'
 )
 
@@ -52,6 +52,12 @@ parser.add_argument( # Accelerator
     nargs='+',
     default = [0],
     help = 'Accelerator devices to be used'
+)
+
+parser.add_argument( # Log in neptune
+    '-n', '--neptune-log',
+    action='store_true',
+    help = 'Log in neptune'
 )
 
 
@@ -118,7 +124,7 @@ def run(model_idx):
         loggers = [tb_logger]
 
         log_cfg = Path('loggers.yaml')
-        if log_cfg.exists():
+        if log_cfg.exists() and args.neptune_log:
             log_cfg = load_yaml(log_cfg)
             if 'neptune' in log_cfg.keys():
                 neptune_cfg = log_cfg['neptune']
