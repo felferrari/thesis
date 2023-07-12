@@ -108,7 +108,7 @@ n_classes = training_params['n_classes']
 def run(model_idx):
     last_val_loss = float('inf')
     
-    while True:
+    while last_val_loss > min_val_loss:
         torch_seed = int(1000*time.time())
         torch.manual_seed(torch_seed)
         torch.set_float32_matmul_precision('high')
@@ -193,6 +193,7 @@ def run(model_idx):
                 'converged': True
             }
             save_yaml(run_results, logs_path / f'model_{model_idx}' / 'train_results.yaml')
+            break
         else:
             print('Model didn\'t converged. Repeating the training...')
             model_file = Path(monitor_checkpoint_callback.best_model_path)

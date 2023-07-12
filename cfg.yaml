@@ -20,8 +20,6 @@ general_params:
     visual_logs: visual_logs
   opt_bands: &opt_bands 13 #number of bands per optical image
   sar_bands: &sar_bands 2 #number of bands per SAR image
-  #n_opt_images: &n_opt_images 2 #!5 #number of optical images
-  #n_sar_images: &n_sar_images 12 #number of optical images
   n_classes: &n_classes 3 #number of classes
   n_models: &n_models 5 #number of models to be trained for each experiment
   resunet_depths: &resunet_depths [32, 64, 128, 256]
@@ -33,25 +31,28 @@ general_params:
     patch_size: [4, 4]
     n_heads: [3, 6, 12, 24]
     n_blocks: [2, 2, 2, 2]
-original_data:
-  opt:
-    n_bands: *opt_bands 
-    folder: D:\Ferrari\Projects\thesis\data\opt_full_L1C
-    imgs:
-      train:
-        - 2019-08-06-2019-08-07.tif # .10 *
-        - 2019-08-11-2019-08-12.tif # .46
-        - 2019-08-16-2019-08-17.tif # .6
-        - 2020-07-31-2020-08-01.tif # .018 *
-        - 2020-08-05-2020-08-06.tif # .19
-        - 2020-08-10-2020-08-11.tif #.82
-      test:
-        - 2020-07-31-2020-08-01.tif # 0.018 *
-        - 2020-08-05-2020-08-06.tif # .19
-        - 2020-08-10-2020-08-11.tif #.82
-        - 2021-06-26-2021-06-27.tif #.655
-        - 2021-07-01-2021-07-02.tif # .28
-        - 2021-07-11-2021-07-12.tif # .009 *
+paths:
+  opt_data: D:\Ferrari\Projects\thesis\data\opt_full_L1C
+
+# original_data:
+#   opt:
+#     n_bands: *opt_bands 
+#     folder: D:\Ferrari\Projects\thesis\data\opt_full_L1C
+    # imgs:
+    #   train:
+    #     - 2019-08-06-2019-08-07.tif # .10 *
+    #     - 2019-08-11-2019-08-12.tif # .46
+    #     - 2019-08-16-2019-08-17.tif # .6
+    #     - 2020-07-31-2020-08-01.tif # .018 *
+    #     - 2020-08-05-2020-08-06.tif # .19
+    #     - 2020-08-10-2020-08-11.tif #.82
+    #   test:
+    #     - 2020-07-31-2020-08-01.tif # 0.018 *
+    #     - 2020-08-05-2020-08-06.tif # .19
+    #     - 2020-08-10-2020-08-11.tif #.82
+    #     - 2021-06-26-2021-06-27.tif #.655
+    #     - 2021-07-01-2021-07-02.tif # .28
+    #     - 2021-07-11-2021-07-12.tif # .009 *
   sar:
     n_bands: *sar_bands 
     folder: D:\Ferrari\Projects\thesis\data\sar

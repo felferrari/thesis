@@ -36,12 +36,17 @@ parser.add_argument( # Create test data.
 )
 
 parser.add_argument( # (Re)Generate statistics file.
-    '-s', '--statistics',
+    '-a', '--statistics',
     default=False,
     action=argparse.BooleanOptionalAction,
     help = '(Re)Generate statistics file.'
 )
 
+parser.add_argument( # specific site location number
+    '-s', '--site',
+    type = int,
+    help = 'Site location number'
+)
 
 parser.add_argument( # Clear training prepared folder before prepare new data.
     '-x', '--clear-train-folder',
@@ -61,6 +66,8 @@ args = parser.parse_args()
 
 with open(args.cfg, 'r') as file:
     cfg = yaml.safe_load(file)
+
+site_cfg = loa
 
 preparation_params = cfg['preparation_params']
 tiles_params = cfg['tiles_params']
