@@ -13,7 +13,7 @@
             "justMyCode": true,
             //"args": ["-r"],
             //"args": ["--train-data"],
-            "args": ["-e", "11"]
+            "args": ["-e", "8"]
         }
     ]
 }

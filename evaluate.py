@@ -1,7 +1,7 @@
 import argparse
 from  pathlib import Path
 import numpy as np
-from utils.ops import save_geotiff, load_sb_image
+from utils.ops import save_geotiff, load_sb_image, load_yaml
 from skimage.morphology import area_opening
 import pandas as pd
 import yaml
@@ -22,34 +22,38 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 2,
+    default = 8,
     help = 'The number of the experiment'
 )
 
 parser.add_argument( # Generate the Max Cloud Map Geotiff
-    '-s', '--cloud-max-map',
+    '-m', '--cloud-max-map',
     #type = bool,
     action='store_true',
     help = 'Generate the Max Cloud Map Geotiff'
 )
 
+parser.add_argument( # specific site location number
+    '-s', '--site',
+    type = int,
+    default=1,
+    help = 'Site location number'
+)
 
 args = parser.parse_args()
 
-with open(args.cfg, 'r') as file:
-    cfg = yaml.load(file, Loader=yaml.Loader)
+cfg = load_yaml(args.cfg)
+site_cfg = load_yaml(f'site_{args.site}.yaml')
 
-prediction_params = cfg['prediction_params']
 preparation_params = cfg['preparation_params']
 experiment_params = cfg['experiments'][f'exp_{args.experiment}']
-label_params = cfg['label_params']
-previous_def_params = cfg['previous_def_params']
-original_data_params = cfg['original_data']
+paths_params = cfg['paths']
+general_params = cfg['general_params']
 
-experiments_paths = prediction_params['experiments_paths']
-prepared_folder = Path(preparation_params['folder'])
+experiments_paths = general_params['experiments_folders']
+#prepared_folder = Path(paths_params['prepared_data'])
 
-exp_path = Path(experiments_paths['folder']) / f'exp_{args.experiment}'
+exp_path = Path(paths_params['experiments']) / f'exp_{args.experiment}'
 
 models_path = exp_path / experiments_paths['models']
 logs_path = exp_path / experiments_paths['logs']
@@ -57,14 +61,17 @@ visual_path = exp_path / experiments_paths['visual']
 predicted_path = exp_path / experiments_paths['predicted']
 results_path = exp_path / experiments_paths['results']
 
-patch_size = prediction_params['patch_size']
-n_classes = prediction_params['n_classes']
-prediction_prefix = experiment_params['prefixs']['prediction']
-cloud_prefix = experiment_params['prefixs']['cloud']
-n_models = prediction_params['n_models']
+patch_size = general_params['patch_size']
+n_classes = general_params['n_classes']
+prediction_prefix = general_params['prefixs']['prediction']
+cloud_prefix = general_params['prefixs']['cloud']
+n_models = general_params['n_models']
 
 n_opt_imgs_groups = len(experiment_params['test_opt_imgs'])
 n_sar_imgs_groups = len(experiment_params['test_sar_imgs'])
+
+original_opt_imgs = site_cfg['original_data']['opt_imgs']
+original_sar_imgs = site_cfg['original_data']['sar_imgs']
 
 imgs_groups_idxs = []
 for opt_imgs_group_idx in range(n_opt_imgs_groups):
@@ -75,11 +82,11 @@ for opt_imgs_group_idx in range(n_opt_imgs_groups):
               
 
 
-opt_folder = Path(original_data_params['opt']['folder'])
-base_data = opt_folder / original_data_params['opt']['imgs']['test'][0]
+opt_folder = Path(paths_params['opt_data'])
+base_data = opt_folder / original_opt_imgs['test'][0]
 
 opt_imgs_groups = experiment_params['test_opt_imgs']
-original_opt_files = original_data_params['opt']['imgs']['test']
+original_opt_files = original_opt_imgs['test']
 #sar_imgs_groups = experiment_params['test_sar_imgs']
 
 #mean prediction
@@ -87,7 +94,7 @@ def eval_prediction(data):
 
     opt_imgs_groups_idx, sar_imgs_groups_idx, model_idx = data
 
-    label = load_sb_image(Path(label_params['test_path'])).astype(np.uint8)
+    label = load_sb_image(Path(paths_params['label_test'])).astype(np.uint8)
     
     if model_idx is None:
         pred_prob = np.zeros_like(label, dtype=np.float16)

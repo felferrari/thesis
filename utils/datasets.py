@@ -11,6 +11,8 @@ from einops import rearrange
 from lightning.pytorch.callbacks import BasePredictionWriter
 from lightning.pytorch.core import LightningModule
 from lightning.pytorch.trainer import Trainer
+from .ops import load_opt_image, load_SAR_image, load_sb_image
+from einops import rearrange
 
 
 class GenericTrainDataset(Dataset):
@@ -90,47 +92,61 @@ class ValDataset(GenericTrainDataset):
 
 
 class PredDataset(Dataset):
-    def __init__(self, patch_size, device, params, data_folder) -> None:
+    def __init__(self, patch_size, device, params, opt_files, sar_files, prev_file) -> None:
         super().__init__()
         self.patch_size = patch_size
         self.device = device
         self.params = params
-        self.data_folder = data_folder
 
-        #previous = np.load(self.data_folder / f'{self.params["prefixs"]["previous"]}.npy').astype(np.float16)
-        previous = h5py.File(self.data_folder / f'{self.params["prefixs"]["previous"]}.h5')['previous'][()]
-
-        #label = np.load(self.data_folder / f'{self.params["prefixs"]["label"]}.npy').astype(np.uint8)
-        label = h5py.File(self.data_folder / f'{self.params["prefixs"]["label"]}.h5')['label'][()].astype(np.uint8)
-        self.original_label = label
-
-        self.original_shape = label.shape
+        previous = load_sb_image(prev_file)
+        self.original_shape = previous.shape
 
         pad_shape = ((patch_size, patch_size),(patch_size, patch_size))
-        label = np.pad(label, pad_shape, mode='reflect')
+
         previous = np.pad(previous, pad_shape, mode='reflect')
+        self.padded_shape = previous.shape
 
-        self.padded_shape = label.shape
-
-        self.label = label.flatten()
-        self.previous = previous.flatten()
-        #self.previous = torch.from_numpy(np.expand_dims(previous, axis=0)).to(self.device)
-
-    def load_opt_data(self, opt_images_idx):
         pad_shape = ((self.patch_size, self.patch_size),(self.patch_size, self.patch_size), (0, 0))
 
         self.opt_data = [
-            np.pad(h5py.File(self.data_folder / f'{self.params["prefixs"]["opt"]}_{opt_idx}.h5')['opt'][()].astype(np.float16), pad_shape, mode='reflect').reshape((-1, self.params['opt_bands']))
-            for opt_idx in opt_images_idx
-            ]
+            rearrange(np.pad((load_opt_image(opt_file)/10000).astype(np.float16), pad_shape, mode='reflect'), 'h w c -> (h w) c')
+            for opt_file in opt_files
+        ]
+
+        self.sar_data = [
+            rearrange(np.pad((load_SAR_image(sar_file)).astype(np.float16), pad_shape, mode='reflect'), 'h w c -> (h w) c')
+            for sar_file in sar_files
+        ]
+
+        self.previous = rearrange(previous, 'h w -> (h w)')
+
+        #previous = np.load(self.data_folder / f'{self.params["prefixs"]["previous"]}.npy').astype(np.float16)
+        #previous = h5py.File(self.data_folder / f'{self.params["prefixs"]["previous"]}.h5')['previous'][()]
+
+        #label = np.load(self.data_folder / f'{self.params["prefixs"]["label"]}.npy').astype(np.uint8)
+        #label = h5py.File(self.data_folder / f'{self.params["prefixs"]["label"]}.h5')['label'][()].astype(np.uint8)
+        #self.original_label = label
+
+        #self.original_shape = label.shape
+
+
+        #self.previous = torch.from_numpy(np.expand_dims(previous, axis=0)).to(self.device)
+
+    # def load_opt_data(self, opt_images_idx):
+    #     pad_shape = ((self.patch_size, self.patch_size),(self.patch_size, self.patch_size), (0, 0))
+
+    #     self.opt_data = [
+    #         np.pad(h5py.File(self.data_folder / f'{self.params["prefixs"]["opt"]}_{opt_idx}.h5')['opt'][()].astype(np.float16), pad_shape, mode='reflect').reshape((-1, self.params['opt_bands']))
+    #         for opt_idx in opt_images_idx
+    #         ]
 
     
-    def load_sar_data(self, sar_images_idx):
-        pad_shape = ((self.patch_size, self.patch_size),(self.patch_size, self.patch_size), (0, 0))
-        self.sar_data = [
-            np.pad(h5py.File(self.data_folder / f'{self.params["prefixs"]["sar"]}_{sar_idx}.h5')['sar'][()].astype(np.float16), pad_shape, mode='reflect').reshape((-1, self.params['sar_bands']))
-            for sar_idx in sar_images_idx
-            ]
+    # def load_sar_data(self, sar_images_idx):
+    #     pad_shape = ((self.patch_size, self.patch_size),(self.patch_size, self.patch_size), (0, 0))
+    #     self.sar_data = [
+    #         np.pad(h5py.File(self.data_folder / f'{self.params["prefixs"]["sar"]}_{sar_idx}.h5')['sar'][()].astype(np.float16), pad_shape, mode='reflect').reshape((-1, self.params['sar_bands']))
+    #         for sar_idx in sar_images_idx
+    #         ]
 
     def generate_overlap_patches(self, overlap):
         window_shape = (self.patch_size, self.patch_size)
@@ -154,11 +170,11 @@ class PredDataset(Dataset):
             for p in self.sar_data 
             ])
         previous_patch = np.expand_dims(self.previous[patch_idx], axis=0)
-        label_patch = self.label[patch_idx]
+        #label_patch = self.label[patch_idx]
 
         return [
             opt_patch,
             sar_patch,
             torch.from_numpy(previous_patch.astype(np.float32)).to(self.device)
-        ], torch.from_numpy(label_patch.astype(np.int64)).to(self.device)
+        ]#, torch.from_numpy(label_patch.astype(np.int64)).to(self.device)
         
