@@ -1,5 +1,5 @@
 import argparse
-from utils.ops import load_opt_image, save_geotiff
+from utils.ops import load_opt_image, save_geotiff, load_yaml
 import numpy as np
 from  pathlib import Path
 import yaml
@@ -17,29 +17,38 @@ parser.add_argument( # The path to the config file (.yaml)
     help = 'Path to the config file (.yaml).'
 )
 
+parser.add_argument( # specific site location number
+    '-s', '--site',
+    default = 1,
+    type = int,
+    help = 'Site location number'
+)
+
 args = parser.parse_args()
 
-with open(args.cfg, 'r') as file:
-    cfg = yaml.load(file, Loader=yaml.Loader)
+cfg = load_yaml(args.cfg)
+site_cfg = load_yaml(f'site_{args.site}.yaml')
 
-original_data = cfg['original_data']
-preparation_params = cfg['preparation_params']
+paths_params = cfg['paths']
+general_params = cfg['general_params']
 
-cloud_prefix = preparation_params['prefixs']['cloud']
+cloud_prefix = general_params['prefixs']['cloud']
 
-opt_folder = Path(original_data['opt']['folder'])
+opt_folder = Path(paths_params['opt_data'])
 
-base_image = opt_folder/ original_data['opt']['imgs']['train'][0]
+original_data = site_cfg['original_data']
+
+base_image = opt_folder/ original_data['opt_imgs']['train'][0]
 
 cloud_detector = S2PixelCloudDetector(threshold=0.4, average_over=4, dilation_size=2, all_bands=True)
-for opt_img_file in tqdm(original_data['opt']['imgs']['train'], desc = 'Generating Clouds for Trainig files'):
+for opt_img_file in tqdm(original_data['opt_imgs']['train'], desc = 'Generating Clouds for Trainig files'):
     opt_img = load_opt_image(opt_folder / opt_img_file) / 10000
     cloud_map = np.squeeze(cloud_detector.get_cloud_probability_maps(np.expand_dims(opt_img, axis=0)))
 
     cloud_tif_file = opt_folder / f'{cloud_prefix}_{opt_img_file}'
     save_geotiff(base_image, cloud_tif_file, cloud_map, dtype = 'float')
 
-for opt_img_file in tqdm(original_data['opt']['imgs']['test'], desc = 'Generating Clouds for Testing files'):
+for opt_img_file in tqdm(original_data['opt_imgs']['test'], desc = 'Generating Clouds for Testing files'):
     opt_img = load_opt_image(opt_folder / opt_img_file) / 10000
     cloud_map = np.squeeze(cloud_detector.get_cloud_probability_maps(np.expand_dims(opt_img, axis=0)))
 

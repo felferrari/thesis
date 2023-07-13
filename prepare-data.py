@@ -45,6 +45,7 @@ parser.add_argument( # (Re)Generate statistics file.
 parser.add_argument( # specific site location number
     '-s', '--site',
     type = int,
+    default=1,
     help = 'Site location number'
 )
 
@@ -64,34 +65,37 @@ parser.add_argument( # Clear test prepared folder before prepare new data.
 
 args = parser.parse_args()
 
-with open(args.cfg, 'r') as file:
-    cfg = yaml.safe_load(file)
+cfg = load_yaml(args.cfg)
+site_cfg = load_yaml(f'site_{args.site}.yaml')
 
-site_cfg = loa
-
+general_params = cfg['general_params']
 preparation_params = cfg['preparation_params']
-tiles_params = cfg['tiles_params']
-label_params = cfg['label_params']
-previous_def_params = cfg['previous_def_params']
-original_data_params = cfg['original_data']
-prediction_params = cfg['prediction_params']
+paths_params = cfg['paths']
 
-patch_size = preparation_params['patch_size']
+tiles_params = site_cfg['tiles_params']
+
+original_opt_imgs = site_cfg['original_data']['opt_imgs']
+original_sar_imgs = site_cfg['original_data']['sar_imgs']
+
+prefix_params = general_params['prefixs']
+
+opt_bands = general_params['opt_bands']
+sar_bands = general_params['sar_bands']
+
+patch_size = general_params['patch_size']
 patch_overlap = preparation_params['patch_overlap']
 min_def_proportion = preparation_params['min_def_proportion']
-opt_prefix = preparation_params['prefixs']['opt']
-sar_prefix = preparation_params['prefixs']['sar']
-label_prefix = preparation_params['prefixs']['label']
-previous_prefix = preparation_params['prefixs']['previous']
-opt_bands = preparation_params['opt_bands']
-sar_bands = preparation_params['sar_bands']
+
+opt_prefix = prefix_params['opt']
+sar_prefix = prefix_params['sar']
+label_prefix = prefix_params['label']
+previous_prefix = prefix_params['previous']
 
 
-prepared_folder = Path(preparation_params['folder'])
+prepared_folder = Path(paths_params['prepared_data'])
 train_folder = prepared_folder / preparation_params['train_folder']
 validation_folder = prepared_folder / preparation_params['validation_folder']
 test_folder = prepared_folder / preparation_params['test_folder']
-#prediction_folder = prepared_folder / preparation_params['prediction_folder']
 
 prepared_folder.mkdir(exist_ok=True)
 if (args.clear_train_folder or args.train_data) and train_folder.exists():
@@ -112,7 +116,7 @@ prepared_patches_file = prepared_folder / preparation_params['prepared_data']
 statistics_file = prepared_folder / preparation_params['statistics_data']
 
 #Generating patches idx
-tiles = load_sb_image(Path(tiles_params['path']))
+tiles = load_sb_image(Path(paths_params['tiles_path']))
 shape = tiles.shape
 tiles = tiles.flatten()
 
@@ -127,64 +131,64 @@ np.random.seed(123)
 cloud_prefix = preparation_params['prefixs']['cloud']
 
 
-if args.statistics:
+# if args.statistics:
 
-    opt_path = Path(original_data_params['opt']['folder'])
-    sar_path = Path(original_data_params['sar']['folder'])
+#     opt_path = Path(paths_params['opt_data'])
+#     sar_path = Path(paths_params['sar_data'])
 
-    opt_means, opt_stds, opt_maxs, opt_mins = [], [], [], []
-    sar_means, sar_stds, sar_maxs, sar_mins = [], [], [], []
-    pbar = tqdm(list(set(original_data_params['opt']['imgs']['test']+original_data_params['opt']['imgs']['train'])), desc = 'Generating OPT statistics')
-    for opt_img_i, opt_img_file in enumerate(pbar):
-        data_file = opt_path / opt_img_file
-        data = load_opt_image(data_file)
-        data = remove_outliers(data)
-        opt_means.append(data.mean(axis=(0,1)))
-        opt_stds.append(data.std(axis=(0,1)))
-        opt_maxs.append(data.max(axis=(0,1)))
-        opt_mins.append(data.min(axis=(0,1)))
-    pbar = tqdm(list(set(original_data_params['sar']['imgs']['test']+original_data_params['sar']['imgs']['train'])), desc = 'Generating SAR statistics')
-    for sar_img_i, sar_img_file in enumerate(pbar):
-        data_file = sar_path / sar_img_file
-        data = load_SAR_image(data_file)
-        data = remove_outliers(data)
-        sar_means.append(data.mean(axis=(0,1)))
-        sar_stds.append(data.std(axis=(0,1)))
-        sar_maxs.append(data.max(axis=(0,1)))
-        sar_mins.append(data.min(axis=(0,1)))
+#     opt_means, opt_stds, opt_maxs, opt_mins = [], [], [], []
+#     sar_means, sar_stds, sar_maxs, sar_mins = [], [], [], []
+#     pbar = tqdm(list(set(original_opt_imgs['test'] + original_opt_imgs['train'])), desc = 'Generating OPT statistics')
+#     for opt_img_i, opt_img_file in enumerate(pbar):
+#         data_file = opt_path / opt_img_file
+#         data = load_opt_image(data_file)
+#         data = remove_outliers(data)
+#         opt_means.append(data.mean(axis=(0,1)))
+#         opt_stds.append(data.std(axis=(0,1)))
+#         opt_maxs.append(data.max(axis=(0,1)))
+#         opt_mins.append(data.min(axis=(0,1)))
+#     pbar = tqdm(list(set(original_sar_imgs['test'] + original_sar_imgs['train'])), desc = 'Generating SAR statistics')
+#     for sar_img_i, sar_img_file in enumerate(pbar):
+#         data_file = sar_path / sar_img_file
+#         data = load_SAR_image(data_file)
+#         data = remove_outliers(data)
+#         sar_means.append(data.mean(axis=(0,1)))
+#         sar_stds.append(data.std(axis=(0,1)))
+#         sar_maxs.append(data.max(axis=(0,1)))
+#         sar_mins.append(data.min(axis=(0,1)))
 
-    opt_means = np.array(opt_means).mean(axis=0)
-    opt_stds = np.array(opt_stds).mean(axis=0)
-    opt_maxs = np.array(opt_maxs).max(axis=0)
-    opt_mins = np.array(opt_mins).min(axis=0)
+#     opt_means = np.array(opt_means).mean(axis=0)
+#     opt_stds = np.array(opt_stds).mean(axis=0)
+#     opt_maxs = np.array(opt_maxs).max(axis=0)
+#     opt_mins = np.array(opt_mins).min(axis=0)
 
-    sar_means = np.array(sar_means).mean(axis=0)
-    sar_stds = np.array(sar_stds).mean(axis=0)
-    sar_maxs = np.array(sar_maxs).max(axis=0)
-    sar_mins = np.array(sar_mins).min(axis=0)
+#     sar_means = np.array(sar_means).mean(axis=0)
+#     sar_stds = np.array(sar_stds).mean(axis=0)
+#     sar_maxs = np.array(sar_maxs).max(axis=0)
+#     sar_mins = np.array(sar_mins).min(axis=0)
 
-    statistics = {
-        'opt_means': opt_means.tolist(),
-        'opt_stds': opt_stds.tolist(),
-        'opt_maxs': opt_maxs.tolist(),
-        'opt_mins': opt_mins.tolist(),
-        'sar_means': sar_means.tolist(),
-        'sar_stds': sar_stds.tolist(),
-        'sar_maxs': sar_maxs.tolist(),
-        'sar_mins': sar_mins.tolist(),
-    }
+#     statistics = {
+#         'opt_means': opt_means.tolist(),
+#         'opt_stds': opt_stds.tolist(),
+#         'opt_maxs': opt_maxs.tolist(),
+#         'opt_mins': opt_mins.tolist(),
+#         'sar_means': sar_means.tolist(),
+#         'sar_stds': sar_stds.tolist(),
+#         'sar_maxs': sar_maxs.tolist(),
+#         'sar_mins': sar_mins.tolist(),
+#     }
 
-    save_yaml(statistics, statistics_file)
+#     save_yaml(statistics, statistics_file)
 
-data = None
+# data = None
 #training patches
 if args.train_data:
-    statistics = load_yaml(statistics_file)
+    # statistics = load_yaml(statistics_file)
 
-    opt_means = statistics['opt_means']
-    opt_stds = statistics['opt_stds']
-    sar_means = statistics['sar_means']
-    sar_stds = statistics['sar_stds']
+    # opt_means = statistics['opt_means']
+    # opt_stds = statistics['opt_stds']
+    # sar_means = statistics['sar_means']
+    # sar_stds = statistics['sar_stds']
 
     outfile = prepared_folder / 'train-data-prep.txt'
     logging.basicConfig(
@@ -195,8 +199,8 @@ if args.train_data:
             )
     log = logging.getLogger('preparing')
 
-    train_label = load_sb_image(Path(label_params['train_path'])).astype(np.uint8).flatten()
-    previous_map = load_sb_image(Path(previous_def_params['train_path'])).astype(np.float16)
+    train_label = load_sb_image(Path(paths_params['label_train'])).astype(np.uint8).flatten()
+    previous_map = load_sb_image(Path(paths_params['previous_train'])).astype(np.float16)
 
     keep = ((train_label[idx_patches] == 1).sum(axis=(1,2)) / patch_size**2) >= min_def_proportion
     keep_args = np.argwhere(keep == True).flatten() #args with at least min_prop deforestation
@@ -227,13 +231,13 @@ if args.train_data:
     np.random.shuffle(val_idx_patches)
     np.random.shuffle(train_idx_patches)
 
-    opt_path = Path(original_data_params['opt']['folder'])
-    sar_path = Path(original_data_params['sar']['folder'])
+    opt_path = Path(paths_params['opt_data'])
+    sar_path = Path(paths_params['sar_data'])
 
     opt_imgs = []
     sar_imgs = []
     cloud_imgs = []
-    for opt_img_i, opt_img_file in enumerate(tqdm(original_data_params['opt']['imgs']['train'], desc = 'Reading OPT Training files')):
+    for opt_img_i, opt_img_file in enumerate(tqdm(original_opt_imgs['train'], desc = 'Reading OPT Training files')):
         data_file = opt_path / opt_img_file
         data = load_opt_image(data_file)
         data = remove_outliers(data)
@@ -241,12 +245,12 @@ if args.train_data:
         data = data / 10000
         opt_imgs.append(data.astype(np.float16).reshape((-1, opt_bands)))
 
-    for opt_img_i, opt_img_file in enumerate(tqdm(original_data_params['opt']['imgs']['train'], desc = 'Reading Cloud Training files')):
+    for opt_img_i, opt_img_file in enumerate(tqdm(original_opt_imgs['train'], desc = 'Reading Cloud Training files')):
         data_file = opt_path / f'{cloud_prefix}_{opt_img_file}'
         data = load_opt_image(data_file)
         cloud_imgs.append(data.astype(np.float16).reshape((-1, 1)))
 
-    for sar_img_i, sar_img_file in enumerate(tqdm(original_data_params['sar']['imgs']['train'], desc = 'Reading SAR Training files')):
+    for sar_img_i, sar_img_file in enumerate(tqdm(original_sar_imgs['train'], desc = 'Reading SAR Training files')):
         data_file = sar_path / sar_img_file
         data = load_SAR_image(data_file)
         data = remove_outliers(data)
@@ -334,10 +338,10 @@ if args.test_data:
     sar_means = statistics['sar_means']
     sar_stds = statistics['sar_stds']
 
-    opt_path = Path(original_data_params['opt']['folder'])
-    sar_path = Path(original_data_params['sar']['folder'])
+    opt_path = Path(paths_params['opt_data'])
+    sar_path = Path(paths_params['sar_data'])
 
-    for opt_img_i, opt_img_file in enumerate(tqdm(original_data_params['opt']['imgs']['test'], desc = 'Converting OPT Testing files')):
+    for opt_img_i, opt_img_file in enumerate(tqdm(original_opt_imgs['test'], desc = 'Converting OPT Testing files')):
         data_file = opt_path / opt_img_file
         data = load_opt_image(data_file)
         data = remove_outliers(data)
@@ -346,7 +350,7 @@ if args.test_data:
         data_patch_file = test_folder / f'{opt_prefix}_{opt_img_i}.h5'
         with h5py.File(data_patch_file, "w") as f:
             f.create_dataset('opt', data=data.astype(np.float16), compression='lzf')
-    for sar_img_i, sar_img_file in enumerate(tqdm(original_data_params['sar']['imgs']['test'], desc = 'Converting SAR Testing files')):
+    for sar_img_i, sar_img_file in enumerate(tqdm(original_sar_imgs['test'], desc = 'Converting SAR Testing files')):
         data_file = sar_path / sar_img_file
         data = load_SAR_image(data_file)
         data = remove_outliers(data)
@@ -355,12 +359,12 @@ if args.test_data:
         with h5py.File(data_patch_file, "w") as f:
             f.create_dataset('sar', data=data.astype(np.float16), compression='lzf')
 
-    previous_map = load_sb_image(Path(previous_def_params['test_path'])).astype(np.float16)
+    previous_map = load_sb_image(Path(paths_params['previous_test'])).astype(np.float16)
     data_patch_file = test_folder / f'{previous_prefix}.h5'
     with h5py.File(data_patch_file, "w") as f:
         f.create_dataset('previous', data=previous_map.astype(np.float16), compression='lzf')
 
-    test_label = load_sb_image(Path(label_params['test_path'])).astype(np.uint8)
+    test_label = load_sb_image(Path(paths_params['label_test'])).astype(np.uint8)
     data_patch_file = test_folder / f'{label_prefix}.h5'
     with h5py.File(data_patch_file, "w") as f:
         f.create_dataset('label', data=test_label, compression='lzf')

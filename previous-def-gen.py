@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 from osgeo import gdal, gdalconst, ogr
 import yaml
+from utils.ops import load_yaml
 
 parser = argparse.ArgumentParser(
     description='Generate .tif previous deforestation temporal distance map. As older is the deforestation, the value is close to 0. As recent is the deforestation, the value is close to 1'
@@ -15,24 +16,37 @@ parser.add_argument( # The path to the config file (.yaml)
     help = 'Path to the config file (.yaml).'
 )
 
+parser.add_argument( # specific site location number
+    '-s', '--site',
+    type = int,
+    default=1,
+    help = 'Site location number'
+)
+
 args = parser.parse_args()
 
-with open(args.cfg, 'r') as file:
-    cfg = yaml.load(file, Loader=yaml.Loader)
+#with open(args.cfg, 'r') as file:
+#    cfg = yaml.load(file, Loader=yaml.Loader)
+cfg = load_yaml(args.cfg)
+site_cfg = load_yaml(f'site_{args.site}.yaml')
 
-original_data = cfg['original_data']
+paths_params = cfg['paths']
+general_params = cfg['general_params']
+prodes_params = cfg['prodes_params']
 
-prodes_folder = Path(original_data['prodes']['folder'])
+original_data = site_cfg['original_data']
 
-base_image = Path(original_data['opt']['folder']) / original_data['opt']['imgs']['train'][0]
+prodes_folder = Path(paths_params['prodes_data'])
 
-previous_def_params = cfg['previous_def_params']
+base_image = Path(paths_params['opt_data']) / original_data['opt_imgs']['train'][0]
 
-f_yearly_def = prodes_folder / original_data['prodes']['yearly_deforestation']
+#previous_def_params = cfg['previous_def_params']
+
+f_yearly_def = prodes_folder / prodes_params['yearly_deforestation']
 v_yearly_def = ogr.Open(str(f_yearly_def))
 l_yearly_def = v_yearly_def.GetLayer()
 
-f_previous_def = prodes_folder / original_data['prodes']['defor_2007']
+f_previous_def = prodes_folder / prodes_params['defor_2007']
 v_previous_def = ogr.Open(str(f_previous_def))
 l_previous_def = v_previous_def.GetLayer()
 
@@ -45,14 +59,14 @@ crs = base_data.GetSpatialRef()
 proj = base_data.GetProjection()
 
 #train previous deforestation
-test_output = previous_def_params['train_path']
+train_output = paths_params['previous_train']
 
-target_train = gdal.GetDriverByName('GTiff').Create(test_output, x_res, y_res, 1, gdal.GDT_Float32)
+target_train = gdal.GetDriverByName('GTiff').Create(train_output, x_res, y_res, 1, gdal.GDT_Float32)
 target_train.SetGeoTransform(geo_transform)
 target_train.SetSpatialRef(crs)
 target_train.SetProjection(proj)
 
-train_year = previous_def_params['train_year']
+train_year = general_params['train_year']
 last_year = train_year - 1
 b_year = 2007
 years = np.arange(b_year, train_year)
@@ -72,14 +86,14 @@ for i, t_year in enumerate(years[1:]):
 target_train = None
 
 #test previous deforestation
-test_output = previous_def_params['test_path']
+test_output = paths_params['previous_test']
 
 target_test = gdal.GetDriverByName('GTiff').Create(test_output, x_res, y_res, 1, gdal.GDT_Float32)
 target_test.SetGeoTransform(geo_transform)
 target_test.SetSpatialRef(crs)
 target_test.SetProjection(proj)
 
-test_year = previous_def_params['test_year']
+test_year = general_params['test_year']
 last_year = test_year - 1
 b_year = 2007
 years = np.arange(b_year, test_year)

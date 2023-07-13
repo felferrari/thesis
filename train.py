@@ -40,7 +40,7 @@ parser.add_argument( # Model number
 )
 
 parser.add_argument( # Model number
-    '-s', '--start-model',
+    '-i', '--start-model',
     type = int,
     default = -1,
     help = 'Number of the model to be retrained'
@@ -60,28 +60,40 @@ parser.add_argument( # Log in neptune
     help = 'Log in neptune'
 )
 
+parser.add_argument( # specific site location number
+    '-s', '--site',
+    type = int,
+    default=1,
+    help = 'Site location number'
+)
 
 args = parser.parse_args()
 
-with open(args.cfg, 'r') as file:
-    cfg = yaml.load(file, Loader=yaml.Loader)
+cfg = load_yaml(args.cfg)
+site_cfg = load_yaml(f'site_{args.site}.yaml')
 
 training_params = cfg['training_params']
 preparation_params = cfg['preparation_params']
 experiment_params = cfg['experiments'][f'exp_{args.experiment}']
-original_data_params = cfg['original_data']
+paths_params = cfg['paths']
+general_params = cfg['general_params']
 
-experiments_paths = training_params['experiments_paths']
+experiments_folders = general_params['experiments_folders']
+
+original_opt_imgs = site_cfg['original_data']['opt_imgs']
+original_sar_imgs = site_cfg['original_data']['sar_imgs']
+
+experiments_paths = paths_params['experiments']
 
 #create experiment folder structure
-exp_path = Path(experiments_paths['folder']) / f'exp_{args.experiment}'
+exp_path = Path(experiments_paths) / f'exp_{args.experiment}'
 
-models_path = exp_path / experiments_paths['models']
-logs_path = exp_path / experiments_paths['logs']
-visual_path = exp_path / experiments_paths['visual']
-predicted_path = exp_path / experiments_paths['predicted']
-results_path = exp_path / experiments_paths['results']
-visual_logs_path = exp_path / experiments_paths['visual_logs']
+models_path = exp_path / experiments_folders['models']
+logs_path = exp_path / experiments_folders['logs']
+visual_path = exp_path / experiments_folders['visual']
+predicted_path = exp_path / experiments_folders['predicted']
+results_path = exp_path / experiments_folders['results']
+visual_logs_path = exp_path / experiments_folders['visual_logs']
 
 exp_path.mkdir(exist_ok=True)
 models_path.mkdir(exist_ok=True)
@@ -92,7 +104,7 @@ results_path.mkdir(exist_ok=True)
 visual_logs_path.mkdir(exist_ok=True)
 
 #setting up prepared data source
-prepared_folder = Path(preparation_params['folder'])
+prepared_folder = Path(paths_params['prepared_data'])
 
 train_folder = prepared_folder / preparation_params['train_folder']
 val_folder = prepared_folder / preparation_params['validation_folder']
@@ -100,10 +112,12 @@ prepared_patches_file = prepared_folder / preparation_params['prepared_data']
 prepared_patches = load_yaml(prepared_patches_file)
 
 
-patch_size = training_params['patch_size']
+patch_size = general_params['patch_size']
+n_classes = general_params['n_classes']
+
 batch_size = training_params['batch_size']
 min_val_loss = training_params['min_val_loss']
-n_classes = training_params['n_classes']
+
 
 def run(model_idx):
     last_val_loss = float('inf')

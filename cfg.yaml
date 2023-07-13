@@ -9,9 +9,8 @@ general_params:
     label: label
     prediction: pred
     cloud: cloud
-  experiments_cfg_path: &experiments_cfg_path experiments
-  experiments_paths: &experiments_path
-    folder: D:\Ferrari\Projects\thesis\experiments
+  #experiments_cfg_path: &experiments_cfg_path experiments
+  experiments_folders: &experiment_folders
     models: models
     logs: logs
     predicted: predicted
@@ -23,6 +22,8 @@ general_params:
   n_classes: &n_classes 3 #number of classes
   n_models: &n_models 5 #number of models to be trained for each experiment
   resunet_depths: &resunet_depths [32, 64, 128, 256]
+  label_def_inner_buffer: 3
+  label_def_outer_buffer: 3
   swin_params: &swin_params
     img_size: *patch_size
     base_dim: 96
@@ -31,9 +32,27 @@ general_params:
     patch_size: [4, 4]
     n_heads: [3, 6, 12, 24]
     n_blocks: [2, 2, 2, 2]
+preparation_params:
+  train_folder: train
+  validation_folder: validation
+  test_folder: test
+  prepared_data: prepared.yaml
+  statistics_data: statistics.yaml
+  patch_overlap: 0.7
+  min_def_proportion: 0.02
 paths:
   opt_data: D:\Ferrari\Projects\thesis\data\opt_full_L1C
-
+  sar_data: D:\Ferrari\Projects\thesis\data\sar
+  #avg_sar_data: D:\Ferrari\Projects\thesis\data\sar_avg
+  #single_sar_data: D:\Ferrari\Projects\thesis\data\sar_single
+  prodes_data: D:\Ferrari\Projects\thesis\prodes
+  tiles_path: D:\Ferrari\Projects\thesis\data\general\tiles.tif
+  experiments: D:\Ferrari\Projects\thesis\experiments
+  label_train: D:\Ferrari\Projects\thesis\data\general\label_train.tif
+  label_test: D:\Ferrari\Projects\thesis\data\general\label_test.tif
+  previous_train: D:\Ferrari\Projects\thesis\data\general\previous_train.tif
+  previous_test: D:\Ferrari\Projects\thesis\data\general\previous_test.tif
+  prepared_data: C:\Users\felferrari\Documents\projetos\thesis\prepared
 # original_data:
 #   opt:
 #     n_bands: *opt_bands 
@@ -53,66 +72,45 @@ paths:
     #     - 2021-06-26-2021-06-27.tif #.655
     #     - 2021-07-01-2021-07-02.tif # .28
     #     - 2021-07-11-2021-07-12.tif # .009 *
-  sar:
-    n_bands: *sar_bands 
-    folder: D:\Ferrari\Projects\thesis\data\sar
-    imgs:
-      train: 
-        - 2019-07-14-2019-08-14.tif
-        - 2019-08-15-2019-09-15.tif
-        - 2019-09-16-2019-10-17.tif
-        - 2019-10-18-2019-11-18.tif
-        - 2019-11-19-2019-12-20.tif
-        - 2019-12-21-2020-01-21.tif
-        - 2020-01-22-2020-02-22.tif
-        - 2020-02-23-2020-03-25.tif
-        - 2020-03-26-2020-04-26.tif
-        - 2020-04-27-2020-05-28.tif
-        - 2020-05-29-2020-06-29.tif
-        - 2020-06-30-2020-07-30.tif
-      test: 
-        - 2020-06-30-2020-07-30.tif
-        - 2020-07-31-2020-08-30.tif
-        - 2020-08-31-2020-09-30.tif
-        - 2020-10-01-2020-10-31.tif
-        - 2020-11-01-2020-12-01.tif
-        - 2020-12-02-2021-01-01.tif
-        - 2021-01-02-2021-02-01.tif
-        - 2021-02-02-2021-03-03.tif
-        - 2021-03-04-2021-04-02.tif
-        - 2021-04-03-2021-05-02.tif
-        - 2021-05-03-2021-06-01.tif
-        - 2021-06-02-2021-07-01.tif
-  prodes:
-    folder: D:\Ferrari\Projects\thesis\prodes
-    defor_2007: accumulated_deforestation_2007.shp
-    hydrography: hydrography.shp
-    no_forest: no_forest.shp
-    residual: residual.shp
-    yearly_deforestation: yearly_deforestation.shp
-tiles_params:
-  lines: 4
-  columns: 4
-  train_tiles: [1, 2, 4, 5, 7, 8, 9, 10, 13, 15]
-  path: D:\Ferrari\Projects\thesis\data\general\tiles.tif
-label_params:
-  def_inner_buffer: 3
-  def_outer_buffer: 3
-  train_year: *train_year
-  test_year: *test_year
-  train_path: D:\Ferrari\Projects\thesis\data\general\label_train.tif
-  test_path: D:\Ferrari\Projects\thesis\data\general\label_test.tif
-previous_def_params:
-  train_path: D:\Ferrari\Projects\thesis\data\general\previous_train.tif
-  test_path: D:\Ferrari\Projects\thesis\data\general\previous_test.tif
-  train_year: *train_year
-  test_year: *test_year
+  # sar:
+  #   n_bands: *sar_bands 
+  #   folder: D:\Ferrari\Projects\thesis\data\sar
+  #   imgs:
+  #     train: 
+  #       - 2019-07-14-2019-08-14.tif
+  #       - 2019-08-15-2019-09-15.tif
+  #       - 2019-09-16-2019-10-17.tif
+  #       - 2019-10-18-2019-11-18.tif
+  #       - 2019-11-19-2019-12-20.tif
+  #       - 2019-12-21-2020-01-21.tif
+  #       - 2020-01-22-2020-02-22.tif
+  #       - 2020-02-23-2020-03-25.tif
+  #       - 2020-03-26-2020-04-26.tif
+  #       - 2020-04-27-2020-05-28.tif
+  #       - 2020-05-29-2020-06-29.tif
+  #       - 2020-06-30-2020-07-30.tif
+  #     test: 
+  #       - 2020-06-30-2020-07-30.tif
+  #       - 2020-07-31-2020-08-30.tif
+  #       - 2020-08-31-2020-09-30.tif
+  #       - 2020-10-01-2020-10-31.tif
+  #       - 2020-11-01-2020-12-01.tif
+  #       - 2020-12-02-2021-01-01.tif
+  #       - 2021-01-02-2021-02-01.tif
+  #       - 2021-02-02-2021-03-03.tif
+  #       - 2021-03-04-2021-04-02.tif
+  #       - 2021-04-03-2021-05-02.tif
+  #       - 2021-05-03-2021-06-01.tif
+  #       - 2021-06-02-2021-07-01.tif
+prodes_params:
+  defor_2007: accumulated_deforestation_2007.shp
+  hydrography: hydrography.shp
+  no_forest: no_forest.shp
+  residual: residual.shp
+  yearly_deforestation: yearly_deforestation.shp
 preparation_params:
-  folder: C:\Users\felferrari\Documents\projetos\thesis\prepared #D:\Ferrari\Projects\thesis\prepared_data
   train_folder: train
-  #train_data: train.csv
   validation_folder: validation
-  #validation_data: validation.csv
   test_folder: test
   prepared_data: prepared.yaml
   statistics_data: statistics.yaml
@@ -124,8 +122,8 @@ preparation_params:
   prefixs: *prefixs
 training_params:
   n_models: *n_models
-  experiments_cfg_path: *experiments_cfg_path
-  experiments_paths: *experiments_path
+  #experiments_cfg_path: *experiments_cfg_path
+  experiment_folders: *experiment_folders
   patch_size: *patch_size
   batch_size: 32
   opt_bands: *opt_bands 
@@ -147,7 +145,7 @@ training_params:
   max_epochs: 500
   n_classes: *n_classes
 prediction_params:
-  experiments_paths: *experiments_path
+  experiment_folders: *experiment_folders
   patch_size: *patch_size
   n_classes: *n_classes
   prefixs: *prefixs
@@ -157,15 +155,6 @@ prediction_params:
   prediction_overlaps: [0.2]#, 0.3, 0.4]
   opt_bands: *opt_bands 
   sar_bands: *sar_bands 
-  #n_opt_images: *n_opt_images 
-  #n_sar_images: *n_sar_images
-#comet_params:
-#  workspace_name: felferrari
-#  project_name: test
-#mlflow_params:
-#  path: file:///D:\Ferrari\Projects\thesis\mlflow
-#  exp_name: test
-
 
 experiments:
   exp_X:

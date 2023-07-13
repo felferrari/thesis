@@ -1,5 +1,5 @@
 import argparse
-from utils.ops import load_opt_image, save_geotiff
+from utils.ops import load_opt_image, save_geotiff, load_yaml
 import numpy as np
 from  pathlib import Path
 import yaml
@@ -15,15 +15,25 @@ parser.add_argument( # The path to the config file (.yaml)
     help = 'Path to the config file (.yaml).'
 )
 
+parser.add_argument( # specific site location number
+    '-s', '--site',
+    default = 1,
+    type = int,
+    help = 'Site location number'
+)
+
+
 args = parser.parse_args()
 
-with open(args.cfg, 'r') as file:
-    cfg = yaml.load(file, Loader=yaml.Loader)
+cfg = load_yaml(args.cfg)
+site_cfg = load_yaml(f'site_{args.site}.yaml')
 
-original_data = cfg['original_data']
-tiles_params = cfg['tiles_params']
+original_data = site_cfg['original_data']
+tiles_params = site_cfg['tiles_params']
 
-base_image = Path(original_data['opt']['folder']) / original_data['opt']['imgs']['train'][0]
+paths_params = cfg['paths']
+
+base_image = Path(paths_params['opt_data']) / original_data['opt_imgs']['train'][0]
 
 shape = load_opt_image(base_image).shape[0:2]
 
@@ -42,9 +52,10 @@ for i, tile in enumerate(tiles_idx):
 
 tiles = tiles.reshape(shape)
 
+tiles_file = Path(paths_params['tiles_path'])
 save_geotiff(
     base_image, 
-    tiles_params['path'], 
+    tiles_file, 
     tiles, 
     'byte'
     )
