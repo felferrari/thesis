@@ -1,0 +1,9 @@
+#! /bin/bash
+python train.py -e 2
+python predict.py -e 2
+python evaluate.py -e 2
+
+python train.py -e 4
+python predict.py -e 4
+python evaluate.py -e 4
+
