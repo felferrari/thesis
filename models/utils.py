@@ -8,13 +8,11 @@ class ModelModule(L.LightningModule):
     def __init__(self, training_params):
         super().__init__()
         self.save_hyperparameters()
-        #self.class_weights = torch.tensor(training_params['loss_fn']['weights'])
-        #self.loss = locate(training_params['loss_fn']['module'])(weight = torch.tensor(training_params['loss_fn']['weights']), ignore_index = training_params['loss_fn']['ignore_index'])
-        self.loss = locate(training_params['loss_fn']['module'])
-        self.n_classes = training_params['n_classes']
-        #self.loss_weights = torch.tensor(training_params['loss_fn']['weights'])
-        #self.loss_weights = torch.unsqueeze(torch.unsqueeze(self.loss_weights, -1), -1)
-        #self.loss_ignore_index = training_params['loss_fn']['ignore_index']
+        loss_params = training_params['loss_fn']['params']
+        if 'weight' in loss_params.keys():
+            loss_params['weight'] = torch.tensor(loss_params['weight'])
+        self.loss = locate(training_params['loss_fn']['module'])(**loss_params)
+        #self.n_classes = training_params['n_classes']
         self.train_metric = MulticlassF1Score(num_classes = training_params['n_classes'], average= 'none')
         self.val_metric = MulticlassF1Score(num_classes = training_params['n_classes'], average= 'none')
 
@@ -28,8 +26,9 @@ class ModelModule(L.LightningModule):
         x, y = batch
         def_target = y[0]
         def_prev = self.forward(x)
-        def_target_one = torch.nn.functional.one_hot(def_target, self.n_classes).moveaxis(-1, -3).float()
-        loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
+        #def_target_one = torch.nn.functional.one_hot(def_target, self.n_classes).moveaxis(-1, -3).float()
+        #loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
+        loss_batch = self.loss(def_prev, def_target)
         #loss_batch = self.loss(def_prev, def_target_one, reduction = 'none')
         #loss_batch = loss_batch * self.loss_weights
         #loss_batch = loss_batch[:, [0, 1]].mean()
@@ -55,8 +54,9 @@ class ModelModule(L.LightningModule):
         x, y = batch
         def_target = y[0]
         def_prev = self.forward(x)
-        def_target_one = torch.nn.functional.one_hot(def_target, self.n_classes).moveaxis(-1, -3).float()
-        loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
+        #def_target_one = torch.nn.functional.one_hot(def_target, self.n_classes).moveaxis(-1, -3).float()
+        loss_batch = self.loss(def_prev, def_target)
+        #loss_batch = self.loss(def_prev, def_target_one, reduction = 'mean')
         #loss_batch = self.loss(def_prev, def_target_one, reduction = 'none')
         #loss_batch = loss_batch * self.loss_weights
         #loss_batch = loss_batch[:, [0, 1]].mean()

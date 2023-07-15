@@ -7,7 +7,6 @@ echo python prepare-data.py --statistics
 echo python prepare-data.py --train-data
 
 
-python train.py -e 9
-python predict.py -e 9
-python evaluate.py -e 9
-
+python train.py -e 6
+python predict.py -e 6
+python evaluate.py -e 6

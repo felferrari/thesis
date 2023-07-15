@@ -100,17 +100,23 @@ prediction_prefix = general_params['prefixs']['prediction']
 opt_folder = Path(paths_params['opt_data'])
 sar_folder = Path(paths_params['sar_data'])
 
+statistics_file = prepared_folder / preparation_params['statistics_data']
+
 device = f"cuda:{args.device}" if torch.cuda.is_available() else "cpu"
 
 def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
+
+    print(f'loading files... Opt gp {opt_i} SAR Gp {sar_i}')
+
+    statistics = load_yaml(statistics_file)
     
     label = load_sb_image(paths_params['label_test'])
-    pred_ds = PredDataset(patch_size, device, experiment_params, test_opt_img, test_sar_img, paths_params['previous_test'])
+    pred_ds = PredDataset(patch_size, device, experiment_params, test_opt_img, test_sar_img, paths_params['previous_test'], statistics)
 
     pred_global_sum = np.zeros(pred_ds.original_shape+(n_classes,))
     one_window = np.ones((patch_size, patch_size, n_classes))
 
-    for model_idx in tqdm(models_pred_idx, desc = 'Model '):
+    for model_idx in tqdm(models_pred_idx, desc = 'Models\' prediction'):
         pred_results = load_yaml(logs_path / f'model_{model_idx}' / 'train_results.yaml')
         model_class = locate(experiment_params['model'])#(experiment_params, training_params)
         model = model_class.load_from_checkpoint(pred_results['model_path'])
@@ -145,7 +151,6 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
 
             pred_global_sum += pred_sum / pred_count
 
-        p_time = (time.perf_counter() - t0)/60
         pred_global = pred_global_sum / len(overlaps)
         pred_global_file = predicted_path / f'{prediction_prefix}_prob_{opt_i}_{sar_i}_{model_idx}.npy'
         np.save(pred_global_file, pred_global[:,:,1].astype(np.float16))
@@ -157,6 +162,13 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
         base_data = Path(paths_params['opt_data']) / original_opt_imgs['test'][0]
         prediction_tif_file = visual_path / f'{prediction_prefix}_{args.experiment}_{opt_i}_{sar_i}_{model_idx}.tif'
         save_geotiff(base_data, prediction_tif_file, pred_b2, dtype = 'byte')
+
+        pred_results = {
+            'models_predicted': models_pred_idx,
+            'opt_files': str(test_opt_img),
+            'sar_files': str(test_sar_img)
+        }
+        save_yaml(pred_results, logs_path / f'pred_{opt_i}_{sar_i}.yaml')
 
 
 

@@ -130,15 +130,20 @@ training_params:
   sar_bands: *sar_bands 
   max_train_batches: 200
   max_val_batches: 100
-  min_val_loss: 0.1
+  min_val_loss: 0.6
   loss_fn: 
-    module: torchvision.ops.sigmoid_focal_loss #torch.nn.CrossEntropyLoss #torch.nn.functional.cross_entropy
-    #ignore_index: 2
-    weights: [0.15, 0.85, 0]
-  optimizer:
-    module: torch.optim.AdamW
+    module: torch.nn.CrossEntropyLoss
+    #module: segmentation_models_pytorch.losses.FocalLoss
     params:
-      lr: 2.0e-4
+      #mode: multiclass
+      ignore_index: 2
+      #gamma: 3
+      weight: [0.2, 0.8, 0]
+  optimizer:
+    #module: torch.optim.AdamW
+    module: torch.optim.Adam
+    params:
+      lr: 2.0e-5
   early_stop:
     patience: 10
     min_delta: 1.0e-5
@@ -238,7 +243,7 @@ experiments:
     n_classes: *n_classes
     train_opt_imgs: [ [0, 3] ]
     train_sar_imgs: [ [0, 11] ]
-    test_opt_imgs: [ [0, 5] ]
+    test_opt_imgs: [ [0, 3] ]
     test_sar_imgs: [ [0, 11] ]
     resunet_depths: *resunet_depths
 

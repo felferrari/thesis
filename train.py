@@ -5,13 +5,11 @@ from torch.multiprocessing import Process, freeze_support
 from torch.utils.data import DataLoader, RandomSampler
 import time
 from  pathlib import Path
-import yaml
 from utils.datasets import TrainDataset, ValDataset#, to_gpu
 from pydoc import locate
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.callbacks import ModelCheckpoint
-from lightning.pytorch.loggers.csv_logs import CSVLogger
 from lightning.pytorch.loggers.tensorboard import TensorBoardLogger
 
 parser = argparse.ArgumentParser(
@@ -28,7 +26,7 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 11,
+    default = 1,
     help = 'The number of the experiment'
 )
 
