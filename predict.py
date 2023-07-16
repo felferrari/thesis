@@ -116,7 +116,7 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
     pred_global_sum = np.zeros(pred_ds.original_shape+(n_classes,))
     one_window = np.ones((patch_size, patch_size, n_classes))
 
-    for model_idx in tqdm(models_pred_idx, desc = 'Models\' prediction'):
+    for model_idx in tqdm(models_pred_idx, desc = 'Models\' prediction', mininterval = 2):
         pred_results = load_yaml(logs_path / f'model_{model_idx}' / 'train_results.yaml')
         model_class = locate(experiment_params['model'])#(experiment_params, training_params)
         model = model_class.load_from_checkpoint(pred_results['model_path'])
@@ -137,7 +137,7 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
             preds = np.moveaxis(preds.numpy().astype(np.float16), 1, -1)
             pred_sum = np.zeros(pred_ds.padded_shape+(n_classes,)).reshape((-1, n_classes))
             pred_count = np.zeros(pred_ds.padded_shape+(n_classes,)).reshape((-1, n_classes))
-            for idx, idx_patch in enumerate(tqdm(pred_ds.idx_patches, desc = 'Rebuild', leave = False)):
+            for idx, idx_patch in enumerate(tqdm(pred_ds.idx_patches, desc = 'Rebuild', leave = False, mininterval = 2)):
                 crop_val = prediction_remove_border
                 idx_patch_crop = idx_patch[crop_val:-crop_val, crop_val:-crop_val]
                 pred_sum[idx_patch_crop] += preds[idx][crop_val:-crop_val, crop_val:-crop_val]
