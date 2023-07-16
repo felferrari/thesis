@@ -164,7 +164,7 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
         save_geotiff(base_data, prediction_tif_file, pred_b2, dtype = 'byte')
 
         pred_results = {
-            'models_predicted': models_pred_idx,
+            #'models_predicted': models_pred_idx,
             'opt_files': str(test_opt_img),
             'sar_files': str(test_sar_img)
         }
@@ -206,6 +206,7 @@ if __name__=="__main__":
     total_time = time.perf_counter() - t0
     m_time = total_time / (len(run_params) * len(models_pred_idx))
     pred_results = {
+        'models_predicted': models_pred_idx,
         'total_pred_time': total_time,
         'train_time_per_epoch': m_time
     }
