@@ -92,7 +92,6 @@ def load_SAR_image(img_file):
     """
     img = gdal_array.LoadFile(str(img_file))
     #temp_dn_img = 10**(db_img/10)
-    #temp_dn_img[temp_dn_img>1] = 1
     img[np.isnan(img)] = 0
     return np.moveaxis(img, 0, -1)
 
