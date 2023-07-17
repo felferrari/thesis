@@ -126,7 +126,7 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
             pred_ds.generate_overlap_patches(overlap)
             dataloader = DataLoader(pred_ds, batch_size=batch_size, shuffle=False)
 
-            pbar = tqdm(dataloader, desc='Prediction', leave = False)
+            pbar = tqdm(dataloader, desc='Prediction', leave = False, mininterval = 2)
             #preds = None
             preds = torch.zeros((len(pred_ds), n_classes, patch_size, patch_size))
 
