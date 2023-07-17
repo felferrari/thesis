@@ -137,13 +137,13 @@ training_params:
     params:
       mode: multiclass
       #ignore_index: 2
-      gamma: 3
+      gamma: 2
       #weight: [0.2, 0.8, 0]
   optimizer:
     module: torch.optim.AdamW
     #module: torch.optim.Adam
     params:
-      lr: 2.0e-5
+      lr: 2.0e-4
   early_stop:
     patience: 10
     min_delta: 1.0e-5
@@ -282,7 +282,7 @@ experiments:
     test_opt_imgs: [ [3] ]
     test_sar_imgs: [ [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40] ]
     resunet_depths: *resunet_depths
- 
+
   exp_11:
     model: models.swin.networks.SwinUnetOpt # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
     prefixs: *prefixs
