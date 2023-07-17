@@ -208,7 +208,7 @@ if __name__=="__main__":
     pred_results = {
         'models_predicted': models_pred_idx,
         'total_pred_time': total_time,
-        'train_time_per_epoch': m_time
+        'train_time_per_image': m_time
     }
     save_yaml(pred_results, logs_path / 'pred_results.yaml')
 
