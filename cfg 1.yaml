@@ -53,73 +53,24 @@ paths:
   previous_train: D:\Ferrari\Projects\thesis\data\general\previous_train.tif
   previous_test: D:\Ferrari\Projects\thesis\data\general\previous_test.tif
   prepared_data: C:\Users\felferrari\Documents\projetos\thesis\prepared
-# original_data:
-#   opt:
-#     n_bands: *opt_bands 
-#     folder: D:\Ferrari\Projects\thesis\data\opt_full_L1C
-    # imgs:
-    #   train:
-    #     - 2019-08-06-2019-08-07.tif # .10 *
-    #     - 2019-08-11-2019-08-12.tif # .46
-    #     - 2019-08-16-2019-08-17.tif # .6
-    #     - 2020-07-31-2020-08-01.tif # .018 *
-    #     - 2020-08-05-2020-08-06.tif # .19
-    #     - 2020-08-10-2020-08-11.tif #.82
-    #   test:
-    #     - 2020-07-31-2020-08-01.tif # 0.018 *
-    #     - 2020-08-05-2020-08-06.tif # .19
-    #     - 2020-08-10-2020-08-11.tif #.82
-    #     - 2021-06-26-2021-06-27.tif #.655
-    #     - 2021-07-01-2021-07-02.tif # .28
-    #     - 2021-07-11-2021-07-12.tif # .009 *
-  # sar:
-  #   n_bands: *sar_bands 
-  #   folder: D:\Ferrari\Projects\thesis\data\sar
-  #   imgs:
-  #     train: 
-  #       - 2019-07-14-2019-08-14.tif
-  #       - 2019-08-15-2019-09-15.tif
-  #       - 2019-09-16-2019-10-17.tif
-  #       - 2019-10-18-2019-11-18.tif
-  #       - 2019-11-19-2019-12-20.tif
-  #       - 2019-12-21-2020-01-21.tif
-  #       - 2020-01-22-2020-02-22.tif
-  #       - 2020-02-23-2020-03-25.tif
-  #       - 2020-03-26-2020-04-26.tif
-  #       - 2020-04-27-2020-05-28.tif
-  #       - 2020-05-29-2020-06-29.tif
-  #       - 2020-06-30-2020-07-30.tif
-  #     test: 
-  #       - 2020-06-30-2020-07-30.tif
-  #       - 2020-07-31-2020-08-30.tif
-  #       - 2020-08-31-2020-09-30.tif
-  #       - 2020-10-01-2020-10-31.tif
-  #       - 2020-11-01-2020-12-01.tif
-  #       - 2020-12-02-2021-01-01.tif
-  #       - 2021-01-02-2021-02-01.tif
-  #       - 2021-02-02-2021-03-03.tif
-  #       - 2021-03-04-2021-04-02.tif
-  #       - 2021-04-03-2021-05-02.tif
-  #       - 2021-05-03-2021-06-01.tif
-  #       - 2021-06-02-2021-07-01.tif
 prodes_params:
   defor_2007: accumulated_deforestation_2007.shp
   hydrography: hydrography.shp
   no_forest: no_forest.shp
   residual: residual.shp
   yearly_deforestation: yearly_deforestation.shp
-preparation_params:
-  train_folder: train
-  validation_folder: validation
-  test_folder: test
-  prepared_data: prepared.yaml
-  statistics_data: statistics.yaml
-  patch_size: *patch_size
-  opt_bands: *opt_bands 
-  sar_bands: *sar_bands 
-  patch_overlap: 0.7
-  min_def_proportion: 0.02
-  prefixs: *prefixs
+# preparation_params:
+#   train_folder: train
+#   validation_folder: validation
+#   test_folder: test
+#   prepared_data: prepared.yaml
+#   statistics_data: statistics.yaml
+#   patch_size: *patch_size
+#   opt_bands: *opt_bands 
+#   sar_bands: *sar_bands 
+#   patch_overlap: 0.7
+#   min_def_proportion: 0.02
+#   prefixs: *prefixs
 training_params:
   n_models: *n_models
   #experiments_cfg_path: *experiments_cfg_path
