@@ -269,12 +269,14 @@ if __name__=="__main__":
     timest = datetime.datetime.now()
     
     final_results = final_results_df.drop(['index', 'model_idx'], axis=1)
-    final_results.insert(0, 'experiment_n', args.experiment)
-    final_results.insert(1, 'time', timest)
+    final_results.insert(0, 'site', args.site)
+    final_results.insert(1, 'experiment_n', args.experiment)
+    final_results.insert(2, 'time', timest)
     final_results['exp_params'] = str(experiment_params)
 
-    sum_results_df.insert(0, 'experiment_n', args.experiment)
-    sum_results_df.insert(2, 'time', timest)
+    sum_results_df.insert(0, 'site', args.site)
+    sum_results_df.insert(1, 'experiment_n', args.experiment)
+    sum_results_df.insert(3, 'time', timest)
     sum_results_df = sum_results_df.dropna()
     sum_results_df = sum_results_df.astype({'model_idx': int})
 
