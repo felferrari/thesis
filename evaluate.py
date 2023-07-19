@@ -7,6 +7,8 @@ import pandas as pd
 import yaml
 from multiprocessing import Pool
 import tqdm
+import sqlite3
+import datetime
 
 parser = argparse.ArgumentParser(
     description='Train NUMBER_MODELS models based in the same parameters'
@@ -60,6 +62,8 @@ logs_path = exp_path / experiments_paths['logs']
 visual_path = exp_path / experiments_paths['visual']
 predicted_path = exp_path / experiments_paths['predicted']
 results_path = exp_path / experiments_paths['results']
+
+results_sqlite_path = Path(paths_params['results_sqlite'])
 
 patch_size = general_params['patch_size']
 n_classes = general_params['n_classes']
@@ -262,5 +266,22 @@ if __name__=="__main__":
 
     final_results_file = results_path / f'results_{args.experiment}.data'
     final_results_df.to_pickle(final_results_file)
+
+    timest = datetime.datetime.now()
+    
+    final_results = final_results_df.drop(['index', 'model_idx'], axis=1)
+    final_results.insert(0, 'experiment_n', args.experiment)
+    final_results.insert(1, 'time', timest)
+    final_results['exp_params'] = str(experiment_params)
+
+    sum_results_df.insert(0, 'experiment_n', args.experiment)
+    sum_results_df.insert(2, 'time', timest)
+    sum_results_df = sum_results_df.dropna()
+    sum_results_df = sum_results_df.astype({'model_idx': int})
+
+    con = sqlite3.connect(results_sqlite_path)
+    final_results.to_sql('experiments', con, if_exists = 'append', index = False)
+
+
 
         
