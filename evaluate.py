@@ -4,7 +4,6 @@ import numpy as np
 from utils.ops import save_geotiff, load_sb_image, load_yaml
 from skimage.morphology import area_opening
 import pandas as pd
-import yaml
 from multiprocessing import Pool
 import tqdm
 import sqlite3
