@@ -79,24 +79,24 @@ class ResUnetEF(GenericResunet):
 class ResUnetJF(GenericModel):
     def __init__(self, *args, **kargs):
         super(ResUnetJF, self).__init__(*args, **kargs)
-        self.encoder_0 = ResUnetEncoder(self.opt_input, self.depths)
-        self.encoder_1 = ResUnetEncoder(self.sar_input, self.depths)
+        self.encoder_opt = ResUnetEncoder(self.opt_input, self.depths)
+        self.encoder_sar = ResUnetEncoder(self.sar_input, self.depths)
         self.decoder = ResUnetDecoderJF(self.depths)
         self.classifier = ResUnetClassifier(self.depths[0], self.n_classes)
 
 
     def forward(self, x):
-        x_img_0 = self.get_opt(x)
-        x_0 = torch.cat((x_img_0, x[2]), dim=1)
+        x_img_opt = self.get_opt(x)
+        x_opt = torch.cat((x_img_opt, x[2]), dim=1)
 
-        x_img_1 = self.get_sar(x)
-        x_1 = torch.cat((x_img_1, x[2]), dim=1)
+        x_img_sar = self.get_sar(x)
+        x_sar = torch.cat((x_img_sar, x[2]), dim=1)
 
-        x_0 = self.encoder_0(x_0)
-        x_1 = self.encoder_1(x_1)
+        x_opt = self.encoder_opt(x_opt)
+        x_sar = self.encoder_sar(x_sar)
         x = []
-        for i in range(len(x_0)):
-            x_cat = torch.cat((x_0[i], x_1[i]), dim=1)
+        for i in range(len(x_opt)):
+            x_cat = torch.cat((x_opt[i], x_sar[i]), dim=1)
             x.append(x_cat)
 
         x = self.decoder(x)
@@ -108,22 +108,22 @@ class ResUnetJFNoSkip(GenericModel):
     def __init__(self, *args, **kargs):
         super(ResUnetJFNoSkip, self).__init__(*args, **kargs)
 
-        self.encoder_0 = ResUnetEncoder(self.opt_input, self.depths)
-        self.encoder_1 = ResUnetEncoder(self.sar_input, self.depths)
+        self.encoder_opt = ResUnetEncoder(self.opt_input, self.depths)
+        self.encoder_sar = ResUnetEncoder(self.sar_input, self.depths)
         self.decoder = ResUnetDecoderJF(self.depths)
         self.classifier = ResUnetClassifier(self.depths[0], self.n_classes)
 
 
     def forward(self, x):
-        x_img_0 = self.get_opt(x)
-        x_0 = torch.cat((x_img_0, x[2]), dim=1)
+        x_img_opt = self.get_opt(x)
+        x_opt = torch.cat((x_img_opt, x[2]), dim=1)
 
-        x_img_1 = self.get_sar(x)
-        x_1 = torch.cat((x_img_1, x[2]), dim=1)
+        x_img_sar = self.get_sar(x)
+        x_sar = torch.cat((x_img_sar, x[2]), dim=1)
 
-        x_0 = self.encoder_0(x_0)
-        x_1 = self.encoder_1(x_1)
-        x = torch.cat((x_0[-1], x_1[-1]), dim=1)
+        x_opt = self.encoder_opt(x_opt)
+        x_sar = self.encoder_sar(x_sar)
+        x = torch.cat((x_opt[-1], x_sar[-1]), dim=1)
 
         x = self.decoder(x)
         x = self.classifier(x)
@@ -134,26 +134,26 @@ class ResUnetLF(GenericModel):
     def __init__(self, *args, **kargs):
         super(ResUnetLF, self).__init__(*args, **kargs)
 
-        self.encoder_0 = ResUnetEncoder(self.opt_input, self.depths)
-        self.encoder_1 = ResUnetEncoder(self.sar_input, self.depths)
-        self.decoder_0 = ResUnetDecoder(self.depths)
-        self.decoder_1 = ResUnetDecoder(self.depths)
+        self.encoder_opt = ResUnetEncoder(self.opt_input, self.depths)
+        self.encoder_sar = ResUnetEncoder(self.sar_input, self.depths)
+        self.decoder_opt = ResUnetDecoder(self.depths)
+        self.decoder_sar = ResUnetDecoder(self.depths)
         self.classifier = ResUnetClassifier(2*self.depths[0], self.n_classes)
 
     def forward(self, x):
-        x_img_0 = self.get_opt(x)
-        x_0 = torch.cat((x_img_0, x[2]), dim=1)
+        x_img_opt = self.get_opt(x)
+        x_opt = torch.cat((x_img_opt, x[2]), dim=1)
 
-        x_img_1 = self.get_sar(x)
-        x_1 = torch.cat((x_img_1, x[2]), dim=1)
+        x_img_sar = self.get_sar(x)
+        x_sar = torch.cat((x_img_sar, x[2]), dim=1)
 
-        x_0 = self.encoder_0(x_0)
-        x_1 = self.encoder_1(x_1)
+        x_opt = self.encoder_opt(x_opt)
+        x_sar = self.encoder_sar(x_sar)
 
-        x_0 = self.decoder_0(x_0)
-        x_1 = self.decoder_1(x_1)
+        x_opt = self.decoder_opt(x_opt)
+        x_sar = self.decoder_sar(x_sar)
 
-        x = torch.cat((x_0, x_1), dim=1)
+        x = torch.cat((x_opt, x_sar), dim=1)
 
         x = self.classifier(x)
 
