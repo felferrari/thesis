@@ -127,6 +127,58 @@ def run(model_idx):
 
         model = locate(experiment_params['model'])(experiment_params, training_params)
 
+        if 'pretrained_encoders' in experiment_params.keys():
+            pretrained_encoder_params = experiment_params['pretrained_encoders']
+            pretrained_opt_exp = pretrained_encoder_params['opt_exp']
+            pretrained_sar_exp = pretrained_encoder_params['sar_exp']
+            opt_exp_params = cfg['experiments'][f'exp_{pretrained_opt_exp}']
+            sar_exp_params = cfg['experiments'][f'exp_{pretrained_sar_exp}']
+
+            opt_exp_path = Path(experiments_paths) / f'exp_{pretrained_opt_exp}'
+            sar_exp_path = Path(experiments_paths) / f'exp_{pretrained_sar_exp}'
+
+            opt_logs_path = opt_exp_path / experiments_folders['logs']
+            sar_logs_path = sar_exp_path / experiments_folders['logs']
+
+            opt_pred_results = load_yaml(opt_logs_path / f'model_{model_idx}' / 'train_results.yaml')
+            sar_pred_results = load_yaml(sar_logs_path / f'model_{model_idx}' / 'train_results.yaml')
+
+            opt_model = locate(opt_exp_params['model'])
+            sar_model = locate(sar_exp_params['model'])
+
+            opt_model = opt_model.load_from_checkpoint(opt_pred_results['model_path'])
+            sar_model = sar_model.load_from_checkpoint(sar_pred_results['model_path'])
+
+            model.encoder_opt.load_state_dict(opt_model.encoder.state_dict())
+            model.encoder_sar.load_state_dict(sar_model.encoder.state_dict())
+
+        if 'pretrained_encoders_decoders' in experiment_params.keys():
+            pretrained_encoder_params = experiment_params['pretrained_encoders_decoders']
+            pretrained_opt_exp = pretrained_encoder_params['opt_exp']
+            pretrained_sar_exp = pretrained_encoder_params['sar_exp']
+            opt_exp_params = cfg['experiments'][f'exp_{pretrained_opt_exp}']
+            sar_exp_params = cfg['experiments'][f'exp_{pretrained_sar_exp}']
+
+            opt_exp_path = Path(experiments_paths) / f'exp_{pretrained_opt_exp}'
+            sar_exp_path = Path(experiments_paths) / f'exp_{pretrained_sar_exp}'
+
+            opt_logs_path = opt_exp_path / experiments_folders['logs']
+            sar_logs_path = sar_exp_path / experiments_folders['logs']
+
+            opt_pred_results = load_yaml(opt_logs_path / f'model_{model_idx}' / 'train_results.yaml')
+            sar_pred_results = load_yaml(sar_logs_path / f'model_{model_idx}' / 'train_results.yaml')
+
+            opt_model = locate(opt_exp_params['model'])
+            sar_model = locate(sar_exp_params['model'])
+
+            opt_model = opt_model.load_from_checkpoint(opt_pred_results['model_path'])
+            sar_model = sar_model.load_from_checkpoint(sar_pred_results['model_path'])
+
+            model.encoder_opt.load_state_dict(opt_model.encoder.state_dict())
+            model.decoder_opt.load_state_dict(opt_model.decoder.state_dict())
+            model.encoder_sar.load_state_dict(sar_model.encoder.state_dict())
+            model.decoder_sar.load_state_dict(sar_model.decoder.state_dict())
+
         tb_logger = TensorBoardLogger(
             save_dir = logs_path,
             name = f'model_{model_idx}',
