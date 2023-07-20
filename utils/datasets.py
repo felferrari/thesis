@@ -98,10 +98,10 @@ class PredDataset(Dataset):
         self.device = device
         self.params = params
 
-        opt_means = statistics['opt_means']
-        opt_stds = statistics['opt_stds']
-        sar_means = statistics['sar_means']
-        sar_stds = statistics['sar_stds']
+        # opt_means = statistics['opt_means']
+        # opt_stds = statistics['opt_stds']
+        # sar_means = statistics['sar_means']
+        # sar_stds = statistics['sar_stds']
 
         previous = load_sb_image(prev_file)
         self.original_shape = previous.shape

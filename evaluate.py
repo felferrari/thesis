@@ -282,6 +282,7 @@ if __name__=="__main__":
 
     con = sqlite3.connect(results_sqlite_path)
     final_results.to_sql('experiments', con, if_exists = 'append', index = False)
+    sum_results_df.to_sql('all_models', con, if_exists = 'append', index = False)
 
 
 

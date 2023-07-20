@@ -90,7 +90,7 @@ opt_prefix = prefix_params['opt']
 sar_prefix = prefix_params['sar']
 label_prefix = prefix_params['label']
 previous_prefix = prefix_params['previous']
-
+cloud_prefix = prefix_params['cloud']
 
 prepared_folder = Path(paths_params['prepared_data'])
 train_folder = prepared_folder / preparation_params['train_folder']
@@ -128,7 +128,7 @@ idx_patches = view_as_windows(idx, window_shape, slide_step).reshape((-1, patch_
 
 np.random.seed(123)
 
-cloud_prefix = preparation_params['prefixs']['cloud']
+
 
 
 if args.statistics:

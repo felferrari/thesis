@@ -1,7 +1,8 @@
 #! /bin/bash
-python train.py -e 8 -d 1 -s 2
-python predict.py -e 8 -d 1 -s 2
-python evaluate.py -e 8 -s 2
+python prepare-data.py -s 2
+python train.py -e 10 -d 1 -s 2 -i 2
+python predict.py -e 10 -d 1 -s 2
+python evaluate.py -e 10 -s 2
 
 
 
