@@ -41,19 +41,19 @@ preparation_params:
   patch_overlap: 0.7
   min_def_proportion: 0.02
 paths:
-  opt_data: /home/felferrari/projects/thesis/data/opt
-  sar_data: /home/felferrari/projects/thesis/data/sar
+  opt_data: D:\Ferrari\Projects\thesis\data\opt_full_L1C
+  sar_data: D:\Ferrari\Projects\thesis\data\sar
   #avg_sar_data: D:\Ferrari\Projects\thesis\data\sar_avg
   #single_sar_data: D:\Ferrari\Projects\thesis\data\sar_single
-  prodes_data: /home/felferrari/projects/thesis/data/prodes
-  tiles_path: /home/felferrari/projects/thesis/data/general/tiles.tif
-  experiments: /home/felferrari/projects/thesis/experiments
-  label_train: /home/felferrari/projects/thesis/data/general/label_train.tif
-  label_test: /home/felferrari/projects/thesis/data/general/label_test.tif
-  previous_train: /home/felferrari/projects/thesis/data/general/previous_train.tif
-  previous_test: /home/felferrari/projects/thesis/data/general/previous_test.tif
-  prepared_data: /home/felferrari/projects/thesis/prepared
-  results_sqlite: /home/felferrari/projects/thesis/experiments/results.db
+  prodes_data: D:\Ferrari\Projects\thesis\prodes
+  tiles_path: D:\Ferrari\Projects\thesis\data\general\tiles.tif
+  experiments: D:\Ferrari\Projects\thesis\experiments
+  label_train: D:\Ferrari\Projects\thesis\data\general\label_train.tif
+  label_test: D:\Ferrari\Projects\thesis\data\general\label_test.tif
+  previous_train: D:\Ferrari\Projects\thesis\data\general\previous_train.tif
+  previous_test: D:\Ferrari\Projects\thesis\data\general\previous_test.tif
+  prepared_data: C:\Users\felferrari\Documents\projetos\thesis\prepared
+  results_sqlite: D:\Ferrari\Projects\thesis\experiments\results.db
 prodes_params:
   defor_2007: accumulated_deforestation_2007.shp
   hydrography: hydrography.shp
@@ -95,7 +95,7 @@ training_params:
     module: torch.optim.AdamW
     #module: torch.optim.Adam
     params:
-      lr: 2.0e-5
+      lr: 2.0e-4
   early_stop:
     patience: 10
     min_delta: 1.0e-5
@@ -107,7 +107,7 @@ prediction_params:
   n_classes: *n_classes
   prefixs: *prefixs
   n_models: *n_models
-  batch_size: 32
+  batch_size: 24
   prediction_remove_border: 8
   prediction_overlaps: [0.2]#, 0.3, 0.4]
   opt_bands: *opt_bands 
@@ -308,8 +308,80 @@ experiments:
     resunet_depths: *resunet_depths
 
 
+  exp_21:
+    model: models.swin.networks.SwinUnetOpt # 
+    description: Optical (Diverse cloud)
+    sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 11] ]
+    swin_params: *swin_params
+
+  exp_22:
+    model: models.swin.networks.SwinUnetSAR # 
+    description: SAR (12 Average images)
+    sumary: Model Trained and tested with 12 average SAR images
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3] , [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    swin_params: *swin_params
+
+  exp_23:
+    model: models.swin.networks.SwinUnetEF # 
+    description: Early Fusion (Diverse cloud and 12 Avg SAR images)
+    sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    swin_params: *swin_params
+
+  exp_24:
+    model: models.swin.networks.SwinUnetJF # 
+    description: Joint Fusion (Diverse cloud and 12 Avg SAR images)
+    sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    swin_params: *swin_params
+
+  exp_25:
+    model: models.swin.networks.SwinUnetLF # 
+    description: Late Fusion (Diverse cloud and 12 Avg SAR images)
+    sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    swin_params: *swin_params
+
   exp_26:
-    model: models.resunet2.networks.ResUnetOpt # ResUnetOpt ResUnetSAR ResUnetEF ResUnetJF ResUnetLF
+    model: models.swin.networks.SwinUnetOpt # 
+    description: Opt (Cloud-free)
+    sumary: Model Trained and tested with cloud-free optical images
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -318,4 +390,4 @@ experiments:
     train_sar_imgs: [ [0, 11] ]
     test_opt_imgs: [ [0, 3] ]
     test_sar_imgs: [ [0, 11] ]
-    resunet_depths: *resunet_depths
+    swin_params: *swin_params

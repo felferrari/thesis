@@ -240,7 +240,7 @@ def run(model_idx):
             logger = loggers,
             log_every_n_steps = 1,
             #num_sanity_val_steps = 0
-            enable_progress_bar = False
+            enable_progress_bar = True
             )
         
         t0 = time.time()
