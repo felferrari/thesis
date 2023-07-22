@@ -41,6 +41,13 @@ parser.add_argument( # specific site location number
     help = 'Site location number'
 )
 
+parser.add_argument( # specific site location number
+    '-p', '--processes',
+    type = int,
+    default=9,
+    help = 'Number of paralel threads'
+)
+
 args = parser.parse_args()
 
 cfg = load_yaml(args.cfg)
@@ -201,7 +208,7 @@ def eval_prediction(data):
 if __name__=="__main__":
     
 
-    with Pool(9) as pool:
+    with Pool(args.processes) as pool:
         #metrics = pool.imap(eval_prediction, imgs_groups_idxs)
         metrics = list(tqdm.tqdm(pool.imap(eval_prediction, imgs_groups_idxs), total=len(imgs_groups_idxs), desc = 'Evaluating Predictions'))
 
