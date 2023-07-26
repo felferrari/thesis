@@ -121,6 +121,7 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
         model_class = locate(experiment_params['model'])#(experiment_params, training_params)
         model = model_class.load_from_checkpoint(pred_results['model_path'])
         model.to(device)
+        model.eval()
 
         for overlap in overlaps:
             pred_ds.generate_overlap_patches(overlap)
@@ -132,7 +133,7 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
 
             for i, X in enumerate(pbar):
                 with torch.no_grad():
-                    preds[batch_size*i: batch_size*(i+1)] =  model(X).to('cpu')
+                    preds[batch_size*i: batch_size*(i+1)] =  model.predict_step(X, i).to('cpu')
 
             preds = np.moveaxis(preds.numpy().astype(np.float16), 1, -1)
             pred_sum = np.zeros(pred_ds.padded_shape+(n_classes,)).reshape((-1, n_classes))

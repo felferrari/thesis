@@ -11,6 +11,7 @@ import lightning.pytorch as pl
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers.tensorboard import TensorBoardLogger
+#from fvcore.nn import flop_count_table, FlopCountAnalysis, flop_count
 
 parser = argparse.ArgumentParser(
     description='Train NUMBER_MODELS models based in the same parameters'
@@ -116,6 +117,9 @@ n_classes = general_params['n_classes']
 batch_size = training_params['batch_size']
 min_val_loss = training_params['min_val_loss']
 
+if 'override_train_params' in experiment_params.keys():
+    training_params.update(experiment_params['override_train_params'])
+
 
 def run(model_idx):
     last_val_loss = float('inf')
@@ -207,7 +211,7 @@ def run(model_idx):
 
         train_ds = TrainDataset(experiment_params, train_folder, prepared_patches['train'])
         val_ds = ValDataset(experiment_params, val_folder, prepared_patches['val'])
-        
+
         train_dl = DataLoader(
             dataset=train_ds,
             batch_size=batch_size,
@@ -222,6 +226,9 @@ def run(model_idx):
             num_workers=8,
             persistent_workers=True
         )
+        #inputs = next(iter(val_dl))[0]
+        #print(flop_count_table(FlopCountAnalysis(model, inputs)))
+        #flops = flop_count(model, inputs)
 
         early_stop_callback = EarlyStopping(monitor="val_loss", verbose = True, mode="min", **training_params['early_stop'])
         monitor_checkpoint_callback = ModelCheckpoint(

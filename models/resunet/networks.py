@@ -1,9 +1,9 @@
-from .layers import ResUnetEncoder, ResUnetDecoder, ResUnetClassifier, ResUnetDecoderJF, ResUnetDecoderJFNoSkip
+from .layers import ResUnetEncoder, ResUnetDecoder, ResUnetClassifier, ResUnetDecoderJF, ResUnetDecoderJFNoSkip, ResUnetRegressionClassifier
 from torch import nn
 import torch
 from abc import abstractmethod
 from einops import rearrange
-from ..utils import ModelModule
+from ..utils import ModelModule, ModelModuleMultiTask
 
 class GenericModel(ModelModule):
     def __init__(self, params, training_params) -> None:
@@ -159,3 +159,41 @@ class ResUnetLF(GenericModel):
 
         return x
 
+class ResUnetOptMultiTask(ModelModuleMultiTask):
+    def __init__(self, params, training_params) -> None:
+        super().__init__(training_params)
+        self.opt_input = len(params['train_opt_imgs'][0]) * params['opt_bands'] + 1
+        self.sar_input = len(params['train_sar_imgs'][0]) * params['sar_bands'] + 1
+
+        #self.opt_imgs = len(params['train_opt_imgs'][0])
+        #self.sar_imgs = len(params['train_sar_imgs'][0])
+        self.n_classes = params['n_classes']
+        self.depths = params['resunet_depths']
+
+        self.encoder = ResUnetEncoder(self.opt_input, self.depths)
+        self.decoder_def = ResUnetDecoder(self.depths)
+        self.decoder_cloud = ResUnetDecoder(self.depths)
+        self.classifier_def = ResUnetClassifier(self.depths[0], self.n_classes)
+        self.classifier_cloud = ResUnetRegressionClassifier(self.depths[0])
+
+    def get_opt(self, x):
+        return rearrange(x[0], 'b i c h w -> b (i c) h w')
+    
+    def get_sar(self, x):
+        return rearrange(x[1], 'b i c h w -> b (i c) h w')
+
+
+    def forward(self, x):
+        x_img_opt = self.get_opt(x)
+        x_opt = torch.cat((x_img_opt, x[2]), dim=1)
+
+        x_opt = self.encoder(x_opt)
+
+        x_def = self.decoder_def(x_opt)
+        x_cloud = self.decoder_cloud(x_opt)
+
+        x_def = self.classifier_def(x_def)
+        x_cloud = self.classifier_cloud(x_cloud)
+        #x_cloud = torch.squeeze(x_cloud, 1)
+
+        return x_def, x_cloud

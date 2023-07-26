@@ -133,3 +133,16 @@ class ResUnetClassifier(nn.Module):
         x = self.last_conv(x)
         x = self.last_act(x)
         return x
+    
+class ResUnetRegressionClassifier(nn.Module):
+    def __init__(self, depth):
+        super().__init__()
+        self.res_block = ResidualBlock(depth, depth)
+        self.last_conv = nn.Conv2d(depth, 2, kernel_size=1)
+        self.last_act = nn.Sigmoid()
+
+    def forward(self, x):
+        x = self.res_block(x)
+        x = self.last_conv(x)
+        x = self.last_act(x)
+        return x
