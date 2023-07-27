@@ -125,7 +125,7 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
 
         for overlap in overlaps:
             pred_ds.generate_overlap_patches(overlap)
-            dataloader = DataLoader(pred_ds, batch_size=batch_size, shuffle=False)
+            dataloader = DataLoader(pred_ds, batch_size=batch_size, shuffle=False, num_workers=4)
 
             pbar = tqdm(dataloader, desc='Prediction', leave = False, mininterval = 2)
             #preds = None
@@ -154,11 +154,14 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
 
         pred_global = pred_global_sum / len(overlaps)
         pred_global_file = predicted_path / f'{prediction_prefix}_prob_{opt_i}_{sar_i}_{model_idx}.npy'
-        np.save(pred_global_file, pred_global[:,:,1].astype(np.float16))
+        
 
         #pred_b2 = (pred_global[:,:,1] > 0.5).astype(np.uint8)
         pred_b2 = (np.argmax(pred_global, -1)==1).astype(np.uint8)
+        pred_b2[pred_b2 == 2] = 0
         pred_b2[label == 2] = 2
+
+        np.save(pred_global_file, pred_global[:,:,1].astype(np.float16))
 
         base_data = Path(paths_params['opt_data']) / original_opt_imgs['test'][0]
         prediction_tif_file = visual_path / f'{prediction_prefix}_{args.experiment}_{opt_i}_{sar_i}_{model_idx}.tif'

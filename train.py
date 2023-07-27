@@ -115,7 +115,7 @@ prepared_patches = load_yaml(prepared_patches_file)
 patch_size = general_params['patch_size']
 n_classes = general_params['n_classes']
 
-batch_size = training_params['batch_size']
+batch_size = training_params['batch_size'] // len(args.devices)
 min_val_loss = training_params['min_val_loss']
 
 if 'override_train_params' in experiment_params.keys():
@@ -250,7 +250,7 @@ def run(model_idx):
             devices = args.devices,
             limit_train_batches = training_params['max_train_batches'], 
             limit_val_batches = training_params['max_val_batches'], 
-            max_epochs = 1, #training_params['max_epochs'], 
+            max_epochs = training_params['max_epochs'], 
             callbacks = [early_stop_callback, monitor_checkpoint_callback], 
             logger = loggers,
             log_every_n_steps = 1,

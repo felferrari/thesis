@@ -13,7 +13,7 @@ from lightning.pytorch.core import LightningModule
 from lightning.pytorch.trainer import Trainer
 from .ops import load_opt_image, load_SAR_image, load_sb_image
 from einops import rearrange
-
+import time
 
 class GenericTrainDataset(Dataset):
     def __init__(self, params, data_folder, n_patches):
@@ -114,7 +114,7 @@ class PredDataset(Dataset):
         pad_shape = ((self.patch_size, self.patch_size),(self.patch_size, self.patch_size), (0, 0))
 
         self.opt_data = [
-            rearrange(np.pad((load_opt_image(opt_file)/10000).astype(np.float16), pad_shape, mode='reflect'), 'h w c -> (h w) c')
+            rearrange(np.pad((load_opt_image(opt_file)).astype(np.float16), pad_shape, mode='reflect'), 'h w c -> (h w) c')
             #rearrange(np.pad(((load_opt_image(opt_file) - opt_means) / opt_stds).astype(np.float16), pad_shape, mode='reflect'), 'h w c -> (h w) c')
             for opt_file in opt_files
         ]

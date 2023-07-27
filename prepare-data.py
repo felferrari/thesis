@@ -242,7 +242,7 @@ if args.train_data:
         data = load_opt_image(data_file)
         data = remove_outliers(data)
         #data = (data - opt_means) / opt_stds
-        data = data / 10000
+        #data = data / 10000
         opt_imgs.append(data.astype(np.float16).reshape((-1, opt_bands)))
 
     for opt_img_i, opt_img_file in enumerate(tqdm(original_opt_imgs['train'], desc = 'Reading Cloud Training files')):
@@ -346,7 +346,7 @@ if args.test_data:
         data = load_opt_image(data_file)
         data = remove_outliers(data)
         #data = (data - opt_means) / opt_stds
-        data = data / 10000
+        #data = data / 10000
         data_patch_file = test_folder / f'{opt_prefix}_{opt_img_i}.h5'
         with h5py.File(data_patch_file, "w") as f:
             f.create_dataset('opt', data=data.astype(np.float16), compression='lzf')

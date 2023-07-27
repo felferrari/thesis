@@ -7,7 +7,7 @@ from osgeo import gdal, gdalconst
 from pathlib import Path
 from typing import Union
 import yaml 
-from sklearn.preprocessing import QuantileTransformer
+from multiprocessing import Pool
 
 def remove_outliers(img, signficance = 0.01):
     outliers = np.quantile(img, [signficance, 1-signficance], axis = (0,1))
@@ -24,7 +24,7 @@ def save_json(dict_:dict, file_path: Union[str, Path]) -> None:
     """Save a dictionary into a file
 
     Args:
-        dict_ (dict): Dictionaruy to be saved
+        dict_ (dict): Dictionary to be saved
         file_path (Union[str, Path]): file path
     """
 
@@ -35,7 +35,7 @@ def save_yaml(dict_:dict, file_path: Union[str, Path]) -> None:
     """Save a dictionary into a file
 
     Args:
-        dict_ (dict): Dictionaruy to be saved
+        dict_ (dict): Dictionary to be saved
         file_path (Union[str, Path]): file path
     """
 
@@ -46,13 +46,12 @@ def load_yaml(file_path: Union[str, Path]) -> None:
     """Save a dictionary into a file
 
     Args:
-        dict_ (dict): Dictionaruy to be saved
+        dict_ (dict): Dictionary to be saved
         file_path (Union[str, Path]): file path
     """
 
     with open(file_path, 'r') as f:
         return yaml.safe_load(f)
-    
     
 def load_opt_image(img_file):
     """load optical data.
@@ -63,11 +62,11 @@ def load_opt_image(img_file):
     Returns:
         array:numpy array of the image.
     """
-    img = gdal_array.LoadFile(str(img_file))
+    img = gdal_array.LoadFile(str(img_file)).astype(np.float16)
     img[np.isnan(img)] = 0
     if len(img.shape) == 2 :
         img = np.expand_dims(img, axis=0)
-    return np.moveaxis(img, 0, -1)
+    return np.moveaxis(img, 0, -1) / 10000
 
 def load_sb_image(img_file):
     """load a single band geotiff image.
