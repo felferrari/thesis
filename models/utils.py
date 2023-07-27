@@ -58,8 +58,8 @@ class ModelModule(L.LightningModule):
         return optimizer
     
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        x, y = batch
-        return self.forward(x)
+        
+        return self.forward(batch)
     
 class ModelModuleMultiTask(L.LightningModule):
     def __init__(self, training_params):
