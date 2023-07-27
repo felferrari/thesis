@@ -41,19 +41,19 @@ preparation_params:
   patch_overlap: 0.7
   min_def_proportion: 0.02
 paths:
-  opt_data: D:\Ferrari\Projects\thesis\data\opt_full_L1C
-  sar_data: D:\Ferrari\Projects\thesis\data\sar
+  opt_data: /home/felferrari/projects/thesis/data/opt
+  sar_data: /home/felferrari/projects/thesis/data/sar
   #avg_sar_data: D:\Ferrari\Projects\thesis\data\sar_avg
   #single_sar_data: D:\Ferrari\Projects\thesis\data\sar_single
-  prodes_data: D:\Ferrari\Projects\thesis\prodes
-  tiles_path: D:\Ferrari\Projects\thesis\data\general\tiles.tif
-  experiments: D:\Ferrari\Projects\thesis\experiments
-  label_train: D:\Ferrari\Projects\thesis\data\general\label_train.tif
-  label_test: D:\Ferrari\Projects\thesis\data\general\label_test.tif
-  previous_train: D:\Ferrari\Projects\thesis\data\general\previous_train.tif
-  previous_test: D:\Ferrari\Projects\thesis\data\general\previous_test.tif
-  prepared_data: C:\Users\felferrari\Documents\projetos\thesis\prepared
-  results_sqlite: D:\Ferrari\Projects\thesis\experiments\results.db
+  prodes_data: /home/felferrari/projects/thesis/data/prodes
+  tiles_path: /home/felferrari/projects/thesis/data/general/tiles.tif
+  experiments: /home/felferrari/projects/thesis/experiments
+  label_train: /home/felferrari/projects/thesis/data/general/label_train.tif
+  label_test: /home/felferrari/projects/thesis/data/general/label_test.tif
+  previous_train: /home/felferrari/projects/thesis/data/general/previous_train.tif
+  previous_test: /home/felferrari/projects/thesis/data/general/previous_test.tif
+  prepared_data: /home/felferrari/projects/thesis/prepared
+  results_sqlite: /home/felferrari/projects/thesis/experiments/results.db
 prodes_params:
   defor_2007: accumulated_deforestation_2007.shp
   hydrography: hydrography.shp
@@ -129,7 +129,7 @@ experiments:
 
   exp_1:
     model: models.resunet.networks.ResUnetOpt # 
-    description: CNN Opt (Cloud-free)
+    description: CNN Opt (Diverse cloud)
     sumary: Model Trained and tested with cloud-free optical images
     prefixs: *prefixs
     opt_bands: *opt_bands
@@ -331,6 +331,52 @@ experiments:
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     resunet_depths: *resunet_depths
 
+  exp_15:
+    model: models.resunet.networks.ResUnetOptMultiTask # 
+    description: CNN Multi-task Opt (Diverse cloud) 
+    sumary: Model Trained and tested with cloud-free optical images
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 11] ]
+    resunet_depths: *resunet_depths
+    override_train_params:
+      loss_fn_def: 
+        module: segmentation_models_pytorch.losses.FocalLoss
+        params:
+          mode: multiclass
+          gamma: 3
+      loss_fn_cloud:
+        weight: 1.0
+        module: torch.nn.MSELoss
+        params:
+          reduction: mean
+      optimizer:
+        module: torch.optim.AdamW
+        params:
+          lr: 2.0e-5
+
+  exp_16:
+    model: models.resunet.networks.ResUnetJF # 
+    description: CNN pretrained (Multi-task) Joint Fusion (Diverse cloud and 12 Avg SAR images)
+    sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    pretrained_encoders:
+      opt_exp: 15
+      sar_exp: 2
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    resunet_depths: *resunet_depths
+    
 
   exp_21:
     model: models.swin.networks.SwinUnetOpt # 
