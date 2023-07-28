@@ -45,14 +45,14 @@ cloud_detector = S2PixelCloudDetector(threshold=0.4, average_over=4, dilation_si
 opt_files = list(set(original_data['opt_imgs']['train']).union(set(original_data['opt_imgs']['test'])))
 
 for opt_img_file in tqdm(opt_files, desc = 'Generating Clouds for OPT files'):
-    opt_img = load_opt_image(opt_folder / opt_img_file) / 10000
+    opt_img = load_opt_image(opt_folder / opt_img_file) 
     cloud_map = np.squeeze(cloud_detector.get_cloud_probability_maps(np.expand_dims(opt_img, axis=0)))
 
     cloud_tif_file = opt_folder / f'{cloud_prefix}_{opt_img_file}'
     save_geotiff(base_image, cloud_tif_file, cloud_map, dtype = 'float')
 
 # for opt_img_file in tqdm(original_data['opt_imgs']['train'], desc = 'Generating Clouds for Trainig files'):
-#     opt_img = load_opt_image(opt_folder / opt_img_file) / 10000
+#     opt_img = load_opt_image(opt_folder / opt_img_file)
 #     cloud_map = np.squeeze(cloud_detector.get_cloud_probability_maps(np.expand_dims(opt_img, axis=0)))
 
 #     cloud_tif_file = opt_folder / f'{cloud_prefix}_{opt_img_file}'
