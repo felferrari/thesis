@@ -80,6 +80,22 @@ def load_sb_image(img_file):
     img = gdal_array.LoadFile(str(img_file))
     return img
 
+def load_ml_image(img_file):
+    """load a single band geotiff image.
+
+    Args:
+        img_file (str): path to the geotiff file.
+
+    Returns:
+        array:numpy array of the image. Channels Last.
+    """
+    img = gdal_array.LoadFile(str(img_file)).astype(np.float16)
+    img[np.isnan(img)] = 0
+    if len(img.shape) == 2 :
+        img = np.expand_dims(img, axis=0)
+    return np.moveaxis(img, 0, -1)
+
+
 def load_SAR_image(img_file):
     """load SAR image, converting from Db to DN.
 

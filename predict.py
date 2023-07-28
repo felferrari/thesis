@@ -7,11 +7,8 @@ import torch
 from tqdm import tqdm
 import numpy as np
 from utils.ops import save_geotiff, load_yaml, save_yaml, load_sb_image
-import logging
-import yaml
-from multiprocessing import Process, freeze_support, Pool
+from multiprocessing import Process, freeze_support
 from pydoc import locate
-import lightning.pytorch as pl
 
 parser = argparse.ArgumentParser(
     description='Train NUMBER_MODELS models based in the same parameters'
@@ -27,7 +24,7 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 8,
+    default = 2,
     help = 'The number of the experiment'
 )
 
@@ -55,7 +52,7 @@ parser.add_argument( # Model number
 parser.add_argument( # specific site location number
     '-s', '--site',
     type = int,
-    default=1,
+    default=2,
     help = 'Site location number'
 )
 
@@ -113,21 +110,23 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
     label = load_sb_image(paths_params['label_test'])
     pred_ds = PredDataset(patch_size, device, experiment_params, test_opt_img, test_sar_img, paths_params['previous_test'], statistics)
 
-    pred_global_sum = np.zeros(pred_ds.original_shape+(n_classes,))
+    
     one_window = np.ones((patch_size, patch_size, n_classes))
 
-    for model_idx in tqdm(models_pred_idx, desc = 'Models\' prediction', mininterval = 2):
+    for model_idx in tqdm(models_pred_idx, desc = 'Models\' prediction', mininterval = 0.2):
         pred_results = load_yaml(logs_path / f'model_{model_idx}' / 'train_results.yaml')
         model_class = locate(experiment_params['model'])#(experiment_params, training_params)
         model = model_class.load_from_checkpoint(pred_results['model_path'])
         model.to(device)
         model.eval()
 
+        pred_global_sum = np.zeros(pred_ds.original_shape+(n_classes,))
+
         for overlap in overlaps:
             pred_ds.generate_overlap_patches(overlap)
-            dataloader = DataLoader(pred_ds, batch_size=batch_size, shuffle=False, num_workers=4)
+            dataloader = DataLoader(pred_ds, batch_size=batch_size, shuffle=False)
 
-            pbar = tqdm(dataloader, desc='Prediction', leave = False, mininterval = 2)
+            pbar = tqdm(dataloader, desc='Prediction', leave = False) #, mininterval = 2)
             #preds = None
             preds = torch.zeros((len(pred_ds), n_classes, patch_size, patch_size))
 
@@ -138,7 +137,7 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
             preds = np.moveaxis(preds.numpy().astype(np.float16), 1, -1)
             pred_sum = np.zeros(pred_ds.padded_shape+(n_classes,)).reshape((-1, n_classes))
             pred_count = np.zeros(pred_ds.padded_shape+(n_classes,)).reshape((-1, n_classes))
-            for idx, idx_patch in enumerate(tqdm(pred_ds.idx_patches, desc = 'Rebuild', leave = False, mininterval = 2)):
+            for idx, idx_patch in enumerate(tqdm(pred_ds.idx_patches, desc = 'Rebuild', leave = False)): #, mininterval = 0.2)):
                 crop_val = prediction_remove_border
                 idx_patch_crop = idx_patch[crop_val:-crop_val, crop_val:-crop_val]
                 pred_sum[idx_patch_crop] += preds[idx][crop_val:-crop_val, crop_val:-crop_val]
@@ -153,19 +152,21 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
             pred_global_sum += pred_sum / pred_count
 
         pred_global = pred_global_sum / len(overlaps)
-        pred_global_file = predicted_path / f'{prediction_prefix}_prob_{opt_i}_{sar_i}_{model_idx}.npy'
+        #pred_global_file = predicted_path / f'{prediction_prefix}_prob_{opt_i}_{sar_i}_{model_idx}.npy'
         
 
         #pred_b2 = (pred_global[:,:,1] > 0.5).astype(np.uint8)
-        pred_b2 = (np.argmax(pred_global, -1)==1).astype(np.uint8)
-        pred_b2[pred_b2 == 2] = 0
-        pred_b2[label == 2] = 2
+        #pred_b2 = (np.argmax(pred_global, -1)==1).astype(np.uint8)
+        #pred_b2[pred_b2 == 2] = 0
+        #pred_b2[label == 2] = 2
 
-        np.save(pred_global_file, pred_global[:,:,1].astype(np.float16))
+        #np.save(pred_global_file, pred_global[:,:,1].astype(np.float16))
+        #np.save(pred_global_file, pred_global[:,:,1].astype(np.float16))
 
         base_data = Path(paths_params['opt_data']) / original_opt_imgs['test'][0]
         prediction_tif_file = visual_path / f'{prediction_prefix}_{args.experiment}_{opt_i}_{sar_i}_{model_idx}.tif'
-        save_geotiff(base_data, prediction_tif_file, pred_b2, dtype = 'byte')
+        #save_geotiff(base_data, prediction_tif_file, pred_b2, dtype = 'byte')
+        save_geotiff(base_data, prediction_tif_file, pred_global[:,:,1], dtype = 'float')
 
         pred_results = {
             #'models_predicted': models_pred_idx,
@@ -178,7 +179,7 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
 
 if __name__=="__main__":
     freeze_support()
-    
+    #mp.set_start_method('spawn', force = True)
 
     if args.model == -1:
         if args.start_model == -1:
@@ -203,6 +204,8 @@ if __name__=="__main__":
             run_params.append((models_pred_idx, opt_images_path, sar_images_path, opt_i, sar_i))
 
     t0 = time.perf_counter()
+
+    
     for run_param in run_params:
         p = Process(target=run_prediction, args=run_param)
         p.start()

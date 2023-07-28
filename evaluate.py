@@ -1,7 +1,7 @@
 import argparse
 from  pathlib import Path
 import numpy as np
-from utils.ops import save_geotiff, load_sb_image, load_yaml
+from utils.ops import save_geotiff, load_sb_image, load_yaml, load_ml_image
 from skimage.morphology import area_opening
 import pandas as pd
 from multiprocessing import Pool
@@ -23,7 +23,7 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 8,
+    default = 2,
     help = 'The number of the experiment'
 )
 
@@ -37,7 +37,7 @@ parser.add_argument( # Generate the Max Cloud Map Geotiff
 parser.add_argument( # specific site location number
     '-s', '--site',
     type = int,
-    default=1,
+    default=2,
     help = 'Site location number'
 )
 
@@ -105,17 +105,32 @@ def eval_prediction(data):
     opt_imgs_groups_idx, sar_imgs_groups_idx, model_idx = data
 
     label = load_sb_image(Path(paths_params['label_test'])).astype(np.uint8)
-    
-    if model_idx is None:
-        pred_prob = np.zeros_like(label, dtype=np.float16)
-        for model_i in range(n_models):
-            pred_prob_file = predicted_path / f'{prediction_prefix}_prob_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_i}.npy'
-            pred_prob += np.load(pred_prob_file)
-        pred_prob = pred_prob / n_models
-    else:
-        pred_prob_file = predicted_path / f'{prediction_prefix}_prob_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_idx}.npy'
-        pred_prob = np.load(pred_prob_file)
 
+    if model_idx is None:
+        #pred_prob = np.zeros_like(label, dtype=np.float16)
+        pred_prob = None
+        for model_i in range(n_models):
+            #pred_prob_file = predicted_path / f'{prediction_prefix}_prob_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_i}.npy'
+            #pred_prob += np.load(pred_prob_file)
+            pred_prob_file = visual_path /f'{prediction_prefix}_{args.experiment}_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_i}.tif'
+            if pred_prob is None:
+                pred_prob = load_sb_image(pred_prob_file).astype(np.float16)
+            else:
+                pred_prob += load_sb_image(pred_prob_file).astype(np.float16)
+        pred_prob = pred_prob / n_models
+        mean_prob_file = visual_path / f'{prediction_prefix}_mean_prob_{args.experiment}_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}.tif'
+        save_geotiff(base_data, mean_prob_file, pred_prob, dtype = 'float')
+
+    else:
+        #pred_prob_file = predicted_path / f'{prediction_prefix}_prob_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_idx}.npy'
+        #pred_prob = np.load(pred_prob_file)
+        pred_prob_file = visual_path /f'{prediction_prefix}_{args.experiment}_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_idx}.tif'
+        pred_prob = load_sb_image(pred_prob_file).astype(np.float16)
+
+
+    #pred_b = (np.argmax(pred_prob, -1)==1).astype(np.uint8)
+    #pred_b[pred_b == 2] = 0
+    #pred_b[label == 2] = 2
 
     pred_b = (pred_prob > 0.5).astype(np.uint8)
     pred_b[label == 2] = 0
