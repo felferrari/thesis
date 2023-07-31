@@ -152,7 +152,7 @@ def eval_prediction(data):
         save_geotiff(base_data, error_map_file, error_map, dtype = 'byte')
     else:
         error_map_file = visual_path / f'{prediction_prefix}_error_map_{args.experiment}_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_idx}.tif'
-        save_geotiff(base_data, error_map_file, error_map, dtype = 'byte')
+        #save_geotiff(base_data, error_map_file, error_map, dtype = 'byte')
     
     
     #load cloud maps
