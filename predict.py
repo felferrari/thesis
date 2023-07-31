@@ -1,7 +1,8 @@
 import argparse
 from pathlib import Path
 import time
-from utils.datasets import PredDataset, PredictedImageWriter
+from utils.datasets import PredDataset
+from models.callbacks import PredictedImageWriter
 from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
@@ -155,10 +156,10 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
         prediction = pred_image_writer.predicted_image()
         prediction[label==2] = [0, 0, 1]
         
-        base_data = Path(paths_params['opt_data']) / original_opt_imgs['test'][0]
-        prediction_tif_file = predicted_path / f'{prediction_prefix}_{args.experiment}_{opt_i}_{sar_i}_{model_idx}.tif'
+        #base_data = Path(paths_params['opt_data']) / original_opt_imgs['test'][0]
+        #prediction_tif_file = predicted_path / f'{prediction_prefix}_{args.experiment}_{opt_i}_{sar_i}_{model_idx}.tif'
         #save_geotiff(base_data, prediction_tif_file, pred_b2, dtype = 'byte')
-        save_geotiff(base_data, prediction_tif_file, prediction[:,:,1], dtype = 'float')
+        #save_geotiff(base_data, prediction_tif_file, prediction[:,:,1], dtype = 'float')
 
         prediction_npz_file = predicted_path / f'{prediction_prefix}_{args.experiment}_{opt_i}_{sar_i}_{model_idx}.npz'
         np.savez_compressed(prediction_npz_file, pred = prediction[:,:,1].astype(np.float16))
