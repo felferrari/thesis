@@ -1,5 +1,3 @@
-from typing import Any, Literal, Optional, Sequence
-import lightning.pytorch as pl
 from torch.utils.data import Dataset
 import numpy as np
 from torchvision.transforms.functional import vflip, hflip
@@ -13,7 +11,6 @@ from lightning.pytorch.core import LightningModule
 from lightning.pytorch.trainer import Trainer
 from .ops import load_opt_image, load_SAR_image, load_sb_image
 from einops import rearrange
-import time
 
 class GenericTrainDataset(Dataset):
     def __init__(self, params, data_folder, n_patches):
@@ -183,38 +180,3 @@ class PredDataset(Dataset):
             torch.from_numpy(previous_patch.astype(np.float32))#.to(self.device)
         ], patch_idx
         
-class PredictedImageWriter(BasePredictionWriter):
-    def __init__(self, shape, patch_size, n_classes, remove_border, write_interval: Literal['batch', 'epoch', 'batch_and_epoch'] = "batch") -> None:
-        self.shape = shape
-        self.patch_size = patch_size
-        self.padded_shape = (shape[0]+2*patch_size, shape[1]+2*patch_size)
-        self.n_classes = n_classes
-        self.remove_border = remove_border
-        super().__init__(write_interval)
-
-    def restart_image(self):
-        self.predicted = np.zeros(self.padded_shape + (self.n_classes, ))
-        self.count = np.zeros(self.padded_shape)
-
-        self.predicted = rearrange(self.predicted, 'h w c -> (h w) c')
-        self.count = rearrange(self.count, 'h w -> (h w)')
-
-    def on_predict_batch_end(self, trainer: Trainer, pl_module: LightningModule, outputs: Any, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> None:
-        predictions = outputs.cpu().numpy()
-        predictions = rearrange(predictions, 'n c h w -> n h w c')
-        for pred_i, prediction in enumerate(predictions):
-            pred_resized = prediction[self.remove_border:-self.remove_border, self.remove_border:-self.remove_border]
-            index_resized = batch[1][pred_i][self.remove_border:-self.remove_border, self.remove_border:-self.remove_border].cpu().numpy()
-            self.predicted[index_resized] += pred_resized
-            self.count[index_resized] += 1
-
-        #return super().on_predict_batch_end(trainer, pl_module, outputs, batch, batch_idx, dataloader_idx)
-    
-    def predicted_image(self):
-        pred = rearrange(self.predicted, '(h w) c -> h w c', h = self.padded_shape[0], w = self.padded_shape[1])
-        count = rearrange(self.count, '(h w) -> h w', h = self.padded_shape[0], w = self.padded_shape[1])
-        pred = pred[self.patch_size:-self.patch_size, self.patch_size:-self.patch_size]
-        count = count[self.patch_size:-self.patch_size, self.patch_size:-self.patch_size]
-        count = np.expand_dims(count, axis=-1)
-
-        return pred/count
