@@ -1,4 +1,4 @@
-from typing import Any, Literal, Optional, Sequence
+from typing import Any, Optional, Sequence
 import lightning.pytorch as pl
 from torch.utils.data import Dataset
 import numpy as np
@@ -92,9 +92,10 @@ class ValDataset(GenericTrainDataset):
 
 
 class PredDataset(Dataset):
-    def __init__(self, patch_size, params, opt_files, sar_files, prev_file, statistics) -> None:
+    def __init__(self, patch_size, device, params, opt_files, sar_files, prev_file, statistics) -> None:
         super().__init__()
         self.patch_size = patch_size
+        self.device = device
         self.params = params
 
         # opt_means = statistics['opt_means']
@@ -166,12 +167,12 @@ class PredDataset(Dataset):
         patch_idx = self.idx_patches[index]
 
         opt_patch = torch.stack([ 
-            torch.from_numpy(np.moveaxis(p[patch_idx], 2, 0).astype(np.float32))#.to(self.device)
+            torch.from_numpy(np.moveaxis(p[patch_idx], 2, 0).astype(np.float32)).to(self.device)
             for p in self.opt_data 
             ])
         
         sar_patch = torch.stack([ 
-            torch.from_numpy(np.moveaxis(p[patch_idx], 2, 0).astype(np.float32))#.to(self.device)
+            torch.from_numpy(np.moveaxis(p[patch_idx], 2, 0).astype(np.float32)).to(self.device)
             for p in self.sar_data 
             ])
         previous_patch = np.expand_dims(self.previous[patch_idx], axis=0)
@@ -180,41 +181,6 @@ class PredDataset(Dataset):
         return [
             opt_patch,
             sar_patch,
-            torch.from_numpy(previous_patch.astype(np.float32))#.to(self.device)
-        ], patch_idx
+            torch.from_numpy(previous_patch.astype(np.float32)).to(self.device)
+        ]#, torch.from_numpy(label_patch.astype(np.int64)).to(self.device)
         
-class PredictedImageWriter(BasePredictionWriter):
-    def __init__(self, shape, patch_size, n_classes, remove_border, write_interval: Literal['batch', 'epoch', 'batch_and_epoch'] = "batch") -> None:
-        self.shape = shape
-        self.patch_size = patch_size
-        self.padded_shape = (shape[0]+2*patch_size, shape[1]+2*patch_size)
-        self.n_classes = n_classes
-        self.remove_border = remove_border
-        super().__init__(write_interval)
-
-    def restart_image(self):
-        self.predicted = np.zeros(self.padded_shape + (self.n_classes, ))
-        self.count = np.zeros(self.padded_shape)
-
-        self.predicted = rearrange(self.predicted, 'h w c -> (h w) c')
-        self.count = rearrange(self.count, 'h w -> (h w)')
-
-    def on_predict_batch_end(self, trainer: Trainer, pl_module: LightningModule, outputs: Any, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> None:
-        predictions = outputs.cpu().numpy()
-        predictions = rearrange(predictions, 'n c h w -> n h w c')
-        for pred_i, prediction in enumerate(predictions):
-            pred_resized = prediction[self.remove_border:-self.remove_border, self.remove_border:-self.remove_border]
-            index_resized = batch[1][pred_i][self.remove_border:-self.remove_border, self.remove_border:-self.remove_border].cpu().numpy()
-            self.predicted[index_resized] += pred_resized
-            self.count[index_resized] += 1
-
-        #return super().on_predict_batch_end(trainer, pl_module, outputs, batch, batch_idx, dataloader_idx)
-    
-    def predicted_image(self):
-        pred = rearrange(self.predicted, '(h w) c -> h w c', h = self.padded_shape[0], w = self.padded_shape[1])
-        count = rearrange(self.count, '(h w) -> h w', h = self.padded_shape[0], w = self.padded_shape[1])
-        pred = pred[self.patch_size:-self.patch_size, self.patch_size:-self.patch_size]
-        count = count[self.patch_size:-self.patch_size, self.patch_size:-self.patch_size]
-        count = np.expand_dims(count, axis=-1)
-
-        return pred/count

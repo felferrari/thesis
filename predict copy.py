@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 import time
-from utils.datasets import PredDataset, PredictedImageWriter
+from utils.datasets import PredDataset
 from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
@@ -9,9 +9,6 @@ import numpy as np
 from utils.ops import save_geotiff, load_yaml, save_yaml, load_sb_image
 from multiprocessing import Process, freeze_support
 from pydoc import locate
-from lightning.pytorch.trainer import Trainer
-from lightning.pytorch.profilers import SimpleProfiler
-import logging
 
 parser = argparse.ArgumentParser(
     description='Train NUMBER_MODELS models based in the same parameters'
@@ -27,7 +24,7 @@ parser.add_argument( # The path to the config file (.yaml)
 parser.add_argument( # Experiment number
     '-e', '--experiment',
     type = int,
-    default = 99,
+    default = 2,
     help = 'The number of the experiment'
 )
 
@@ -45,12 +42,11 @@ parser.add_argument( # Model number
     help = 'Number of the model to be retrained'
 )
 
-parser.add_argument( # Accelerator
-    '-d', '--devices',
+parser.add_argument( # Model number
+    '-d', '--device',
     type = int,
-    nargs='+',
-    default = [0],
-    help = 'Accelerator devices to be used'
+    default = 0,
+    help = 'Number of the model to be retrained'
 )
 
 parser.add_argument( # specific site location number
@@ -103,65 +99,74 @@ sar_folder = Path(paths_params['sar_data'])
 
 statistics_file = prepared_folder / preparation_params['statistics_data']
 
-#device = f"cuda:{args.device}" if torch.cuda.is_available() else "cpu"
+device = f"cuda:{args.device}" if torch.cuda.is_available() else "cpu"
 
 def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
-
-    # configure logging at the root level of Lightning
-    logging.getLogger("lightning.pytorch").setLevel(logging.ERROR)
-
-    # configure logging on module level, redirect to file
-    logger = logging.getLogger("lightning.pytorch.core")
-    logger.addHandler(logging.FileHandler("core.log"))
 
     print(f'loading files... Opt gp {opt_i} SAR Gp {sar_i}')
 
     statistics = load_yaml(statistics_file)
     
     label = load_sb_image(paths_params['label_test'])
-    pred_ds = PredDataset(patch_size, experiment_params, test_opt_img, test_sar_img, paths_params['previous_test'], statistics)
+    pred_ds = PredDataset(patch_size, device, experiment_params, test_opt_img, test_sar_img, paths_params['previous_test'], statistics)
 
-    pred_image_writer = PredictedImageWriter(label.shape, patch_size, n_classes, prediction_remove_border)
+    
+    one_window = np.ones((patch_size, patch_size, n_classes))
 
-    for model_idx in tqdm(models_pred_idx, desc = 'Models\' prediction'):
+    for model_idx in tqdm(models_pred_idx, desc = 'Models\' prediction', mininterval = 0.2):
         pred_results = load_yaml(logs_path / f'model_{model_idx}' / 'train_results.yaml')
         model_class = locate(experiment_params['model'])#(experiment_params, training_params)
         model = model_class.load_from_checkpoint(pred_results['model_path'])
-        #model.to(device)
-        #model.eval()
+        model.to(device)
+        model.eval()
 
-        for overlap_i, overlap in enumerate(overlaps):
+        pred_global_sum = np.zeros(pred_ds.original_shape+(n_classes,))
+
+        for overlap in overlaps:
             pred_ds.generate_overlap_patches(overlap)
-            dataloader = DataLoader(pred_ds, batch_size=batch_size, shuffle = False)
+            dataloader = DataLoader(pred_ds, batch_size=batch_size, shuffle=False)
 
-            pred_image_writer.restart_image()
+            pbar = tqdm(dataloader, desc='Prediction', leave = False) #, mininterval = 2)
+            #preds = None
+            preds = torch.zeros((len(pred_ds), n_classes, patch_size, patch_size))
 
-            profiler = SimpleProfiler(
-                dirpath = logs_path,
-                filename = f'model_{model_idx}_{overlap_i}',
-                )
+            for i, X in enumerate(pbar):
+                with torch.no_grad():
+                    preds[batch_size*i: batch_size*(i+1)] =  model.predict_step(X, i).to('cpu')
 
-            trainer = Trainer(
-                accelerator  = 'gpu',
-                devices = args.devices,
-                profiler = profiler,
-                callbacks = [pred_image_writer],
-                #num_sanity_val_steps = 0
-                enable_progress_bar = True
-                )
+            preds = np.moveaxis(preds.numpy().astype(np.float16), 1, -1)
+            pred_sum = np.zeros(pred_ds.padded_shape+(n_classes,)).reshape((-1, n_classes))
+            pred_count = np.zeros(pred_ds.padded_shape+(n_classes,)).reshape((-1, n_classes))
+            for idx, idx_patch in enumerate(tqdm(pred_ds.idx_patches, desc = 'Rebuild', leave = False)): #, mininterval = 0.2)):
+                crop_val = prediction_remove_border
+                idx_patch_crop = idx_patch[crop_val:-crop_val, crop_val:-crop_val]
+                pred_sum[idx_patch_crop] += preds[idx][crop_val:-crop_val, crop_val:-crop_val]
+                pred_count[idx_patch_crop] += one_window[crop_val:-crop_val, crop_val:-crop_val]
 
-            trainer.predict(model, dataloaders = dataloader, return_predictions = False)
+            pred_sum = pred_sum.reshape(pred_ds.padded_shape+(n_classes,))
+            pred_count = pred_count.reshape(pred_ds.padded_shape+(n_classes,))
 
-        prediction = pred_image_writer.predicted_image()
-        prediction[label==2] = [0, 0, 1]
+            pred_sum = pred_sum[patch_size:-patch_size, patch_size:-patch_size,:]
+            pred_count = pred_count[patch_size:-patch_size, patch_size:-patch_size,:]
+
+            pred_global_sum += pred_sum / pred_count
+
+        pred_global = pred_global_sum / len(overlaps)
+        #pred_global_file = predicted_path / f'{prediction_prefix}_prob_{opt_i}_{sar_i}_{model_idx}.npy'
         
-        base_data = Path(paths_params['opt_data']) / original_opt_imgs['test'][0]
-        prediction_tif_file = predicted_path / f'{prediction_prefix}_{args.experiment}_{opt_i}_{sar_i}_{model_idx}.tif'
-        #save_geotiff(base_data, prediction_tif_file, pred_b2, dtype = 'byte')
-        save_geotiff(base_data, prediction_tif_file, prediction[:,:,1], dtype = 'float')
 
-        prediction_npz_file = predicted_path / f'{prediction_prefix}_{args.experiment}_{opt_i}_{sar_i}_{model_idx}.npz'
-        np.savez_compressed(prediction_npz_file, pred = prediction[:,:,1].astype(np.float16))
+        #pred_b2 = (pred_global[:,:,1] > 0.5).astype(np.uint8)
+        #pred_b2 = (np.argmax(pred_global, -1)==1).astype(np.uint8)
+        #pred_b2[pred_b2 == 2] = 0
+        #pred_b2[label == 2] = 2
+
+        #np.save(pred_global_file, pred_global[:,:,1].astype(np.float16))
+        #np.save(pred_global_file, pred_global[:,:,1].astype(np.float16))
+
+        base_data = Path(paths_params['opt_data']) / original_opt_imgs['test'][0]
+        prediction_tif_file = visual_path / f'{prediction_prefix}_{args.experiment}_{opt_i}_{sar_i}_{model_idx}.tif'
+        #save_geotiff(base_data, prediction_tif_file, pred_b2, dtype = 'byte')
+        save_geotiff(base_data, prediction_tif_file, pred_global[:,:,1], dtype = 'float')
 
         pred_results = {
             #'models_predicted': models_pred_idx,
@@ -169,6 +174,8 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
             'sar_files': str(test_sar_img)
         }
         save_yaml(pred_results, logs_path / f'pred_{opt_i}_{sar_i}.yaml')
+
+
 
 if __name__=="__main__":
     freeze_support()
@@ -197,6 +204,7 @@ if __name__=="__main__":
             run_params.append((models_pred_idx, opt_images_path, sar_images_path, opt_i, sar_i))
 
     t0 = time.perf_counter()
+
     
     for run_param in run_params:
         p = Process(target=run_prediction, args=run_param)
@@ -210,4 +218,10 @@ if __name__=="__main__":
         'train_time_per_image': m_time
     }
     save_yaml(pred_results, logs_path / 'pred_results.yaml')
+
+
+
+
+    
+
     

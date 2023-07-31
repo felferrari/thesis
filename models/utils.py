@@ -9,8 +9,10 @@ class ModelModule(L.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         loss_params = training_params['loss_fn']['params']
-        #if 'weight' in loss_params.keys():
-        #    loss_params['weight'] = torch.tensor(loss_params['weight'])
+        if 'weight' in loss_params.keys():
+            loss_params['weight'] = torch.tensor(loss_params['weight'])
+        if 'alpha' in loss_params.keys():
+            loss_params['alpha'] = torch.tensor(loss_params['alpha'])
         self.loss = locate(training_params['loss_fn']['module'])(**loss_params)
         self.train_metric = MulticlassF1Score(num_classes = training_params['n_classes'], average= 'none')
         self.val_metric = MulticlassF1Score(num_classes = training_params['n_classes'], average= 'none')
@@ -58,7 +60,7 @@ class ModelModule(L.LightningModule):
         return optimizer
     
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        return self.forward(batch)
+        return self.forward(batch[0])
     
 class ModelModuleMultiTask(L.LightningModule):
     def __init__(self, training_params):
@@ -136,4 +138,4 @@ class ModelModuleMultiTask(L.LightningModule):
     
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         #x, y = batch
-        return self.forward(batch)[0]
+        return self.forward(batch[0])[0]

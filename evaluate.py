@@ -107,25 +107,25 @@ def eval_prediction(data):
     label = load_sb_image(Path(paths_params['label_test'])).astype(np.uint8)
 
     if model_idx is None:
-        #pred_prob = np.zeros_like(label, dtype=np.float16)
-        pred_prob = None
+        pred_prob = np.zeros_like(label, dtype=np.float16)
+        #pred_prob = None
         for model_i in range(n_models):
-            #pred_prob_file = predicted_path / f'{prediction_prefix}_prob_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_i}.npy'
-            #pred_prob += np.load(pred_prob_file)
-            pred_prob_file = visual_path /f'{prediction_prefix}_{args.experiment}_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_i}.tif'
-            if pred_prob is None:
-                pred_prob = load_sb_image(pred_prob_file).astype(np.float16)
-            else:
-                pred_prob += load_sb_image(pred_prob_file).astype(np.float16)
+            pred_prob_file = predicted_path / f'{prediction_prefix}_{args.experiment}_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_i}.npz'
+            pred_prob += np.load(pred_prob_file)['pred']
+            #pred_prob_file = visual_path /f'{prediction_prefix}_{args.experiment}_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_i}.tif'
+            #if pred_prob is None:
+            #    pred_prob = load_sb_image(pred_prob_file).astype(np.float16)
+            #else:
+            #    pred_prob += load_sb_image(pred_prob_file).astype(np.float16)
         pred_prob = pred_prob / n_models
         mean_prob_file = visual_path / f'{prediction_prefix}_mean_prob_{args.experiment}_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}.tif'
         save_geotiff(base_data, mean_prob_file, pred_prob, dtype = 'float')
 
     else:
-        #pred_prob_file = predicted_path / f'{prediction_prefix}_prob_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_idx}.npy'
-        #pred_prob = np.load(pred_prob_file)
-        pred_prob_file = visual_path /f'{prediction_prefix}_{args.experiment}_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_idx}.tif'
-        pred_prob = load_sb_image(pred_prob_file).astype(np.float16)
+        pred_prob_file = predicted_path / f'{prediction_prefix}_{args.experiment}_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_idx}.npz'
+        pred_prob = np.load(pred_prob_file)['pred']
+        #pred_prob_file = visual_path /f'{prediction_prefix}_{args.experiment}_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_idx}.tif'
+        #pred_prob = load_sb_image(pred_prob_file).astype(np.float16)
 
 
     #pred_b = (np.argmax(pred_prob, -1)==1).astype(np.uint8)
