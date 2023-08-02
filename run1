@@ -1,4 +1,5 @@
 #! /bin/bash
-python train.py -e 91 -d 0 -s 2
-python predict.py -e 91 -d 0 -s 2
-python evaluate.py -e 91 -s 2
+python predict.py -e 93 -d 0 -s 2
+python evaluate.py -e 93 -s 2
+
+
