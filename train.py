@@ -12,6 +12,7 @@ from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers.tensorboard import TensorBoardLogger
 from lightning.pytorch.profilers import SimpleProfiler
+from models.callbacks import TrainSamples
 #from fvcore.nn import flop_count_table, FlopCountAnalysis, flop_count
 
 parser = argparse.ArgumentParser(
@@ -240,6 +241,8 @@ def run(model_idx):
             filename = f'model_{model_idx}'
             )
         
+        train_samples = TrainSamples(visual_logs_path, 20, model_idx)
+        
         profiler = SimpleProfiler(
             dirpath = logs_path,
             filename = f'model_{model_idx}',
@@ -251,7 +254,7 @@ def run(model_idx):
             limit_train_batches = training_params['max_train_batches'], 
             limit_val_batches = training_params['max_val_batches'], 
             max_epochs = training_params['max_epochs'], 
-            callbacks = [early_stop_callback, monitor_checkpoint_callback], 
+            callbacks = [early_stop_callback, monitor_checkpoint_callback, train_samples], 
             logger = loggers,
             log_every_n_steps = 1,
             profiler =profiler,
