@@ -43,8 +43,6 @@ preparation_params:
 paths:
   opt_data: /home/felferrari/projects/thesis/data/opt
   sar_data: /home/felferrari/projects/thesis/data/sar
-  #avg_sar_data: D:\Ferrari\Projects\thesis\data\sar_avg
-  #single_sar_data: D:\Ferrari\Projects\thesis\data\sar_single
   prodes_data: /home/felferrari/projects/thesis/data/prodes
   tiles_path: /home/felferrari/projects/thesis/data/general/tiles.tif
   experiments: /home/felferrari/projects/thesis/experiments
