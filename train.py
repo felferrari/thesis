@@ -234,27 +234,34 @@ def run(model_idx):
 
         early_stop_callback = EarlyStopping(monitor="val_loss", verbose = True, mode="min", **training_params['early_stop'])
 
-        monitor_checkpoint_callback = ModelCheckpoint(
+        best_model_callback = ModelCheckpoint(
             str(models_path), 
             monitor = 'val_loss', 
             verbose = True, 
             filename = f'model_{model_idx}'
             )
         
-        train_samples = TrainSamples(visual_logs_path, 20, model_idx)
+        history_model_callback = ModelCheckpoint(
+            str(logs_path / f'model_{model_idx}'), 
+            verbose = False, 
+            save_top_k = -1,
+            filename = '{epoch}'
+            )
+        
+        #train_samples = TrainSamples(visual_logs_path, 20, model_idx)
         
         profiler = SimpleProfiler(
             dirpath = logs_path,
             filename = f'model_{model_idx}',
             )
-
+        
         trainer = pl.Trainer(
             accelerator  = 'gpu',
             devices = args.devices,
             limit_train_batches = training_params['max_train_batches'], 
             limit_val_batches = training_params['max_val_batches'], 
             max_epochs = training_params['max_epochs'], 
-            callbacks = [early_stop_callback, monitor_checkpoint_callback, train_samples], 
+            callbacks = [early_stop_callback, best_model_callback, history_model_callback], 
             logger = loggers,
             log_every_n_steps = 1,
             profiler =profiler,
@@ -266,11 +273,11 @@ def run(model_idx):
         trainer.fit(model = model, train_dataloaders=train_dl, val_dataloaders=val_dl) #, datamodule=data_module)
         train_time = time.time() - t0
         
-        last_val_loss = monitor_checkpoint_callback.best_model_score.item()
+        last_val_loss = best_model_callback.best_model_score.item()
 
         if last_val_loss <= min_val_loss:
             run_results = {
-                'model_path': monitor_checkpoint_callback.best_model_path,
+                'model_path': best_model_callback.best_model_path,
                 'total_train_time': train_time,
                 'train_per_epoch': train_time / trainer.current_epoch,
                 'n_paramters': count_parameters(model), 
@@ -280,7 +287,7 @@ def run(model_idx):
             break
         else:
             print('Model didn\'t converged. Repeating the training...')
-            model_file = Path(monitor_checkpoint_callback.best_model_path)
+            model_file = Path(best_model_callback.best_model_path)
             model_file.unlink()
 
 if __name__=="__main__":

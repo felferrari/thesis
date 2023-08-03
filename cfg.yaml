@@ -41,8 +41,7 @@ preparation_params:
   patch_overlap: 0.7
   min_def_proportion: 0.02
 paths:
-  #opt_data: /home/felferrari/projects/thesis/data/opt
-  opt_data: /home/felferrari/projects/thesis/data/opt_l2a
+  opt_data: /home/felferrari/projects/thesis/data/opt
   sar_data: /home/felferrari/projects/thesis/data/sar
   #avg_sar_data: D:\Ferrari\Projects\thesis\data\sar_avg
   #single_sar_data: D:\Ferrari\Projects\thesis\data\sar_single
