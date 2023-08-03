@@ -163,7 +163,7 @@ def eval_prediction(data):
     ).max(axis=-1)
 
     cloud_pixels = np.zeros_like(cloud_max, dtype=np.uint8)
-    cloud_pixels[cloud_max>0.5] = 1
+    cloud_pixels[cloud_max>50] = 1
 
     no_cloud_tns = np.logical_and(error_map == 0, cloud_pixels == 0).sum()
     no_cloud_tps = np.logical_and(error_map == 1, cloud_pixels == 0).sum()

@@ -80,6 +80,7 @@ original_sar_imgs = site_cfg['original_data']['sar_imgs']
 prefix_params = general_params['prefixs']
 
 opt_bands = general_params['opt_bands']
+#list_opt_bands = general_params['list_opt_bands']
 sar_bands = general_params['sar_bands']
 
 patch_size = general_params['patch_size']
@@ -127,9 +128,6 @@ slide_step = int((1-patch_overlap)*patch_size)
 idx_patches = view_as_windows(idx, window_shape, slide_step).reshape((-1, patch_size, patch_size))
 
 np.random.seed(123)
-
-
-
 
 if args.statistics:
 
@@ -237,7 +235,9 @@ if args.train_data:
     opt_imgs = []
     sar_imgs = []
     cloud_imgs = []
-    for opt_img_i, opt_img_file in enumerate(tqdm(original_opt_imgs['train'], desc = 'Reading OPT Training files')):
+    pbar = tqdm(original_opt_imgs['train'], desc = 'Reading OPT Training files')
+    for opt_img_i, opt_img_file in enumerate(pbar):
+        pbar.set_description(f'Reading OPT training file {opt_img_file}')
         data_file = opt_path / opt_img_file
         data = load_opt_image(data_file)
         data = remove_outliers(data)
@@ -245,12 +245,16 @@ if args.train_data:
         #data = data / 10000
         opt_imgs.append(data.astype(np.float16).reshape((-1, opt_bands)))
 
-    for opt_img_i, opt_img_file in enumerate(tqdm(original_opt_imgs['train'], desc = 'Reading Cloud Training files')):
+    pbar = tqdm(original_opt_imgs['train'], desc = 'Reading Cloud Training files')
+    for opt_img_i, opt_img_file in enumerate(pbar):
+        pbar.set_description(f'Reading Cloud training file {cloud_prefix}_{opt_img_file}')
         data_file = opt_path / f'{cloud_prefix}_{opt_img_file}'
         data = load_opt_image(data_file)
         cloud_imgs.append(data.astype(np.float16).reshape((-1, 1)))
 
-    for sar_img_i, sar_img_file in enumerate(tqdm(original_sar_imgs['train'], desc = 'Reading SAR Training files')):
+    pbar = tqdm(original_sar_imgs['train'], desc = 'Reading SAR Training files')
+    for sar_img_i, sar_img_file in enumerate(pbar):
+        pbar.set_description(f'Reading SAR training file {sar_img_file}')
         data_file = sar_path / sar_img_file
         data = load_SAR_image(data_file)
         data = remove_outliers(data)

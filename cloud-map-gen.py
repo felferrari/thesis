@@ -43,8 +43,9 @@ base_image = opt_folder/ original_data['opt_imgs']['train'][0]
 cloud_detector = S2PixelCloudDetector(threshold=0.4, average_over=4, dilation_size=2, all_bands=True)
 
 opt_files = list(set(original_data['opt_imgs']['train']).union(set(original_data['opt_imgs']['test'])))
-
-for opt_img_file in tqdm(opt_files, desc = 'Generating Clouds for OPT files'):
+pbar = tqdm(opt_files, desc = 'Generating Clouds for OPT files')
+for opt_img_file in pbar:
+    pbar.set_description(f'Generating cloud map for {opt_img_file}')
     opt_img = load_opt_image(opt_folder / opt_img_file) 
     cloud_map = np.squeeze(cloud_detector.get_cloud_probability_maps(np.expand_dims(opt_img, axis=0)))
 
