@@ -1,5 +1,7 @@
 #! /bin/bash
-python predict.py -e 93 -d 0 -s 2
-python evaluate.py -e 93 -s 2
+python predict.py -e 96 -d 1 -s 2
+python evaluate.py -e 96 -s 2
+
+
 
 

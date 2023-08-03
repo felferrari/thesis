@@ -124,7 +124,9 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
 
     pred_image_writer = PredictedImageWriter(label.shape, patch_size, n_classes, prediction_remove_border)
 
-    for model_idx in tqdm(models_pred_idx, desc = 'Models\' prediction'):
+    pbar = tqdm(models_pred_idx)
+    for model_idx in pbar:
+        pbar.set_description(f'Predicting model {model_idx}')
         pred_results = load_yaml(logs_path / f'model_{model_idx}' / 'train_results.yaml')
         model_class = locate(experiment_params['model'])#(experiment_params, training_params)
         model = model_class.load_from_checkpoint(pred_results['model_path'])

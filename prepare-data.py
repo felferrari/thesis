@@ -80,7 +80,7 @@ original_sar_imgs = site_cfg['original_data']['sar_imgs']
 prefix_params = general_params['prefixs']
 
 opt_bands = general_params['opt_bands']
-list_opt_bands = general_params['list_opt_bands']
+#list_opt_bands = general_params['list_opt_bands']
 sar_bands = general_params['sar_bands']
 
 patch_size = general_params['patch_size']
@@ -128,9 +128,6 @@ slide_step = int((1-patch_overlap)*patch_size)
 idx_patches = view_as_windows(idx, window_shape, slide_step).reshape((-1, patch_size, patch_size))
 
 np.random.seed(123)
-
-
-
 
 if args.statistics:
 

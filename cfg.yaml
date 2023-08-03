@@ -17,7 +17,7 @@ general_params:
     visual: visual
     results: results
     visual_logs: visual_logs
-  opt_bands: &opt_bands 13 #number of bands per optical image
+  opt_bands: &opt_bands 10 #number of bands per optical image
   sar_bands: &sar_bands 2 #number of bands per SAR image
   n_classes: &n_classes 3 #number of classes
   n_models: &n_models 5 #number of models to be trained for each experiment
@@ -41,7 +41,8 @@ preparation_params:
   patch_overlap: 0.7
   min_def_proportion: 0.02
 paths:
-  opt_data: /home/felferrari/projects/thesis/data/opt
+  #opt_data: /home/felferrari/projects/thesis/data/opt
+  opt_data: /home/felferrari/projects/thesis/data/opt_l2a
   sar_data: /home/felferrari/projects/thesis/data/sar
   #avg_sar_data: D:\Ferrari\Projects\thesis\data\sar_avg
   #single_sar_data: D:\Ferrari\Projects\thesis\data\sar_single
@@ -692,6 +693,33 @@ experiments:
         params:
           weight: [0.2, 0.8, 0.0]
 
+  exp_96:
+    model: models.resunet.networks.ResUnetOpt # 
+    description: CNN Opt (Cloud-free)
+    sumary: Model Trained and tested with cloud-free optical images
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 1] ]
+    train_sar_imgs: [ [0, 1] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 1] ]
+    resunet_depths: *resunet_depths
+
+  exp_97:
+    model: models.swin.networks.SwinUnetOpt # 
+    description: SWIN-Unet Opt (Cloud-free)
+    sumary: Model Trained and tested with cloud-free optical images
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 1] ]
+    train_sar_imgs: [ [0, 1] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 1] ]
+    swin_params: *swin_params
 
   exp_99:
     model: models.resunet.networks.ResUnetEF # 
