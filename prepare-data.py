@@ -35,12 +35,12 @@ parser.add_argument( # Create test data.
     help = 'Create test data.'
 )
 
-parser.add_argument( # (Re)Generate statistics file.
-    '-a', '--statistics',
-    default=False,
-    action=argparse.BooleanOptionalAction,
-    help = '(Re)Generate statistics file.'
-)
+# parser.add_argument( # (Re)Generate statistics file.
+#     '-a', '--statistics',
+#     default=False,
+#     action=argparse.BooleanOptionalAction,
+#     help = '(Re)Generate statistics file.'
+# )
 
 parser.add_argument( # specific site location number
     '-s', '--site',
@@ -112,9 +112,8 @@ train_folder.mkdir(exist_ok=True)
 validation_folder.mkdir(exist_ok=True)
 test_folder.mkdir(exist_ok=True)
 
-
 prepared_patches_file = prepared_folder / preparation_params['prepared_data']
-statistics_file = prepared_folder / preparation_params['statistics_data']
+# statistics_file = prepared_folder / preparation_params['statistics_data']
 
 #Generating patches idx
 tiles = load_sb_image(Path(paths_params['tiles_path']))
@@ -129,64 +128,64 @@ idx_patches = view_as_windows(idx, window_shape, slide_step).reshape((-1, patch_
 
 np.random.seed(123)
 
-if args.statistics:
+# if args.statistics:
 
-    opt_path = Path(paths_params['opt_data'])
-    sar_path = Path(paths_params['sar_data'])
+#     opt_path = Path(paths_params['opt_data'])
+#     sar_path = Path(paths_params['sar_data'])
 
-    opt_means, opt_stds, opt_maxs, opt_mins = [], [], [], []
-    sar_means, sar_stds, sar_maxs, sar_mins = [], [], [], []
-    pbar = tqdm(list(set(original_opt_imgs['test'] + original_opt_imgs['train'])), desc = 'Generating OPT statistics')
-    for opt_img_i, opt_img_file in enumerate(pbar):
-        data_file = opt_path / opt_img_file
-        data = load_opt_image(data_file)
-        data = remove_outliers(data)
-        opt_means.append(data.mean(axis=(0,1)))
-        opt_stds.append(data.std(axis=(0,1)))
-        opt_maxs.append(data.max(axis=(0,1)))
-        opt_mins.append(data.min(axis=(0,1)))
-    pbar = tqdm(list(set(original_sar_imgs['test'] + original_sar_imgs['train'])), desc = 'Generating SAR statistics')
-    for sar_img_i, sar_img_file in enumerate(pbar):
-        data_file = sar_path / sar_img_file
-        data = load_SAR_image(data_file)
-        data = remove_outliers(data)
-        sar_means.append(data.mean(axis=(0,1)))
-        sar_stds.append(data.std(axis=(0,1)))
-        sar_maxs.append(data.max(axis=(0,1)))
-        sar_mins.append(data.min(axis=(0,1)))
+#     opt_means, opt_stds, opt_maxs, opt_mins = [], [], [], []
+#     sar_means, sar_stds, sar_maxs, sar_mins = [], [], [], []
+#     pbar = tqdm(list(set(original_opt_imgs['test'] + original_opt_imgs['train'])), desc = 'Generating OPT statistics')
+#     for opt_img_i, opt_img_file in enumerate(pbar):
+#         data_file = opt_path / opt_img_file
+#         data = load_opt_image(data_file)
+#         data = remove_outliers(data)
+#         opt_means.append(data.mean(axis=(0,1)))
+#         opt_stds.append(data.std(axis=(0,1)))
+#         opt_maxs.append(data.max(axis=(0,1)))
+#         opt_mins.append(data.min(axis=(0,1)))
+#     pbar = tqdm(list(set(original_sar_imgs['test'] + original_sar_imgs['train'])), desc = 'Generating SAR statistics')
+#     for sar_img_i, sar_img_file in enumerate(pbar):
+#         data_file = sar_path / sar_img_file
+#         data = load_SAR_image(data_file)
+#         data = remove_outliers(data)
+#         sar_means.append(data.mean(axis=(0,1)))
+#         sar_stds.append(data.std(axis=(0,1)))
+#         sar_maxs.append(data.max(axis=(0,1)))
+#         sar_mins.append(data.min(axis=(0,1)))
 
-    opt_means = np.array(opt_means).mean(axis=0)
-    opt_stds = np.array(opt_stds).mean(axis=0)
-    opt_maxs = np.array(opt_maxs).max(axis=0)
-    opt_mins = np.array(opt_mins).min(axis=0)
+#     opt_means = np.array(opt_means).mean(axis=0)
+#     opt_stds = np.array(opt_stds).mean(axis=0)
+#     opt_maxs = np.array(opt_maxs).max(axis=0)
+#     opt_mins = np.array(opt_mins).min(axis=0)
 
-    sar_means = np.array(sar_means).mean(axis=0)
-    sar_stds = np.array(sar_stds).mean(axis=0)
-    sar_maxs = np.array(sar_maxs).max(axis=0)
-    sar_mins = np.array(sar_mins).min(axis=0)
+#     sar_means = np.array(sar_means).mean(axis=0)
+#     sar_stds = np.array(sar_stds).mean(axis=0)
+#     sar_maxs = np.array(sar_maxs).max(axis=0)
+#     sar_mins = np.array(sar_mins).min(axis=0)
 
-    statistics = {
-        'opt_means': opt_means.tolist(),
-        'opt_stds': opt_stds.tolist(),
-        'opt_maxs': opt_maxs.tolist(),
-        'opt_mins': opt_mins.tolist(),
-        'sar_means': sar_means.tolist(),
-        'sar_stds': sar_stds.tolist(),
-        'sar_maxs': sar_maxs.tolist(),
-        'sar_mins': sar_mins.tolist(),
-    }
+#     statistics = {
+#         'opt_means': opt_means.tolist(),
+#         'opt_stds': opt_stds.tolist(),
+#         'opt_maxs': opt_maxs.tolist(),
+#         'opt_mins': opt_mins.tolist(),
+#         'sar_means': sar_means.tolist(),
+#         'sar_stds': sar_stds.tolist(),
+#         'sar_maxs': sar_maxs.tolist(),
+#         'sar_mins': sar_mins.tolist(),
+#     }
 
-    save_yaml(statistics, statistics_file)
+#     save_yaml(statistics, statistics_file)
 
 data = None
 #training patches
 if args.train_data:
-    statistics = load_yaml(statistics_file)
+    # statistics = load_yaml(statistics_file)
 
-    opt_means = statistics['opt_means']
-    opt_stds = statistics['opt_stds']
-    sar_means = statistics['sar_means']
-    sar_stds = statistics['sar_stds']
+    # opt_means = statistics['opt_means']
+    # opt_stds = statistics['opt_stds']
+    # sar_means = statistics['sar_means']
+    # sar_stds = statistics['sar_stds']
 
     outfile = prepared_folder / 'train-data-prep.txt'
     logging.basicConfig(
@@ -335,12 +334,12 @@ if args.train_data:
 #prediction/test image preparation
 if args.test_data:
 
-    statistics = load_yaml(statistics_file)
+    # statistics = load_yaml(statistics_file)
 
-    opt_means = statistics['opt_means']
-    opt_stds = statistics['opt_stds']
-    sar_means = statistics['sar_means']
-    sar_stds = statistics['sar_stds']
+    # opt_means = statistics['opt_means']
+    # opt_stds = statistics['opt_stds']
+    # sar_means = statistics['sar_means']
+    # sar_stds = statistics['sar_stds']
 
     opt_path = Path(paths_params['opt_data'])
     sar_path = Path(paths_params['sar_data'])

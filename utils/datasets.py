@@ -6,9 +6,6 @@ import random
 from skimage.util import view_as_windows
 import h5py
 from einops import rearrange
-from lightning.pytorch.callbacks import BasePredictionWriter
-from lightning.pytorch.core import LightningModule
-from lightning.pytorch.trainer import Trainer
 from .ops import load_opt_image, load_SAR_image, load_sb_image
 from einops import rearrange
 
@@ -89,7 +86,7 @@ class ValDataset(GenericTrainDataset):
 
 
 class PredDataset(Dataset):
-    def __init__(self, patch_size, params, opt_files, sar_files, prev_file, statistics) -> None:
+    def __init__(self, patch_size, params, opt_files, sar_files, prev_file) -> None:
         super().__init__()
         self.patch_size = patch_size
         self.params = params
