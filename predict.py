@@ -141,7 +141,7 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
 
             profiler = SimpleProfiler(
                 dirpath = logs_path,
-                filename = f'model_{model_idx}_{overlap_i}',
+                filename = f'model_{model_idx}_{opt_i}_{sar_i}_{overlap_i}',
                 )
 
             trainer = Trainer(
