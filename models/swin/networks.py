@@ -1,9 +1,9 @@
 from torch import nn
 import torch
-from .layers import SwinEncoder, SwinDecoder, SwinClassifier, SwinDecoderJF
+from .layers import SwinEncoder, SwinDecoder, SwinClassifier, SwinDecoderJF, SwinRegressionClassifier
 from abc import abstractmethod
 from einops import rearrange
-from ..utils import ModelModule
+from ..utils import ModelModule, ModelModuleMultiTask
 #from conf import general
 
 class GenericModel(ModelModule):
@@ -29,8 +29,6 @@ class GenericModel(ModelModule):
     
     def get_sar(self, x):
         return rearrange(x[1], 'b i c h w -> b (i c) h w')
-
-
 
 class GenericSwinUnet(GenericModel):
     def prepare_model(self, in_channels):
@@ -139,7 +137,7 @@ class SwinUnetJF(GenericModel):
             shift_size = self.shift_size
             )
         
-        self.classifier = SwinClassifier(
+        self.classifier = SwinRegressionClassifier(
             self.base_dim, 
             n_heads=self.n_heads,
             n_blocks = self.n_blocks,
@@ -233,3 +231,80 @@ class SwinUnetLF(GenericModel):
 
         return x
 
+class SwinUnetOptMultiTask(ModelModuleMultiTask):
+    def __init__(self,  params, training_params):
+        super().__init__(training_params)
+        self.opt_input = len(params['train_opt_imgs'][0]) * params['opt_bands'] + 1
+        self.sar_input = len(params['train_sar_imgs'][0]) * params['sar_bands'] + 1
+
+        self.n_classes = params['n_classes']
+
+        self.img_size = params['swin_params']['img_size']
+        self.base_dim = params['swin_params']['base_dim']
+        self.window_size = params['swin_params']['window_size']
+        self.shift_size = params['swin_params']['shift_size']
+        self.patch_size = params['swin_params']['patch_size']
+        self.n_heads = params['swin_params']['n_heads']
+        self.n_blocks = params['swin_params']['n_blocks']
+
+        self.encoder = SwinEncoder(
+            input_depth = self.opt_input, 
+            base_dim = self.base_dim, 
+            window_size = self.window_size,
+            shift_size = self.shift_size,
+            img_size = self.img_size,
+            patch_size = self.patch_size,
+            n_heads = self.n_heads,
+            n_blocks = self.n_blocks
+            )
+    
+        self.decoder_def = SwinDecoder(
+            base_dim=self.base_dim,
+            n_heads=self.n_heads,
+            n_blocks = self.n_blocks,
+            window_size = self.window_size,
+            shift_size = self.shift_size
+            )
+        
+        self.classifier_def = SwinClassifier(
+            self.base_dim, 
+            n_heads=self.n_heads,
+            n_blocks = self.n_blocks,
+            window_size = self.window_size,
+            shift_size = self.shift_size,
+            n_classes = self.n_classes)
+        
+        self.decoder_cloud = SwinDecoder(
+            base_dim=self.base_dim,
+            n_heads=self.n_heads,
+            n_blocks = self.n_blocks,
+            window_size = self.window_size,
+            shift_size = self.shift_size
+            )
+        
+        self.classifier_cloud = SwinRegressionClassifier(
+            self.base_dim, 
+            n_heads=self.n_heads,
+            n_blocks = self.n_blocks,
+            window_size = self.window_size,
+            shift_size = self.shift_size)
+
+    def get_opt(self, x):
+        return rearrange(x[0], 'b i c h w -> b (i c) h w')
+    
+    def get_sar(self, x):
+        return rearrange(x[1], 'b i c h w -> b (i c) h w')
+    
+    def forward(self, x):
+        x_img_opt = self.get_opt(x)
+        x_opt = torch.cat((x_img_opt, x[2]), dim=1)
+
+        x = self.encoder(x_opt)
+
+        x_def = self.decoder_def(x)
+        x_cloud = self.decoder_cloud(x)
+
+        x_def = self.classifier_def(x_def)
+        x_cloud = self.classifier_cloud(x_cloud)
+
+        return x_def, x_cloud

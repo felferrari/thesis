@@ -268,3 +268,33 @@ class SwinClassifier(nn.Module):
         x = self.last_proj(x)
         x = self.last_act(x)
         return x
+
+class SwinRegressionClassifier(nn.Module):
+    def __init__(self, 
+                 base_dim, 
+                 n_heads,
+                 n_blocks,
+                 window_size,
+                 shift_size) -> None:
+        super().__init__()
+
+        self.last_msa = SwinTransformerBlockSet(
+                n_blocks = n_blocks[0],
+                dim = base_dim,
+                n_heads = n_heads[0],
+                window_size = window_size,
+                shift_size = shift_size
+            )
+
+        self.patch_expand_last = PatchExpandx4(dim = base_dim)
+
+        self.last_proj = nn.Conv2d(base_dim, 2, kernel_size=1, bias=False)
+        self.last_act = nn.Sigmoid()
+
+    def forward(self, x):
+        x = self.last_msa(x)
+        x = self.patch_expand_last(x)
+        x = x.permute((0,3,1,2))
+        x = self.last_proj(x)
+        x = self.last_act(x)
+        return x

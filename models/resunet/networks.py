@@ -22,7 +22,6 @@ class GenericModel(ModelModule):
     def get_sar(self, x):
         return rearrange(x[1], 'b i c h w -> b (i c) h w')
 
-
 class GenericResunet(GenericModel):
     def prepare_model(self, in_channels):
         self.encoder = ResUnetEncoder(in_channels, self.depths)
@@ -40,7 +39,6 @@ class GenericResunet(GenericModel):
         x = self.classifier(x)
         return x
 
-
 class ResUnetOpt(GenericResunet):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
@@ -52,7 +50,6 @@ class ResUnetOpt(GenericResunet):
         x = torch.cat((x_img, x[2]), dim=1)
         return x
     
-   
 class ResUnetSAR(GenericResunet):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
@@ -75,7 +72,6 @@ class ResUnetEF(GenericResunet):
         x = torch.cat((x_img_0, x_img_1, x[2]), dim=1)
         return x
     
-
 class ResUnetJF(GenericModel):
     def __init__(self, *args, **kargs):
         super(ResUnetJF, self).__init__(*args, **kargs)
