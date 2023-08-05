@@ -137,7 +137,7 @@ class SwinUnetJF(GenericModel):
             shift_size = self.shift_size
             )
         
-        self.classifier = SwinRegressionClassifier(
+        self.classifier = SwinClassifier(
             self.base_dim, 
             n_heads=self.n_heads,
             n_blocks = self.n_blocks,
