@@ -261,7 +261,7 @@ def run(model_idx):
             limit_train_batches = training_params['max_train_batches'], 
             limit_val_batches = training_params['max_val_batches'], 
             max_epochs = training_params['max_epochs'], 
-            callbacks = [early_stop_callback, best_model_callback, history_model_callback], 
+            callbacks = [early_stop_callback, best_model_callback], 
             logger = loggers,
             log_every_n_steps = 1,
             profiler =profiler,
