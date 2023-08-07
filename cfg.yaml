@@ -75,7 +75,7 @@ training_params:
   #experiments_cfg_path: *experiments_cfg_path
   experiment_folders: *experiment_folders
   patch_size: *patch_size
-  batch_size: 32
+  batch_size: 24
   opt_bands: *opt_bands 
   sar_bands: *sar_bands 
   max_train_batches: 200
@@ -129,6 +129,8 @@ experiments:
     model: models.resunet.networks.ResUnetOpt # 
     description: CNN Opt (Diverse cloud)
     sumary: Model Trained and tested with cloud-free optical images
+    short: Opt (Diverse cloud conditions)
+    group_model: CNN
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -143,6 +145,8 @@ experiments:
     model: models.resunet.networks.ResUnetSAR # 
     description: CNN SAR (12 Average images)
     sumary: Model Trained and tested with 12 average SAR images
+    short: SAR (12 Avg Images)
+    group_model: CNN
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -157,6 +161,8 @@ experiments:
     model: models.resunet.networks.ResUnetEF # 
     description: CNN Early Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    short: Early Fusion
+    group_model: CNN
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -171,6 +177,8 @@ experiments:
     model: models.resunet.networks.ResUnetJF # 
     description: CNN Joint Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    short: Joint Fusion
+    group_model: CNN
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -185,6 +193,8 @@ experiments:
     model: models.resunet.networks.ResUnetLF # 
     description: CNN Late Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    short: Late Fusion
+    group_model: CNN
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -199,6 +209,8 @@ experiments:
     model: models.resunet.networks.ResUnetOpt # 
     description: CNN Opt (Cloud-free)
     sumary: Model Trained and tested with cloud-free optical images
+    short: Opt (Cloud-free)
+    group_model: CNN
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -213,6 +225,8 @@ experiments:
     model: models.resunet.networks.ResUnetJF # 
     description: CNN pretrained Joint Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    short: Joint Fusion (pre-trained)
+    group_model: CNN
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -230,6 +244,8 @@ experiments:
     model: models.resunet.networks.ResUnetLF # 
     description: CNN pretrained Late Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    short: Late Fusion (pre-trained)
+    group_model: CNN
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -247,6 +263,8 @@ experiments:
     model: models.resunet.networks.ResUnetOptMultiTask # 
     description: CNN Multi-task Opt (Diverse cloud) 
     sumary: Model Trained and tested with cloud-free optical images
+    short: Opt (Multi-task)
+    group_model: CNN
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -276,6 +294,8 @@ experiments:
     model: models.resunet.networks.ResUnetJF # 
     description: CNN pretrained (Multi-task) Joint Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    short: Joint Fusion (pre-trained with Opt Multitask)
+    group_model: CNN
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -294,6 +314,8 @@ experiments:
     model: models.swin.networks.SwinUnetOpt # 
     description: SWIN-Unet Optical (Diverse cloud)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    short: Opt (Diverse cloud conditions)
+    group_model: SWIN-Unet
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -308,6 +330,8 @@ experiments:
     model: models.swin.networks.SwinUnetSAR # 
     description: SWIN-Unet SAR (12 Average images)
     sumary: Model Trained and tested with 12 average SAR images
+    short: SAR (12 Avg Images)
+    group_model: SWIN-Unet
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -322,6 +346,8 @@ experiments:
     model: models.swin.networks.SwinUnetEF # 
     description: SWIN-Unet Early Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    short: Early Fusion
+    group_model: SWIN-Unet
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -336,6 +362,8 @@ experiments:
     model: models.swin.networks.SwinUnetJF # 
     description: SWIN-Unet Joint Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    short: Joint Fusion
+    group_model: SWIN-Unet
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -350,6 +378,8 @@ experiments:
     model: models.swin.networks.SwinUnetLF # 
     description: SWIN-Unet Late Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    short: Late Fusion
+    group_model: SWIN-Unet
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -364,6 +394,8 @@ experiments:
     model: models.swin.networks.SwinUnetOpt # 
     description: SWIN-Unet Opt (Cloud-free)
     sumary: Model Trained and tested with cloud-free optical images
+    short: Opt (Cloud-free)
+    group_model: SWIN-Unet
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -378,6 +410,8 @@ experiments:
     model: models.swin.networks.SwinUnetJF # 
     description: SWIN-Unet pretrained Joint Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    short: Joint Fusion (pre-trained)
+    group_model: SWIN-Unet
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -395,6 +429,8 @@ experiments:
     model: models.swin.networks.SwinUnetLF # 
     description: SWIN-Unet pretrained Late Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    short: Late Fusion (pre-trained)
+    group_model: SWIN-Unet
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -412,6 +448,8 @@ experiments:
     model: models.swin.networks.SwinUnetOptMultiTask # 
     description: SWIN-Unet Multi-task Opt (Diverse cloud) 
     sumary: Model Trained and tested with cloud-free optical images
+    short: Opt (Multi-task)
+    group_model: SWIN-Unet
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
@@ -441,6 +479,8 @@ experiments:
     model: models.swin.networks.SwinUnetJF # 
     description: SWIN-Unet pretrained (Multi-task) Joint Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
+    short: Joint Fusion (pre-trained with Opt Multitask)
+    group_model: SWIN-Unet
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
