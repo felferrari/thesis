@@ -171,3 +171,5 @@ loggers.yaml
 data
 experiments
 *.err
+run*.*
+newplot.png
