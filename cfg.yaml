@@ -537,3 +537,47 @@ experiments:
         params:
           ignore_index: 2
           weight: [0.2, 0.8, 0]
+
+  exp_43:
+    model: models.resunet.networks.ResUnetOpt # 
+    description: CNN Opt (Cloud-free) [WBCE]
+    sumary: Model Trained and tested with cloud-free optical images
+    short: Opt (Cloud-free) [WBCE]
+    group_model: CNN
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 11] ]
+    resunet_depths: *resunet_depths
+    override_train_params:
+      loss_fn: 
+        module: torch.nn.CrossEntropyLoss
+        params:
+          ignore_index: 2
+          weight: [0.1, 0.9, 0]
+
+  exp_44:
+    model: models.swin.networks.SwinUnetOpt # 
+    description: SWIN-Unet Opt (Cloud-free) [WBCE]
+    sumary: Model Trained and tested with cloud-free optical images
+    short: Opt (Cloud-free) [WBCE]
+    group_model: SWIN-Unet
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 11] ]
+    swin_params: *swin_params
+    override_train_params:
+      loss_fn: 
+        module: torch.nn.CrossEntropyLoss
+        params:
+          ignore_index: 2
+          weight: [0.1, 0.9, 0]
