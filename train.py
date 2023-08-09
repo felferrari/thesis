@@ -143,6 +143,9 @@ def run(model_idx):
             opt_exp_path = Path(experiments_paths) / f'exp_{pretrained_opt_exp}'
             sar_exp_path = Path(experiments_paths) / f'exp_{pretrained_sar_exp}'
 
+            opt_models_path = opt_exp_path / experiments_folders['models']
+            sar_models_path = sar_exp_path / experiments_folders['models']
+
             opt_logs_path = opt_exp_path / experiments_folders['logs']
             sar_logs_path = sar_exp_path / experiments_folders['logs']
 
@@ -152,8 +155,8 @@ def run(model_idx):
             opt_model = locate(opt_exp_params['model'])
             sar_model = locate(sar_exp_params['model'])
 
-            opt_model_path = models_path / opt_pred_results['model_file']
-            sar_model_path = models_path / sar_pred_results['model_file']
+            opt_model_path = opt_models_path / opt_pred_results['model_file']
+            sar_model_path = sar_models_path / sar_pred_results['model_file']
 
             opt_model = opt_model.load_from_checkpoint(opt_model_path)
             sar_model = sar_model.load_from_checkpoint(sar_model_path)
@@ -171,6 +174,9 @@ def run(model_idx):
             opt_exp_path = Path(experiments_paths) / f'exp_{pretrained_opt_exp}'
             sar_exp_path = Path(experiments_paths) / f'exp_{pretrained_sar_exp}'
 
+            opt_models_path = opt_exp_path / experiments_folders['models']
+            sar_models_path = sar_exp_path / experiments_folders['models']
+
             opt_logs_path = opt_exp_path / experiments_folders['logs']
             sar_logs_path = sar_exp_path / experiments_folders['logs']
 
@@ -180,8 +186,8 @@ def run(model_idx):
             opt_model = locate(opt_exp_params['model'])
             sar_model = locate(sar_exp_params['model'])
 
-            opt_model_path = models_path / opt_pred_results['model_file']
-            sar_model_path = models_path / sar_pred_results['model_file']
+            opt_model_path = opt_models_path / opt_pred_results['model_file']
+            sar_model_path = sar_models_path / sar_pred_results['model_file']
 
             opt_model = opt_model.load_from_checkpoint(opt_model_path)
             sar_model = sar_model.load_from_checkpoint(sar_model_path)
