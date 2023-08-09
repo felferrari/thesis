@@ -152,8 +152,11 @@ def run(model_idx):
             opt_model = locate(opt_exp_params['model'])
             sar_model = locate(sar_exp_params['model'])
 
-            opt_model = opt_model.load_from_checkpoint(opt_pred_results['model_path'])
-            sar_model = sar_model.load_from_checkpoint(sar_pred_results['model_path'])
+            opt_model_path = models_path / opt_pred_results['model_file']
+            sar_model_path = models_path / sar_pred_results['model_file']
+
+            opt_model = opt_model.load_from_checkpoint(opt_model_path)
+            sar_model = sar_model.load_from_checkpoint(sar_model_path)
 
             model.encoder_opt.load_state_dict(opt_model.encoder.state_dict())
             model.encoder_sar.load_state_dict(sar_model.encoder.state_dict())
@@ -177,8 +180,11 @@ def run(model_idx):
             opt_model = locate(opt_exp_params['model'])
             sar_model = locate(sar_exp_params['model'])
 
-            opt_model = opt_model.load_from_checkpoint(opt_pred_results['model_path'])
-            sar_model = sar_model.load_from_checkpoint(sar_pred_results['model_path'])
+            opt_model_path = models_path / opt_pred_results['model_file']
+            sar_model_path = models_path / sar_pred_results['model_file']
+
+            opt_model = opt_model.load_from_checkpoint(opt_model_path)
+            sar_model = sar_model.load_from_checkpoint(sar_model_path)
 
             model.encoder_opt.load_state_dict(opt_model.encoder.state_dict())
             model.decoder_opt.load_state_dict(opt_model.decoder.state_dict())
@@ -276,8 +282,9 @@ def run(model_idx):
         last_val_loss = best_model_callback.best_model_score.item()
 
         if last_val_loss <= min_val_loss:
+            model_file = Path(best_model_callback.best_model_path)
             run_results = {
-                'model_path': best_model_callback.best_model_path,
+                'model_file': model_file.name,
                 'total_train_time': train_time,
                 'train_per_epoch': train_time / trainer.current_epoch,
                 'n_paramters': count_parameters(model), 

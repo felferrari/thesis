@@ -129,7 +129,8 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
         pbar.set_description(f'Predicting model {model_idx}')
         pred_results = load_yaml(logs_path / f'model_{model_idx}' / 'train_results.yaml')
         model_class = locate(experiment_params['model'])#(experiment_params, training_params)
-        model = model_class.load_from_checkpoint(pred_results['model_path'])
+        model_path = models_path / pred_results['model_file']
+        model = model_class.load_from_checkpoint(model_path)
         #model.to(device)
         #model.eval()
 
