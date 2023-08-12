@@ -1,4 +1,11 @@
 #! /bin/bash
-python train.py -d 0 -s 1 -e 30
-python predict.py -d 0 -s 1 -e 30
-python evaluate.py -s 1 -e 30
+python predict.py -d 1 -s 2 -e 54
+python evaluate.py -s 2 -e 54
+
+python train.py -d 1 -s 2 -e 55
+python predict.py -d 1 -s 2 -e 55
+python evaluate.py -s 2 -e 55
+
+python train.py -d 1 -s 2 -e 56
+python predict.py -d 1 -s 2 -e 56
+python evaluate.py -s 2 -e 56
