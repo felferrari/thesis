@@ -240,7 +240,7 @@ if args.train_data:
         data_file = opt_path / opt_img_file
         data = load_opt_image(data_file)
         data = remove_outliers(data)
-        #data = (data - opt_means) / opt_stds
+        data = (data - opt_means) / opt_stds
         #data = data / 10000
         opt_imgs.append(data.astype(np.float16).reshape((-1, opt_bands)))
 
@@ -257,7 +257,7 @@ if args.train_data:
         data_file = sar_path / sar_img_file
         data = load_SAR_image(data_file)
         data = remove_outliers(data)
-        #data = (data - sar_means) / sar_stds
+        data = (data - sar_means) / sar_stds
         sar_imgs.append(data.astype(np.float16).reshape((-1, sar_bands)))
 
     previous_map = previous_map.astype(np.float16).reshape(-1, 1)
@@ -289,11 +289,11 @@ if args.train_data:
         patch_file = train_folder / f'{patch_i:d}.h5'
 
         with h5py.File(patch_file, "w") as f:
-            f.create_dataset('opt', data=opt_patchs, compression='lzf', chunks=(1, 224, 224, 1))
-            f.create_dataset('cloud', data=cloud_patchs, compression='lzf', chunks=(1, 224, 224, 1))
-            f.create_dataset('sar', data=sar_patchs, compression='lzf', chunks=(1, 224, 224, 1))
-            f.create_dataset('previous', data=previous_patch, compression='lzf', chunks=(224, 224, 1))
-            f.create_dataset('label', data=label_patch, compression='lzf', chunks=(224, 224))
+            f.create_dataset('opt', data=opt_patchs, compression='lzf', chunks=(1, patch_size, patch_size, 1))
+            f.create_dataset('cloud', data=cloud_patchs, compression='lzf', chunks=(1, patch_size, patch_size, 1))
+            f.create_dataset('sar', data=sar_patchs, compression='lzf', chunks=(1, patch_size, patch_size, 1))
+            f.create_dataset('previous', data=previous_patch, compression='lzf', chunks=(patch_size, patch_size, 1))
+            f.create_dataset('label', data=label_patch, compression='lzf', chunks=(patch_size, patch_size))
         
         #train_dataset['patch_idx'].append(patch_i)
 
@@ -322,11 +322,11 @@ if args.train_data:
         previous_patch = previous_map[idx_patch]
         patch_file = validation_folder / f'{patch_i:d}.h5'
         with h5py.File(patch_file, "w") as f:
-            f.create_dataset('opt', data=opt_patchs, compression='lzf', chunks=(1, 224, 224, 1))
-            f.create_dataset('cloud', data=cloud_patchs, compression='lzf', chunks=(1, 224, 224, 1))
-            f.create_dataset('sar', data=sar_patchs, compression='lzf', chunks=(1, 224, 224, 1))
-            f.create_dataset('previous', data=previous_patch, compression='lzf', chunks=(224, 224, 1))
-            f.create_dataset('label', data=label_patch, compression='lzf', chunks=(224, 224))
+            f.create_dataset('opt', data=opt_patchs, compression='lzf', chunks=(1, patch_size, patch_size, 1))
+            f.create_dataset('cloud', data=cloud_patchs, compression='lzf', chunks=(1, patch_size, patch_size, 1))
+            f.create_dataset('sar', data=sar_patchs, compression='lzf', chunks=(1, patch_size, patch_size, 1))
+            f.create_dataset('previous', data=previous_patch, compression='lzf', chunks=(patch_size, patch_size, 1))
+            f.create_dataset('label', data=label_patch, compression='lzf', chunks=(patch_size, patch_size))
         
     del train_label
     data = None

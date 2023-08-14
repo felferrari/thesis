@@ -75,7 +75,7 @@ training_params:
   #experiments_cfg_path: *experiments_cfg_path
   experiment_folders: *experiment_folders
   patch_size: *patch_size
-  batch_size: 24
+  batch_size: 32
   opt_bands: *opt_bands 
   sar_bands: *sar_bands 
   max_train_batches: 200
@@ -105,7 +105,7 @@ prediction_params:
   n_classes: *n_classes
   prefixs: *prefixs
   n_models: *n_models
-  batch_size: 24
+  batch_size: 48
   prediction_remove_border: 8
   prediction_overlaps: [0.2]#, 0.3, 0.4]
   opt_bands: *opt_bands 
@@ -625,9 +625,9 @@ experiments:
     sar_bands: *sar_bands
     n_classes: *n_classes
     train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40] ]
+    train_sar_imgs: [ [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43] ]
     test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40] ]
+    test_sar_imgs: [ [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43] ]
     resunet_depths: *resunet_depths
 
   exp_54:
@@ -641,9 +641,9 @@ experiments:
     sar_bands: *sar_bands
     n_classes: *n_classes
     train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40] ]
+    train_sar_imgs: [ [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43] ]
     test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40] ]
+    test_sar_imgs: [ [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43] ]
     swin_params: *swin_params
 
   exp_55:
@@ -657,9 +657,9 @@ experiments:
     sar_bands: *sar_bands
     n_classes: *n_classes
     train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [12, 40] ]
+    train_sar_imgs: [ [12, 43] ]
     test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [12, 40] ]
+    test_sar_imgs: [ [12, 43] ]
     resunet_depths: *resunet_depths
 
   exp_56:
@@ -673,9 +673,9 @@ experiments:
     sar_bands: *sar_bands
     n_classes: *n_classes
     train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [12, 40] ]
+    train_sar_imgs: [ [12, 43] ]
     test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [12, 40] ]
+    test_sar_imgs: [ [12, 43] ]
     swin_params: *swin_params
 
   exp_57:
@@ -689,9 +689,9 @@ experiments:
     sar_bands: *sar_bands
     n_classes: *n_classes
     train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [12, 40] ]
+    train_sar_imgs: [ [12, 43] ]
     test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [12, 40] ]
+    test_sar_imgs: [ [12, 43] ]
     resunet_depths: *resunet_depths
     override_train_params:
       loss_fn: 
@@ -711,9 +711,9 @@ experiments:
     sar_bands: *sar_bands
     n_classes: *n_classes
     train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [12, 40] ]
+    train_sar_imgs: [ [12, 43] ]
     test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [12, 40] ]
+    test_sar_imgs: [ [12, 43] ]
     swin_params: *swin_params
     override_train_params:
       loss_fn: 
@@ -733,9 +733,9 @@ experiments:
     sar_bands: *sar_bands
     n_classes: *n_classes
     train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [12, 40] ]
+    train_sar_imgs: [ [12, 43] ]
     test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [12, 40] ]
+    test_sar_imgs: [ [12, 43] ]
     resunet_depths: *resunet_depths
     override_train_params:
       loss_fn: 
@@ -755,9 +755,9 @@ experiments:
     sar_bands: *sar_bands
     n_classes: *n_classes
     train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [12, 40] ]
+    train_sar_imgs: [ [12, 43] ]
     test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [12, 40] ]
+    test_sar_imgs: [ [12, 43] ]
     swin_params: *swin_params
     override_train_params:
       loss_fn: 
@@ -858,18 +858,70 @@ experiments:
 
   exp_71:
     model: models.resunet.networks.ResUnetSAR # 
-    description: CNN SAR (2 Single images) [128 Adam WBCE 0.2-0.8]
-    sumary: Model Trained and tested with 2 Single SAR images [128 Adam WBCE 0.2-0.8]
-    short: SAR (2 Single Images) [128 Adam WBCE 0.2-0.8]
+    description: CNN SAR (2 Single images) [norm 128 Adam WBCE 0.2-0.8]
+    sumary: Model Trained and tested with 2 Single SAR images [norm 128 Adam WBCE 0.2-0.8]
+    short: SAR (2 Single Images) [norm 128 Adam WBCE 0.2-0.8]
     group_model: CNN
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
     train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [12, 40] ]
+    train_sar_imgs: [ [12, 43] ]
     test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [12, 40] ]
+    test_sar_imgs: [ [12, 43] ]
+    resunet_depths: *resunet_depths
+    override_train_params:
+      loss_fn: 
+        module: torch.nn.CrossEntropyLoss
+        params:
+          ignore_index: 2
+          weight: [0.2, 0.8, 0]
+      optimizer:
+        module: torch.optim.Adam
+        params:
+          lr: 2.0e-5
+
+  exp_72:
+    model: models.swin.networks.SwinUnetSAR # 
+    description: SWIN-Unet SAR (2 Single images) [norm 128 Adam WBCE 0.2-0.8]
+    sumary: Model Trained and tested with 2 Single SAR images [norm 128 Adam WBCE 0.2-0.8]
+    short: SAR (2 Single Images) [norm 128 Adam WBCE 0.2-0.8]
+    group_model: SWIN-Unet
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [12, 43] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [12, 43] ]
+    swin_params: *swin_params
+    override_train_params:
+      loss_fn: 
+        module: torch.nn.CrossEntropyLoss
+        params:
+          ignore_index: 2
+          weight: [0.2, 0.8, 0]
+      optimizer:
+        module: torch.optim.Adam
+        params:
+          lr: 2.0e-5
+
+  exp_73:
+    model: models.resunet.networks.ResUnetSAR # 
+    description: CNN SAR (2 Single images) [norm 128 WBCE 0.2-0.8]
+    sumary: Model Trained and tested with 2 Single SAR images [norm 128 WBCE 0.2-0.8]
+    short: SAR (2 Single Images) [norm 128 WBCE 0.2-0.8]
+    group_model: CNN
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [12, 43] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [12, 43] ]
     resunet_depths: *resunet_depths
     override_train_params:
       loss_fn: 
@@ -878,20 +930,20 @@ experiments:
           ignore_index: 2
           weight: [0.2, 0.8, 0]
 
-  exp_72:
+  exp_74:
     model: models.swin.networks.SwinUnetSAR # 
-    description: SWIN-Unet SAR (2 Single images) [128 Adam WBCE 0.2-0.8]
-    sumary: Model Trained and tested with 2 Single SAR images [128 Adam WBCE 0.2-0.8]
-    short: SAR (2 Single Images) [128 Adam WBCE 0.2-0.8]
+    description: SWIN-Unet SAR (2 Single images) [norm 128 WBCE 0.2-0.8]
+    sumary: Model Trained and tested with 2 Single SAR images [norm 128 WBCE 0.2-0.8]
+    short: SAR (2 Single Images) [norm 128 WBCE 0.2-0.8]
     group_model: SWIN-Unet
     prefixs: *prefixs
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
     train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [12, 40] ]
+    train_sar_imgs: [ [12, 43] ]
     test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [12, 40] ]
+    test_sar_imgs: [ [12, 43] ]
     swin_params: *swin_params
     override_train_params:
       loss_fn: 
@@ -899,7 +951,109 @@ experiments:
         params:
           ignore_index: 2
           weight: [0.2, 0.8, 0]
-    optimizer:
-      module: torch.optim.Adam
-      params:
-        lr: 2.0e-5
+
+
+
+  exp_75:
+    model: models.resunet.networks.ResUnetSAR # 
+    description: CNN SAR (2 Single images) [norm 128 Adam WBCE 0.2-0.8 all patches]
+    sumary: Model Trained and tested with 2 Single SAR images [norm 128 Adam WBCE 0.2-0.8 all patches]
+    short: SAR (2 Single Images) [norm 128 Adam WBCE 0.2-0.8 all patches]
+    group_model: CNN
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [12, 43] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [12, 43] ]
+    resunet_depths: *resunet_depths
+    override_train_params:
+      loss_fn: 
+        module: torch.nn.CrossEntropyLoss
+        params:
+          ignore_index: 2
+          weight: [0.2, 0.8, 0]
+      optimizer:
+        module: torch.optim.Adam
+        params:
+          lr: 2.0e-5
+      max_train_batches: null
+      max_val_batches: null
+
+  exp_76:
+    model: models.swin.networks.SwinUnetSAR # 
+    description: SWIN-Unet SAR (2 Single images) [norm 128 Adam WBCE 0.2-0.8 all patches]
+    sumary: Model Trained and tested with 2 Single SAR images [norm 128 Adam WBCE 0.2-0.8 all patches]
+    short: SAR (2 Single Images) [norm 128 Adam WBCE 0.2-0.8 all patches]
+    group_model: SWIN-Unet
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [12, 43] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [12, 43] ]
+    swin_params: *swin_params
+    override_train_params:
+      loss_fn: 
+        module: torch.nn.CrossEntropyLoss
+        params:
+          ignore_index: 2
+          weight: [0.2, 0.8, 0]
+      optimizer:
+        module: torch.optim.Adam
+        params:
+          lr: 2.0e-5
+      max_train_batches: null
+      max_val_batches: null
+
+  exp_77:
+    model: models.resunet.networks.ResUnetSAR # 
+    description: CNN SAR (2 Single images) [norm 128 WBCE 0.2-0.8 all patches]
+    sumary: Model Trained and tested with 2 Single SAR images [norm 128 WBCE 0.2-0.8 all patches]
+    short: SAR (2 Single Images) [norm 128 WBCE 0.2-0.8 all patches]
+    group_model: CNN
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [12, 43] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [12, 43] ]
+    resunet_depths: *resunet_depths
+    override_train_params:
+      loss_fn: 
+        module: torch.nn.CrossEntropyLoss
+        params:
+          ignore_index: 2
+          weight: [0.2, 0.8, 0]
+      max_train_batches: null
+      max_val_batches: null
+
+  exp_78:
+    model: models.swin.networks.SwinUnetSAR # 
+    description: SWIN-Unet SAR (2 Single images) [norm 128 WBCE 0.2-0.8 all patches]
+    sumary: Model Trained and tested with 2 Single SAR images [norm 128 WBCE 0.2-0.8 all patches]
+    short: SAR (2 Single Images) [norm 128 WBCE 0.2-0.8 all patches]
+    group_model: SWIN-Unet
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [12, 43] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [12, 43] ]
+    swin_params: *swin_params
+    override_train_params:
+      loss_fn: 
+        module: torch.nn.CrossEntropyLoss
+        params:
+          ignore_index: 2
+          weight: [0.2, 0.8, 0]
+      max_train_batches: null
+      max_val_batches: null

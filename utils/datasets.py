@@ -114,7 +114,7 @@ class PredDataset(Dataset):
 
         self.sar_data = [
             #rearrange(np.pad((load_SAR_image(sar_file)).astype(np.float16), pad_shape, mode='reflect'), 'h w c -> (h w) c')
-            rearrange(np.pad(((load_opt_image(sar_file) - sar_means) / sar_stds).astype(np.float16), pad_shape, mode='reflect'), 'h w c -> (h w) c')
+            rearrange(np.pad(((load_SAR_image(sar_file) - sar_means) / sar_stds).astype(np.float16), pad_shape, mode='reflect'), 'h w c -> (h w) c')
             for sar_file in sar_files
         ]
 
