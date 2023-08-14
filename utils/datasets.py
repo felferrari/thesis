@@ -86,15 +86,15 @@ class ValDataset(GenericTrainDataset):
 
 
 class PredDataset(Dataset):
-    def __init__(self, patch_size, params, opt_files, sar_files, prev_file) -> None:
+    def __init__(self, patch_size, params, opt_files, sar_files, prev_file, statistics) -> None:
         super().__init__()
         self.patch_size = patch_size
         self.params = params
 
-        # opt_means = statistics['opt_means']
-        # opt_stds = statistics['opt_stds']
-        # sar_means = statistics['sar_means']
-        # sar_stds = statistics['sar_stds']
+        opt_means = statistics['opt_means']
+        opt_stds = statistics['opt_stds']
+        sar_means = statistics['sar_means']
+        sar_stds = statistics['sar_stds']
 
         previous = load_sb_image(prev_file)
         self.original_shape = previous.shape
@@ -107,13 +107,14 @@ class PredDataset(Dataset):
         pad_shape = ((self.patch_size, self.patch_size),(self.patch_size, self.patch_size), (0, 0))
 
         self.opt_data = [
-            rearrange(np.pad((load_opt_image(opt_file)).astype(np.float16), pad_shape, mode='reflect'), 'h w c -> (h w) c')
-            #rearrange(np.pad(((load_opt_image(opt_file) - opt_means) / opt_stds).astype(np.float16), pad_shape, mode='reflect'), 'h w c -> (h w) c')
+            #rearrange(np.pad((load_opt_image(opt_file)).astype(np.float16), pad_shape, mode='reflect'), 'h w c -> (h w) c')
+            rearrange(np.pad(((load_opt_image(opt_file) - opt_means) / opt_stds).astype(np.float16), pad_shape, mode='reflect'), 'h w c -> (h w) c')
             for opt_file in opt_files
         ]
 
         self.sar_data = [
-            rearrange(np.pad((load_SAR_image(sar_file)).astype(np.float16), pad_shape, mode='reflect'), 'h w c -> (h w) c')
+            #rearrange(np.pad((load_SAR_image(sar_file)).astype(np.float16), pad_shape, mode='reflect'), 'h w c -> (h w) c')
+            rearrange(np.pad(((load_opt_image(sar_file) - sar_means) / sar_stds).astype(np.float16), pad_shape, mode='reflect'), 'h w c -> (h w) c')
             for sar_file in sar_files
         ]
 
