@@ -1,7 +1,7 @@
 general_params:
   train_year: &train_year 2020
   test_year: &test_year 2021
-  patch_size: &patch_size 224
+  patch_size: &patch_size 128 #224
   prefixs: &prefixs
     opt: opt
     sar: sar
@@ -854,3 +854,52 @@ experiments:
           mode: multiclass
           gamma: 3
           ignore_index: 2
+
+
+  exp_71:
+    model: models.resunet.networks.ResUnetSAR # 
+    description: CNN SAR (2 Single images) [128 Adam WBCE 0.2-0.8]
+    sumary: Model Trained and tested with 2 Single SAR images [128 Adam WBCE 0.2-0.8]
+    short: SAR (2 Single Images) [128 Adam WBCE 0.2-0.8]
+    group_model: CNN
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [11, 40] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [11, 40] ]
+    resunet_depths: *resunet_depths
+    override_train_params:
+      loss_fn: 
+        module: torch.nn.CrossEntropyLoss
+        params:
+          ignore_index: 2
+          weight: [0.2, 0.8, 0]
+
+  exp_72:
+    model: models.swin.networks.SwinUnetSAR # 
+    description: SWIN-Unet SAR (2 Single images) [128 Adam WBCE 0.2-0.8]
+    sumary: Model Trained and tested with 2 Single SAR images [128 Adam WBCE 0.2-0.8]
+    short: SAR (2 Single Images) [128 Adam WBCE 0.2-0.8]
+    group_model: SWIN-Unet
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [11, 40] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [11, 40] ]
+    swin_params: *swin_params
+    override_train_params:
+      loss_fn: 
+        module: torch.nn.CrossEntropyLoss
+        params:
+          ignore_index: 2
+          weight: [0.2, 0.8, 0]
+    optimizer:
+      module: torch.optim.Adam
+      params:
+        lr: 2.0e-5
