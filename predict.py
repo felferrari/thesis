@@ -117,10 +117,10 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
 
     print(f'loading files... Opt gp {opt_i} SAR Gp {sar_i}')
 
-    statistics = load_yaml(statistics_file)
+    # statistics = load_yaml(statistics_file)
     
     label = load_sb_image(paths_params['label_test'])
-    pred_ds = PredDataset(patch_size, experiment_params, test_opt_img, test_sar_img, paths_params['previous_test'], statistics)
+    pred_ds = PredDataset(patch_size, experiment_params, test_opt_img, test_sar_img, paths_params['previous_test']) #, statistics)
 
     pred_image_writer = PredictedImageWriter(label.shape, patch_size, n_classes, prediction_remove_border)
 

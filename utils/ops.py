@@ -106,7 +106,7 @@ def load_SAR_image(img_file):
         array:numpy array of the image. Channels Last.
     """
     img = gdal_array.LoadFile(str(img_file))
-    #img = 10**(img/10)
+    #img = 10**(img/10) 
     img[np.isnan(img)] = 0
     return np.moveaxis(img, 0, -1)
 

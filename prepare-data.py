@@ -182,10 +182,10 @@ data = None
 if args.train_data:
     statistics = load_yaml(statistics_file)
 
-    opt_means = statistics['opt_means']
-    opt_stds = statistics['opt_stds']
-    sar_means = statistics['sar_means']
-    sar_stds = statistics['sar_stds']
+    # opt_means = statistics['opt_means']
+    # opt_stds = statistics['opt_stds']
+    # sar_means = statistics['sar_means']
+    # sar_stds = statistics['sar_stds']
 
     outfile = prepared_folder / 'train-data-prep.txt'
     logging.basicConfig(
@@ -240,8 +240,7 @@ if args.train_data:
         data_file = opt_path / opt_img_file
         data = load_opt_image(data_file)
         data = remove_outliers(data)
-        data = (data - opt_means) / opt_stds
-        #data = data / 10000
+        # data = (data - opt_means) / opt_stds
         opt_imgs.append(data.astype(np.float16).reshape((-1, opt_bands)))
 
     pbar = tqdm(original_opt_imgs['train'], desc = 'Reading Cloud Training files')
@@ -257,7 +256,7 @@ if args.train_data:
         data_file = sar_path / sar_img_file
         data = load_SAR_image(data_file)
         data = remove_outliers(data)
-        data = (data - sar_means) / sar_stds
+        # data = (data - sar_means) / sar_stds 
         sar_imgs.append(data.astype(np.float16).reshape((-1, sar_bands)))
 
     previous_map = previous_map.astype(np.float16).reshape(-1, 1)
