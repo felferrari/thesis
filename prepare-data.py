@@ -247,7 +247,7 @@ if args.train_data:
     for opt_img_i, opt_img_file in enumerate(pbar):
         pbar.set_description(f'Reading Cloud training file {cloud_prefix}_{opt_img_file}')
         data_file = opt_path / f'{cloud_prefix}_{opt_img_file}'
-        data = load_opt_image(data_file)/100
+        data = load_sb_image(data_file)/100
         cloud_imgs.append(data.astype(np.float16).reshape((-1, 1)))
 
     pbar = tqdm(original_sar_imgs['train'], desc = 'Reading SAR Training files')
