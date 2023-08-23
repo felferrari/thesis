@@ -104,6 +104,8 @@ sar_folder = Path(paths_params['sar_data'])
 
 statistics_file = prepared_folder / preparation_params['statistics_data']
 
+logging.getLogger("lightning").setLevel(logging.ERROR)
+
 #device = f"cuda:{args.device}" if torch.cuda.is_available() else "cpu"
 
 def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
@@ -151,13 +153,16 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
                 profiler = profiler,
                 callbacks = [pred_image_writer],
                 #num_sanity_val_steps = 0
-                enable_progress_bar = True
+                enable_progress_bar = False
                 )
 
             trainer.predict(model, dataloaders = dataloader, return_predictions = False)
 
         prediction = pred_image_writer.predicted_image()
         prediction[label==2] = [0, 0, 1]
+        prediction[label!=2][2] = 0
+        prediction = prediction / np.expand_dims(prediction.sum(axis=-1), axis=-1)
+
         
         #base_data = Path(paths_params['opt_data']) / original_opt_imgs['test'][0]
         #prediction_tif_file = predicted_path / f'{prediction_prefix}_{args.experiment}_{opt_i}_{sar_i}_{model_idx}.tif'
