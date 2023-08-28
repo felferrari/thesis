@@ -182,6 +182,9 @@ def save_geotiff(base_image_path, dest_path, data, dtype):
         elif dtype == 'float':
             target_ds = gdal.GetDriverByName('GTiff').Create(dest_path, x_res, y_res, 1, gdal.GDT_Float32)
             data = data.astype(np.float32)
+        elif dtype == 'uint16':
+            target_ds = gdal.GetDriverByName('GTiff').Create(dest_path, x_res, y_res, 1, gdal.GDT_UInt16)
+            data = data.astype(np.uint16)
     elif len(data.shape) == 3:
         if dtype == 'byte':
             target_ds = gdal.GetDriverByName('GTiff').Create(dest_path, x_res, y_res, data.shape[-1], gdal.GDT_Byte)
@@ -189,7 +192,9 @@ def save_geotiff(base_image_path, dest_path, data, dtype):
         elif dtype == 'float':
             target_ds = gdal.GetDriverByName('GTiff').Create(dest_path, x_res, y_res, data.shape[-1], gdal.GDT_Float32)
             data = data.astype(np.float32)
-            
+        elif dtype == 'float':
+            target_ds = gdal.GetDriverByName('GTiff').Create(dest_path, x_res, y_res, data.shape[-1], gdal.GDT_UInt16)
+            data = data.astype(np.uint16)
     target_ds.SetGeoTransform(geo_transform)
     target_ds.SetSpatialRef(crs)
     target_ds.SetProjection(proj)

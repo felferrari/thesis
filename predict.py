@@ -114,8 +114,8 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
     logging.getLogger("lightning.pytorch").setLevel(logging.ERROR)
 
     # configure logging on module level, redirect to file
-    logger = logging.getLogger("lightning.pytorch.core")
-    logger.addHandler(logging.FileHandler("core.log"))
+    #logger = logging.getLogger("lightning.pytorch.core")
+    #logger.addHandler(logging.FileHandler("core.log"))
 
     print(f'loading files... Opt gp {opt_i} SAR Gp {sar_i}')
 
@@ -125,6 +125,8 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
     pred_ds = PredDataset(patch_size, experiment_params, test_opt_img, test_sar_img, paths_params['previous_test']) #, statistics)
 
     pred_image_writer = PredictedImageWriter(label.shape, patch_size, n_classes, prediction_remove_border)
+
+    sum_prediction = np.zeros(label.shape + (n_classes,))
 
     pbar = tqdm(models_pred_idx)
     for model_idx in pbar:
@@ -159,25 +161,34 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
             trainer.predict(model, dataloaders = dataloader, return_predictions = False)
 
         prediction = pred_image_writer.predicted_image()
+        
+
         prediction[label==2] = [0, 0, 1]
         prediction[label!=2][2] = 0
         prediction = prediction / np.expand_dims(prediction.sum(axis=-1), axis=-1)
 
-        
-        #base_data = Path(paths_params['opt_data']) / original_opt_imgs['test'][0]
-        #prediction_tif_file = predicted_path / f'{prediction_prefix}_{args.experiment}_{opt_i}_{sar_i}_{model_idx}.tif'
-        #save_geotiff(base_data, prediction_tif_file, pred_b2, dtype = 'byte')
-        #save_geotiff(base_data, prediction_tif_file, prediction[:,:,1], dtype = 'float')
+        sum_prediction += prediction
 
         prediction_npz_file = predicted_path / f'{prediction_prefix}_{args.experiment}_{opt_i}_{sar_i}_{model_idx}.npz'
         np.savez_compressed(prediction_npz_file, pred = prediction[:,:,1].astype(np.float16))
 
-        pred_results = {
-            #'models_predicted': models_pred_idx,
-            'opt_files': str(test_opt_img),
-            'sar_files': str(test_sar_img)
-        }
-        save_yaml(pred_results, logs_path / f'pred_{opt_i}_{sar_i}.yaml')
+    avg_prediction = sum_prediction / len(models_pred_idx)
+    avg_prediction += 1e-7
+    entropy = avg_prediction * np.log(avg_prediction)
+    entropy = entropy.sum(axis=-1)
+    entropy = -1 * (1/n_classes) * entropy
+
+    base_data = Path(paths_params['opt_data']) / original_opt_imgs['test'][0]
+    entropy_tif_file = visual_path / f'entropy_{args.experiment}_{opt_i}_{sar_i}.tif'
+    save_geotiff(base_data, entropy_tif_file, entropy, dtype = 'float')
+    #save_geotiff(base_data, prediction_tif_file, prediction[:,:,1], dtype = 'float')
+
+    pred_results = {
+        #'models_predicted': models_pred_idx,
+        'opt_files': str(test_opt_img),
+        'sar_files': str(test_sar_img)
+    }
+    save_yaml(pred_results, logs_path / f'pred_{opt_i}_{sar_i}.yaml')
 
 if __name__=="__main__":
     freeze_support()

@@ -119,7 +119,7 @@ def eval_prediction(data):
             #    pred_prob += load_sb_image(pred_prob_file).astype(np.float16)
         pred_prob = pred_prob / n_models
         mean_prob_file = visual_path / f'{prediction_prefix}_mean_prob_{args.experiment}_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}.tif'
-        save_geotiff(base_data, mean_prob_file, pred_prob, dtype = 'float')
+        #save_geotiff(base_data, mean_prob_file, pred_prob, dtype = 'float')
 
     else:
         pred_prob_file = predicted_path / f'{prediction_prefix}_{args.experiment}_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}_{model_idx}.npz'
@@ -287,6 +287,9 @@ if __name__=="__main__":
 
     final_results_file = results_path / f'results_{args.experiment}.data'
     final_results_df.to_pickle(final_results_file)
+
+    models_results_file = results_path / f'models_results_{args.experiment}.data'
+    sum_results_df.to_pickle(models_results_file)
 
     timest = datetime.datetime.now()
     
