@@ -26,8 +26,8 @@ class ModelModule(L.LightningModule):
         loss_batch = self.loss(def_prev, def_target)
         self.log("train_loss", loss_batch, prog_bar=True, logger = True, on_step=True, on_epoch=True)
         if batch_idx % 10 == 0:
-            self.train_metric.to('cpu')
-            f1 = self.train_metric(def_prev.to('cpu'), def_target.to('cpu'))
+            self.train_metric.cpu()
+            f1 = self.train_metric(def_prev.detach().cpu(), def_target.detach().cpu())
             self.log("train_f1_class_0",f1[0].item(), prog_bar=False, logger = True, on_step=True, on_epoch=True)
             self.log("train_f1_class_1",f1[1].item(), prog_bar=False, logger = True, on_step=True, on_epoch=True)
             self.log("train_f1_class_2",f1[2].item(), prog_bar=False, logger = True, on_step=True, on_epoch=True)
@@ -44,8 +44,8 @@ class ModelModule(L.LightningModule):
         loss_batch = self.loss(def_prev, def_target)
         self.log("val_loss", loss_batch, prog_bar=True, logger = True, on_step=True, on_epoch=True)
         if batch_idx % 10 == 0:
-            self.val_metric.to('cpu')
-            f1 = self.val_metric(def_prev.to('cpu'), def_target.to('cpu'))
+            self.val_metric.cpu()
+            f1 = self.val_metric(def_prev.detach().cpu(), def_target.detach().cpu())
             self.log("val_f1_class_0",f1[0].item(), prog_bar=False, logger = True, on_step=True, on_epoch=True)
             self.log("val_f1_class_1",f1[1].item(), prog_bar=False, logger = True, on_step=True, on_epoch=True)
             self.log("val_f1_class_2",f1[2].item(), prog_bar=False, logger = True, on_step=True, on_epoch=True)
@@ -95,8 +95,8 @@ class ModelModuleMultiTask(L.LightningModule):
         self.log("train_loss_def", loss_def_batch, prog_bar=True, logger = True, on_step=True, on_epoch=True)
         self.log("train_loss_cloud", loss_cloud_batch, prog_bar=True, logger = True, on_step=True, on_epoch=True)
         if batch_idx % 10 == 0:
-            self.train_metric_def.to('cpu')
-            f1 = self.train_metric_def(prev[0].to('cpu'), def_target.to('cpu'))
+            self.train_metric_def.cpu()
+            f1 = self.train_metric_def(prev[0].detach().cpu(), def_target.detach().cpu())
             self.log("train_f1_class_0",f1[0].item(), prog_bar=False, logger = True, on_step=True, on_epoch=True)
             self.log("train_f1_class_1",f1[1].item(), prog_bar=False, logger = True, on_step=True, on_epoch=True)
             self.log("train_f1_class_2",f1[2].item(), prog_bar=False, logger = True, on_step=True, on_epoch=True)
@@ -121,8 +121,8 @@ class ModelModuleMultiTask(L.LightningModule):
         self.log("val_loss_def", loss_def_batch, prog_bar=True, logger = True, on_step=True, on_epoch=True)
         self.log("val_loss_cloud", loss_cloud_batch, prog_bar=True, logger = True, on_step=True, on_epoch=True)
         if batch_idx % 10 == 0:
-            self.val_metric_def.to('cpu')
-            f1 = self.val_metric_def(prev[0].to('cpu'), def_target.to('cpu'))
+            self.val_metric_def.cpu()
+            f1 = self.val_metric_def(prev[0].detach().cpu(), def_target.detach().cpu())
             self.log("val_f1_class_0",f1[0].item(), prog_bar=False, logger = True, on_step=True, on_epoch=True)
             self.log("val_f1_class_1",f1[1].item(), prog_bar=False, logger = True, on_step=True, on_epoch=True)
             self.log("val_f1_class_2",f1[2].item(), prog_bar=False, logger = True, on_step=True, on_epoch=True)

@@ -13,6 +13,9 @@ from pydoc import locate
 from lightning.pytorch.trainer import Trainer
 from lightning.pytorch.profilers import SimpleProfiler
 import logging
+from skimage.morphology import erosion, disk
+import warnings
+
 
 parser = argparse.ArgumentParser(
     description='Train NUMBER_MODELS models based in the same parameters'
@@ -105,6 +108,7 @@ sar_folder = Path(paths_params['sar_data'])
 statistics_file = prepared_folder / preparation_params['statistics_data']
 
 logging.getLogger("lightning").setLevel(logging.ERROR)
+warnings.filterwarnings("ignore", ".*Consider increasing the value of the `num_workers` argument*")
 
 #device = f"cuda:{args.device}" if torch.cuda.is_available() else "cpu"
 
@@ -117,7 +121,7 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
     #logger = logging.getLogger("lightning.pytorch.core")
     #logger.addHandler(logging.FileHandler("core.log"))
 
-    print(f'loading files... Opt gp {opt_i} SAR Gp {sar_i}')
+    print(f'loading files... Exp {args.experiment} Opt gp {opt_i} SAR Gp {sar_i}')
 
     # statistics = load_yaml(statistics_file)
     
@@ -126,7 +130,7 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
 
     pred_image_writer = PredictedImageWriter(label.shape, patch_size, n_classes, prediction_remove_border)
 
-    sum_prediction = np.zeros(label.shape + (n_classes,))
+    sum_prediction = np.zeros(label.shape)
 
     pbar = tqdm(models_pred_idx)
     for model_idx in pbar:
@@ -140,7 +144,7 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
 
         for overlap_i, overlap in enumerate(overlaps):
             pred_ds.generate_overlap_patches(overlap)
-            dataloader = DataLoader(pred_ds, batch_size=batch_size, shuffle = False)
+            dataloader = DataLoader(pred_ds, batch_size=batch_size, shuffle = False, num_workers=1)
 
             pred_image_writer.restart_image()
 
@@ -161,27 +165,38 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
             trainer.predict(model, dataloaders = dataloader, return_predictions = False)
 
         prediction = pred_image_writer.predicted_image()
+
+        sum_prediction += prediction[:,:,1]
+
+        #prediction[label==2] = [0, 0, 1]
+        #prediction[label!=2][2] = 0
+        #prediction = prediction / np.expand_dims(prediction.sum(axis=-1), axis=-1)
+
+        #prediction[:,:,0] = prediction[:,:,0] + prediction[:,:,2]
+        #prediction = prediction[:,:,0:2]
+        #prediction = prediction / np.expand_dims(prediction.sum(axis=-1), axis=-1)
+
         
-
-        prediction[label==2] = [0, 0, 1]
-        prediction[label!=2][2] = 0
-        prediction = prediction / np.expand_dims(prediction.sum(axis=-1), axis=-1)
-
-        sum_prediction += prediction
 
         prediction_npz_file = predicted_path / f'{prediction_prefix}_{args.experiment}_{opt_i}_{sar_i}_{model_idx}.npz'
         np.savez_compressed(prediction_npz_file, pred = prediction[:,:,1].astype(np.float16))
 
+    pbar.set_description(f'All models predicted.')
+
+    print('Evaluating uncertainty...')
     avg_prediction = sum_prediction / len(models_pred_idx)
-    avg_prediction += 1e-7
-    entropy = avg_prediction * np.log(avg_prediction)
-    entropy = entropy.sum(axis=-1)
-    entropy = -1 * (1/n_classes) * entropy
+    avg_prediction = np.clip(avg_prediction, 1e-7, 1)
+    entropy = (-1/2) * (avg_prediction * np.log(avg_prediction) + (1-avg_prediction) * np.log(1-avg_prediction))
+    #entropy = entropy.sum(axis=-1)
+    #entropy = -1 * (1/(n_classes-1)) * entropy
+
+    #entropy = erosion(entropy, disk(3))
 
     base_data = Path(paths_params['opt_data']) / original_opt_imgs['test'][0]
     entropy_tif_file = visual_path / f'entropy_{args.experiment}_{opt_i}_{sar_i}.tif'
     save_geotiff(base_data, entropy_tif_file, entropy, dtype = 'float')
     #save_geotiff(base_data, prediction_tif_file, prediction[:,:,1], dtype = 'float')
+    print('Uncertainty evaluated.')
 
     pred_results = {
         #'models_predicted': models_pred_idx,

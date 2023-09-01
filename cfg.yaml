@@ -107,7 +107,7 @@ prediction_params:
   n_models: *n_models
   batch_size: 48
   prediction_remove_border: 8
-  prediction_overlaps: [0.2, 0.3]#, 0.3, 0.4]
+  prediction_overlaps: [0.3]#, 0.3, 0.4]
   opt_bands: *opt_bands 
   sar_bands: *sar_bands 
 
@@ -555,9 +555,9 @@ experiments:
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_opt_imgs: [ [0, 3] ]
     train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_opt_imgs: [ [0, 3] ]
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     swin_params: *swin_params
 
@@ -571,9 +571,9 @@ experiments:
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_opt_imgs: [ [0, 3] ]
     train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_opt_imgs: [ [0, 3] ]
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     swin_params: *swin_params
 
@@ -587,9 +587,9 @@ experiments:
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_opt_imgs: [ [0, 3] ]
     train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_opt_imgs: [ [0, 3] ]
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     swin_params: *swin_params
 
