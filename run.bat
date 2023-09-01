@@ -1,9 +1,14 @@
-python previous-def-gen.py -s 1
-python label-gen.py -s 1
-python tiles-gen.py -s 1
-python prepare-data.py -s 1 -r
+python predict.py -s 1 -e 55
+python evaluate.py -s 1 -e 55
 
+python predict.py -s 1 -e 56
+python evaluate.py -s 1 -e 56
 
-python train.py -s 1 -e 6
-python predict.py -s 1 -e 6
-python evaluate.py -s 1 -e 6
+python predict.py -s 1 -e 57
+python evaluate.py -s 1 -e 57
+
+python predict.py -s 1 -e 58
+python evaluate.py -s 1 -e 58
+
+python predict.py -s 1 -e 59
+python evaluate.py -s 1 -e 59
