@@ -46,7 +46,7 @@ f_yearly_def = prodes_folder / prodes_params['yearly_deforestation']
 v_yearly_def = ogr.Open(str(f_yearly_def))
 l_yearly_def = v_yearly_def.GetLayer()
 
-f_previous_def = prodes_folder / prodes_params['defor_2007']
+f_previous_def = prodes_folder / prodes_params['previous_def']
 v_previous_def = ogr.Open(str(f_previous_def))
 l_previous_def = v_previous_def.GetLayer()
 
@@ -68,7 +68,7 @@ target_train.SetProjection(proj)
 
 train_year = general_params['train_year']
 last_year = train_year - 1
-b_year = 2007
+b_year = 2001
 years = np.arange(b_year, train_year)
 vals = np.linspace(0,1, len(years)+1)
 

@@ -42,13 +42,16 @@ f_yearly_def = prodes_folder / prodes_params['yearly_deforestation']
 v_yearly_def = ogr.Open(str(f_yearly_def))
 l_yearly_def = v_yearly_def.GetLayer()
 
-f_previous_def = prodes_folder / prodes_params['defor_2007']
+f_previous_def = prodes_folder / prodes_params['previous_def']
 v_previous_def = ogr.Open(str(f_previous_def))
 l_previous_def = v_previous_def.GetLayer()
 
 f_no_forest = prodes_folder / prodes_params['no_forest']
-v_no_forest = ogr.Open(str(f_no_forest))
-l_no_forest = v_no_forest.GetLayer()
+if f_no_forest.exists():
+    v_no_forest = ogr.Open(str(f_no_forest))
+    l_no_forest = v_no_forest.GetLayer()
+else:
+    l_no_forest = None
 
 f_residual = prodes_folder / prodes_params['residual']
 v_residual = ogr.Open(str(f_residual))
@@ -82,7 +85,8 @@ where_past = f'"year"<={train_year -1}'
 where_ref = f'"year"={train_year}'
 
 gdal.RasterizeLayer(target_train, [1], l_previous_def, burn_values=[2])
-gdal.RasterizeLayer(target_train, [1], l_no_forest, burn_values=[2])
+if l_no_forest is not None:
+    gdal.RasterizeLayer(target_train, [1], l_no_forest, burn_values=[2])
 gdal.RasterizeLayer(target_train, [1], l_hydrography, burn_values=[2])
 gdal.RasterizeLayer(target_train, [1], l_residual, burn_values=[2])
 
@@ -121,7 +125,8 @@ where_past = f'"year"<={test_year -1}'
 where_ref = f'"year"={test_year}'
 
 gdal.RasterizeLayer(target_test, [1], l_previous_def, burn_values=[2])
-gdal.RasterizeLayer(target_test, [1], l_no_forest, burn_values=[2])
+if l_no_forest is not None:
+    gdal.RasterizeLayer(target_test, [1], l_no_forest, burn_values=[2])
 gdal.RasterizeLayer(target_test, [1], l_hydrography, burn_values=[2])
 gdal.RasterizeLayer(target_test, [1], l_residual, burn_values=[2])
 
