@@ -83,6 +83,8 @@ n_sar_imgs_groups = len(experiment_params['test_sar_imgs'])
 original_opt_imgs = site_cfg['original_data']['opt_imgs']
 original_sar_imgs = site_cfg['original_data']['sar_imgs']
 
+min_area = general_params['min_area']
+
 imgs_groups_idxs = []
 for opt_imgs_group_idx in range(n_opt_imgs_groups):
      for sar_imgs_group_idx in range(n_sar_imgs_groups):
@@ -134,7 +136,7 @@ def eval_prediction(data):
 
     pred_b = (pred_prob > 0.5).astype(np.uint8)
     pred_b[label == 2] = 0
-    pred_red = pred_b - area_opening(pred_b, 625)
+    pred_red = pred_b - area_opening(pred_b, min_area)
 
     pred_b[label == 2] = 2
     pred_b[pred_red == 1] = 2
