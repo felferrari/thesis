@@ -1,6 +1,6 @@
 general_params:
-  train_year: &train_year 2020 
-  test_year: &test_year 2021
+  train_year: 2020 
+  test_year: 2021
   patch_size: &patch_size 224 
   prefixs: &prefixs
     opt: opt
@@ -19,8 +19,9 @@ general_params:
     visual_logs: visual_logs
   opt_bands: &opt_bands 10 #number of bands per optical image
   sar_bands: &sar_bands 2 #number of bands per SAR image
-  n_classes: &n_classes 3 #number of classes
+  n_classes: &n_classes 4 #number of classes
   n_models: &n_models 10 #number of models to be trained for each experiment
+  min_area: 625
   resunet_depths: &resunet_depths [32, 64, 128, 256]
   label_def_inner_buffer: 3
   label_def_outer_buffer: 3
@@ -39,7 +40,7 @@ preparation_params:
   prepared_data: prepared.yaml
   statistics_data: statistics.yaml
   patch_overlap: 0.7
-  min_def_proportion: 0.01
+  min_def_proportion: 0.02
 paths:
   opt_data: /home/felferrari/projects/thesis/data/opt 
   sar_data: /home/felferrari/projects/thesis/data/sar
@@ -53,7 +54,7 @@ paths:
   prepared_data: /home/felferrari/projects/thesis/prepared
   results_sqlite: /home/felferrari/projects/thesis/experiments/results.db
 prodes_params:
-  previous_def: accumulated_deforestation_2000.shp
+  previous_def: accumulated_deforestation_2007.shp
   hydrography: hydrography.shp
   no_forest: no_forest.shp
   residual: residual.shp
@@ -87,9 +88,9 @@ training_params:
     module: segmentation_models_pytorch.losses.FocalLoss
     params:
       mode: multiclass
-      #ignore_index: 2
+      ignore_index: 3
       gamma: 3
-      #weight: [0.2, 0.8, 0]
+      #weight: [0.1, 0.9, 0]
   optimizer:
     module: torch.optim.AdamW
     #module: torch.optim.Adam
@@ -322,7 +323,7 @@ experiments:
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: [ [0, 3] ]
+    train_opt_imgs: [ [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3] ]
     train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     test_opt_imgs: [ [0, 3] ]
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
@@ -338,7 +339,7 @@ experiments:
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: [ [0, 3] ]
+    train_opt_imgs: [ [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3] ]
     train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     test_opt_imgs: [ [0, 3] ]
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
@@ -354,7 +355,7 @@ experiments:
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: [ [0, 3] ]
+    train_opt_imgs: [ [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3] ]
     train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     test_opt_imgs: [ [0, 3] ]
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
@@ -388,7 +389,7 @@ experiments:
     n_classes: *n_classes
     train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
     train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    test_opt_imgs: [ [0, 3] , [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     swin_params: *swin_params
 
@@ -450,7 +451,7 @@ experiments:
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: [ [0, 3] ]
+    train_opt_imgs: [ [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3] ]
     train_sar_imgs: [ [0, 11] ]
     test_opt_imgs: [ [0, 3] ]
     test_sar_imgs: [ [0, 11] ]
@@ -556,7 +557,7 @@ experiments:
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: [ [0, 3] ]
+    train_opt_imgs: [ [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3] ]
     train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     test_opt_imgs: [ [0, 3] ]
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
@@ -572,7 +573,7 @@ experiments:
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: [ [0, 3] ]
+    train_opt_imgs: [ [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3] ]
     train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     test_opt_imgs: [ [0, 3] ]
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
@@ -588,7 +589,7 @@ experiments:
     opt_bands: *opt_bands
     sar_bands: *sar_bands
     n_classes: *n_classes
-    train_opt_imgs: [ [0, 3] ]
+    train_opt_imgs: [ [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3], [0, 3] ]
     train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     test_opt_imgs: [ [0, 3] ]
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]

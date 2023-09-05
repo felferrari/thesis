@@ -86,15 +86,19 @@ where_ref = f'"year"={train_year}'
 
 gdal.RasterizeLayer(target_train, [1], l_previous_def, burn_values=[2])
 if l_no_forest is not None:
-    gdal.RasterizeLayer(target_train, [1], l_no_forest, burn_values=[2])
-gdal.RasterizeLayer(target_train, [1], l_hydrography, burn_values=[2])
-gdal.RasterizeLayer(target_train, [1], l_residual, burn_values=[2])
+    gdal.RasterizeLayer(target_train, [1], l_no_forest, burn_values=[3])
+gdal.RasterizeLayer(target_train, [1], l_hydrography, burn_values=[3])
+
 
 l_yearly_def.SetAttributeFilter(where_past)
+l_residual.SetAttributeFilter(where_past)
 gdal.RasterizeLayer(target_train, [1], l_yearly_def, burn_values=[2])
+gdal.RasterizeLayer(target_train, [1], l_residual, burn_values=[2])
 
 l_yearly_def.SetAttributeFilter(where_ref)
+l_residual.SetAttributeFilter(where_ref)
 gdal.RasterizeLayer(target_train, [1], l_yearly_def, burn_values=[1])
+gdal.RasterizeLayer(target_train, [1], l_residual, burn_values=[1])
 
 rasterized_data = target_train.ReadAsArray() 
 
@@ -105,7 +109,7 @@ def_inner_buffer = general_params['label_def_inner_buffer']
 def_outer_buffer = general_params['label_def_outer_buffer']
 border_data = dilation(defor_data, disk(def_inner_buffer)) - erosion(defor_data, disk(def_outer_buffer))
 
-rasterized_data[border_data==1] = 2
+rasterized_data[border_data==1] = 3
 
 target_train.GetRasterBand(1).WriteArray(rasterized_data)
 target_train = None
@@ -126,9 +130,9 @@ where_ref = f'"year"={test_year}'
 
 gdal.RasterizeLayer(target_test, [1], l_previous_def, burn_values=[2])
 if l_no_forest is not None:
-    gdal.RasterizeLayer(target_test, [1], l_no_forest, burn_values=[2])
-gdal.RasterizeLayer(target_test, [1], l_hydrography, burn_values=[2])
-gdal.RasterizeLayer(target_test, [1], l_residual, burn_values=[2])
+    gdal.RasterizeLayer(target_test, [1], l_no_forest, burn_values=[3])
+gdal.RasterizeLayer(target_test, [1], l_hydrography, burn_values=[3])
+gdal.RasterizeLayer(target_test, [1], l_residual, burn_values=[3])
 
 l_yearly_def.SetAttributeFilter(where_past)
 gdal.RasterizeLayer(target_test, [1], l_yearly_def, burn_values=[2])
@@ -147,11 +151,11 @@ border_data = dilation(defor_data, disk(def_inner_buffer)) - erosion(defor_data,
 
 del defor_data
 
-rasterized_data[border_data==1] = 2
+rasterized_data[border_data==1] = 3
 
 defor_label = (rasterized_data==1).astype(np.uint8)
 defor_remove = defor_label - area_opening(defor_label, 625)
-rasterized_data[defor_remove == 1] = 2
+rasterized_data[defor_remove == 1] = 3
 
 target_test.GetRasterBand(1).WriteArray(rasterized_data)
 target_test = None

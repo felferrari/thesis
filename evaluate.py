@@ -136,11 +136,13 @@ def eval_prediction(data):
 
     pred_b = (pred_prob > 0.5).astype(np.uint8)
     pred_b[label == 2] = 0
+    pred_b[label == 3] = 0
     pred_red = pred_b - area_opening(pred_b, min_area)
 
-    pred_b[label == 2] = 2
-    pred_b[pred_red == 1] = 2
-    label[pred_red == 1] = 2
+    pred_b[label == 2] = 3
+    pred_b[label == 3] = 3
+    pred_b[pred_red == 1] = 3
+    label[pred_red == 1] = 3
 
 
     error_map = np.zeros_like(label, dtype=np.uint8)
