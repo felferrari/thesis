@@ -121,7 +121,7 @@ def eval_prediction(data):
             #    pred_prob += load_sb_image(pred_prob_file).astype(np.float16)
         pred_prob = pred_prob / n_models
         mean_prob_file = visual_path / f'{prediction_prefix}_mean_prob_{args.experiment}_{opt_imgs_groups_idx}_{sar_imgs_groups_idx}.tif'
-        save_geotiff(base_data, mean_prob_file, pred_prob, dtype = 'float')
+        #save_geotiff(base_data, mean_prob_file, pred_prob, dtype = 'float')
         epsilon = 1e-7
         cliped_pred_prob = np.clip(pred_prob, epsilon, 1-epsilon)
         entropy = (-1/2) * (cliped_pred_prob * np.log(cliped_pred_prob) + (1-cliped_pred_prob) * np.log(1-cliped_pred_prob))
