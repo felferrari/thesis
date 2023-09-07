@@ -130,7 +130,7 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
 
     pred_image_writer = PredictedImageWriter(label.shape, patch_size, n_classes, prediction_remove_border)
 
-    sum_prediction = np.zeros(label.shape)
+    #sum_prediction = np.zeros(label.shape)
 
     pbar = tqdm(models_pred_idx)
     for model_idx in pbar:
@@ -166,7 +166,7 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
 
         prediction = pred_image_writer.predicted_image()
 
-        sum_prediction += prediction[:,:,1]
+        #sum_prediction += prediction[:,:,1]
 
         #prediction[label==2] = [0, 0, 1]
         #prediction[label!=2][2] = 0
@@ -183,20 +183,21 @@ def run_prediction(models_pred_idx, test_opt_img, test_sar_img, opt_i, sar_i):
 
     pbar.set_description(f'All models predicted.')
 
-    print('Evaluating uncertainty...')
-    avg_prediction = sum_prediction / len(models_pred_idx)
-    avg_prediction = np.clip(avg_prediction, 1e-7, 1)
-    entropy = (-1/2) * (avg_prediction * np.log(avg_prediction) + (1-avg_prediction) * np.log(1-avg_prediction))
-    #entropy = entropy.sum(axis=-1)
-    #entropy = -1 * (1/(n_classes-1)) * entropy
+    # print('Evaluating uncertainty...')
+    # avg_prediction = sum_prediction / len(models_pred_idx)
+    # epsilon = 1e-7
+    # avg_prediction = np.clip(avg_prediction, epsilon, 1-epsilon)
+    # entropy = (-1/2) * (avg_prediction * np.log(avg_prediction) + (1-avg_prediction) * np.log(1-avg_prediction))
+    # #entropy = entropy.sum(axis=-1)
+    # #entropy = -1 * (1/(n_classes-1)) * entropy
 
-    #entropy = erosion(entropy, disk(3))
+    # #entropy = erosion(entropy, disk(3))
 
-    base_data = Path(paths_params['opt_data']) / original_opt_imgs['test'][0]
-    entropy_tif_file = visual_path / f'entropy_{args.experiment}_{opt_i}_{sar_i}.tif'
-    save_geotiff(base_data, entropy_tif_file, entropy, dtype = 'float')
-    #save_geotiff(base_data, prediction_tif_file, prediction[:,:,1], dtype = 'float')
-    print('Uncertainty evaluated.')
+    # base_data = Path(paths_params['opt_data']) / original_opt_imgs['test'][0]
+    # entropy_tif_file = visual_path / f'entropy_{args.experiment}_{opt_i}_{sar_i}.tif'
+    # save_geotiff(base_data, entropy_tif_file, entropy, dtype = 'float')
+    # #save_geotiff(base_data, prediction_tif_file, prediction[:,:,1], dtype = 'float')
+    # print('Uncertainty evaluated.')
 
     pred_results = {
         #'models_predicted': models_pred_idx,
