@@ -21,7 +21,7 @@ general_params:
   sar_bands: &sar_bands 2 #number of bands per SAR image
   n_classes: &n_classes 4 #number of classes
   n_models: &n_models 10 #number of models to be trained for each experiment
-  min_area: 625
+  min_area: 625 #!CHANGE 625
   resunet_depths: &resunet_depths [32, 64, 128, 256]
   label_def_inner_buffer: 3
   label_def_outer_buffer: 3
@@ -40,7 +40,7 @@ preparation_params:
   prepared_data: prepared.yaml
   statistics_data: statistics.yaml
   patch_overlap: 0.7
-  min_def_proportion: 0.02
+  min_def_proportion: 0.02 #!CHANGE
 paths:
   opt_data: /home/felferrari/projects/thesis/data/opt 
   sar_data: /home/felferrari/projects/thesis/data/sar
@@ -54,7 +54,7 @@ paths:
   prepared_data: /home/felferrari/projects/thesis/prepared
   results_sqlite: /home/felferrari/projects/thesis/experiments/results.db
 prodes_params:
-  previous_def: accumulated_deforestation_2007.shp
+  previous_def: accumulated_deforestation_2007.shp #!CHANGE
   hydrography: hydrography.shp
   no_forest: no_forest.shp
   residual: residual.shp
@@ -89,7 +89,7 @@ training_params:
     params:
       mode: multiclass
       ignore_index: 3
-      gamma: 3
+      gamma: 3 #!CHANGE 3
       #weight: [0.1, 0.9, 0]
   optimizer:
     module: torch.optim.AdamW

@@ -68,7 +68,7 @@ target_train.SetProjection(proj)
 
 train_year = general_params['train_year']
 last_year = train_year - 1
-b_year = 2007 #2001 2007
+b_year = 2007 #! CHANGE 2001 2007
 years = np.arange(b_year, train_year)
 vals = np.linspace(0,1, len(years)+1)
 
@@ -95,7 +95,7 @@ target_test.SetProjection(proj)
 
 test_year = general_params['test_year']
 last_year = test_year - 1
-b_year = 2007
+b_year = 2001 #! CHANGE 2001 2007
 years = np.arange(b_year, test_year)
 vals = np.linspace(0,1, len(years)+1)
 
