@@ -131,7 +131,7 @@ class ResUnetClassifier(nn.Module):
     def forward(self, x):
         x = self.res_block(x)
         x = self.last_conv(x)
-        x = self.last_act(x)
+        #x = self.last_act(x)
         return x
     
 class ResUnetRegressionClassifier(nn.Module):

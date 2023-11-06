@@ -266,7 +266,7 @@ class SwinClassifier(nn.Module):
         x = self.patch_expand_last(x)
         x = x.permute((0,3,1,2))
         x = self.last_proj(x)
-        x = self.last_act(x)
+        #x = self.last_act(x)
         return x
 
 class SwinRegressionClassifier(nn.Module):

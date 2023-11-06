@@ -19,6 +19,8 @@ class ModelModule(L.LightningModule):
 
         self.optimizer_cfg = training_params['optimizer']
 
+        self.last_softmax = torch.nn.Softmax(dim=1)
+
     def training_step(self, batch, batch_idx):
         x, y = batch
         def_target = y[0]
@@ -60,7 +62,8 @@ class ModelModule(L.LightningModule):
         return optimizer
     
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        return self.forward(batch[0])
+        y = self.forward(batch[0])
+        return self.last_softmax(y)
     
 class ModelModuleMultiTask(L.LightningModule):
     def __init__(self, training_params):
@@ -79,6 +82,8 @@ class ModelModuleMultiTask(L.LightningModule):
         self.val_metric_def = MulticlassF1Score(num_classes = training_params['n_classes'], average= 'none')
 
         self.optimizer_cfg = training_params['optimizer']
+
+        self.last_softmax = torch.nn.Softmax(dim=1)
 
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -138,4 +143,5 @@ class ModelModuleMultiTask(L.LightningModule):
     
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         #x, y = batch
-        return self.forward(batch[0])[0]
+        y = self.forward(batch[0])[0]
+        return self.last_softmax(y)

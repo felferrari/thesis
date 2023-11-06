@@ -59,12 +59,6 @@ crs = base_data.GetSpatialRef()
 proj = base_data.GetProjection()
 
 #train previous deforestation
-
-
-base_year = 2007 #! CHANGE 2001 2007
-delta_years = 10
-vals = np.linspace(0.1,1, delta_years)
-
 train_output = paths_params['previous_train']
 
 target_train = gdal.GetDriverByName('GTiff').Create(train_output, x_res, y_res, 1, gdal.GDT_Float32)
@@ -73,29 +67,25 @@ target_train.SetSpatialRef(crs)
 target_train.SetProjection(proj)
 
 train_year = general_params['train_year']
-prev_train_year = train_year - 1
+last_year = train_year - 1
+b_year = 2007 #! CHANGE 2001 2007
+years = np.arange(b_year, train_year)
+vals = np.linspace(0,1, len(years)+1)
 
-years = np.linspace(prev_train_year-delta_years+1 ,prev_train_year, delta_years).astype(np.int32)
 
+gdal.RasterizeLayer(target_train, [1], l_previous_def, burn_values=[vals[1]])
+print('prev', vals[1])
 
-gdal.RasterizeLayer(target_train, [1], l_previous_def, burn_values=[vals[0]])
-print('prev', vals[0])
-
-where = f'"year"<{years[0]}'
-l_yearly_def.SetAttributeFilter(where)
-gdal.RasterizeLayer(target_train, [1], l_yearly_def, burn_values=[vals[0]])
-print(where, vals[0])
-
-for i, year in enumerate(years):
-    v = vals[i]
-    print(year, v)
-    where = f'"year"={year}'
+for i, t_year in enumerate(years[1:]):
+    v = vals[i+2]
+    print(t_year, v)
+    where = f'"year"={t_year}'
     l_yearly_def.SetAttributeFilter(where)
     gdal.RasterizeLayer(target_train, [1], l_yearly_def, burn_values=[v])
 
 target_train = None
-    
 
+#test previous deforestation
 test_output = paths_params['previous_test']
 
 target_test = gdal.GetDriverByName('GTiff').Create(test_output, x_res, y_res, 1, gdal.GDT_Float32)
@@ -104,23 +94,19 @@ target_test.SetSpatialRef(crs)
 target_test.SetProjection(proj)
 
 test_year = general_params['test_year']
-prev_test_year = test_year - 1
+last_year = test_year - 1
+b_year = 2001 #! CHANGE 2001 2007
+years = np.arange(b_year, test_year)
+vals = np.linspace(0,1, len(years)+1)
 
-years = np.linspace(prev_test_year-delta_years+1 ,prev_test_year, delta_years).astype(np.int32)
 
+gdal.RasterizeLayer(target_test, [1], l_previous_def, burn_values=[vals[1]])
+print('prev', vals[1])
 
-gdal.RasterizeLayer(target_test, [1], l_previous_def, burn_values=[vals[0]])
-print('prev', vals[0])
-
-where = f'"year"<{years[0]}'
-l_yearly_def.SetAttributeFilter(where)
-gdal.RasterizeLayer(target_test, [1], l_yearly_def, burn_values=[vals[0]])
-print(where, vals[0])
-
-for i, year in enumerate(years):
-    v = vals[i]
-    print(year, v)
-    where = f'"year"={year}'
+for i, t_year in enumerate(years[1:]):
+    v = vals[i+2]
+    print(t_year, v)
+    where = f'"year"={t_year}'
     l_yearly_def.SetAttributeFilter(where)
     gdal.RasterizeLayer(target_test, [1], l_yearly_def, burn_values=[v])
 
