@@ -10,10 +10,10 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": true,
+            "justMyCode": false,
             //"args": ["-r"],
             //"args": ["--train-data"],
-            "args": ["-e", "30", "-s", "1"]
+            "args": ["-e", "22", "-s", "1"]
         }
     ]
 }
