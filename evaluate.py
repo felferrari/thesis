@@ -41,7 +41,7 @@ parser.add_argument( # specific site location number
     help = 'Site location number'
 )
 
-parser.add_argument( # specific site location number
+parser.add_argument( # Number of paralel threads
     '-p', '--processes',
     type = int,
     default=9,

@@ -262,58 +262,6 @@ experiments:
     resunet_depths: *resunet_depths
 
   exp_9:
-    model: models.resunet.networks.ResUnetOptMultiTask # 
-    description: CNN Multi-task Opt (Diverse cloud) 
-    sumary: Model Trained and tested with cloud-free optical images
-    short: Opt (Multi-task)
-    group_model: CNN
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    train_sar_imgs: [ [0, 11] ]
-    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    test_sar_imgs: [ [0, 11] ]
-    resunet_depths: *resunet_depths
-    override_train_params:
-      loss_fn_def: 
-        module: segmentation_models_pytorch.losses.FocalLoss
-        params:
-          mode: multiclass
-          gamma: 3
-      loss_fn_cloud:
-        weight: 1.0
-        module: torch.nn.MSELoss
-        params:
-          reduction: mean
-      optimizer:
-        module: torch.optim.AdamW
-        params:
-          lr: 2.0e-5
-
-  exp_10:
-    model: models.resunet.networks.ResUnetJF # 
-    description: CNN pretrained (Multi-task) Joint Fusion (Diverse cloud and 12 Avg SAR images)
-    sumary: Model Trained and tested with diverse cloud conditions in the optical images
-    short: Joint Fusion (pre-trained with Opt Multitask)
-    group_model: CNN
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    pretrained_encoders:
-      opt_exp: 9
-      sar_exp: 2
-    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    resunet_depths: *resunet_depths
-    
-
-
-  exp_11:
     model: models.resunet.networks.ResUnetEF # 
     description: CNN Early Fusion (Cloud-free and 12 Avg SAR images)
     sumary: Model Trained and tested with Cloud-free in the optical images
@@ -329,7 +277,7 @@ experiments:
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     resunet_depths: *resunet_depths
 
-  exp_12:
+  exp_10:
     model: models.resunet.networks.ResUnetJF # 
     description: CNN Joint Fusion (Cloud-free and 12 Avg SAR images)
     sumary: Model Trained and tested with Cloud-free conditions in the optical images
@@ -345,7 +293,7 @@ experiments:
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     resunet_depths: *resunet_depths
 
-  exp_13:
+  exp_11:
     model: models.resunet.networks.ResUnetLF # 
     description: CNN Late Fusion (Cloud-free and 12 Avg SAR images)
     sumary: Model Trained and tested with Cloud-free conditions in the optical images
@@ -361,7 +309,175 @@ experiments:
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     resunet_depths: *resunet_depths
 
+  exp_12:
+    model: models.resunet2.networks.ResUnetOpt # 
+    description: CNN Opt [No Prev Def] (Cloud-free)
+    sumary: Model Trained and tested with cloud-free optical images without previous deforestation info
+    short: Opt [No Prev Def] (Cloud-free)
+    group_model: CNN
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 11] ]
+    resunet_depths: *resunet_depths
+
+  exp_13:
+    model: models.resunet2.networks.ResUnetSAR # 
+    description: CNN SAR [No Prev Def] (12 Average images)
+    sumary: Model Trained and tested with 12 average SAR images without previous deforestation info
+    short: SAR [No Prev Def] (12 Avg Images)
+    group_model: CNN
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    resunet_depths: *resunet_depths
+
+  exp_14:
+    model: models.resunet_siamese.networks.SiameseOpt # 
+    description: CNN Siamese Diff Opt [No Prev Def] (Cloud-free)
+    sumary: Model Trained and tested with cloud-free optical images without previous deforestation info
+    short: Siamese Diff Opt [No Prev Def] (Cloud-free)
+    group_model: CNN
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 11] ]
+    resunet_depths: *resunet_depths
+    siamese_op: difference
+
+  exp_15:
+    model: models.resunet_siamese.networks.SiameseOpt # 
+    description: CNN Siamese Conc Opt [No Prev Def] (Cloud-free)
+    sumary: Model Trained and tested with cloud-free optical images without previous deforestation info
+    short: Siamese Conc Opt [No Prev Def] (Cloud-free)
+    group_model: CNN
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 11] ]
+    resunet_depths: *resunet_depths
+    siamese_op: concatenation
+
+  exp_16:
+    model: models.resunet_siamese.networks.SiameseSAR # 
+    description: CNN Siamese Diff SAR [No Prev Def] 
+    sumary: Model Trained and tested with pair of SAR images
+    short: Siamese Diff SAR [No Prev Def] 
+    group_model: CNN
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 11] ]
+    resunet_depths: *resunet_depths
+    siamese_op: difference
+
+  exp_17:
+    model: models.resunet_siamese.networks.SiameseSAR # 
+    description: CNN Siamese Conc SAR [No Prev Def] 
+    sumary: Model Trained and tested with pair of SAR images
+    short: Siamese Conc SAR [No Prev Def] 
+    group_model: CNN
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 11] ]
+    resunet_depths: *resunet_depths
+    siamese_op: concatenation
+
+  exp_18:
+    model: models.resunet_siamese.networks.SiameseOptPrevDef # 
+    description: CNN Siamese Diff Opt (Cloud-free)
+    sumary: Model Trained and tested with cloud-free optical images without previous deforestation info
+    short: Siamese Diff Opt (Cloud-free)
+    group_model: CNN
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 11] ]
+    resunet_depths: *resunet_depths
+    siamese_op: difference
+
+  exp_19:
+    model: models.resunet_siamese.networks.SiameseOptPrevDef # 
+    description: CNN Siamese Concat Opt (Cloud-free)
+    sumary: Model Trained and tested with cloud-free optical images without previous deforestation info
+    short: Siamese Concat Opt (Cloud-free)
+    group_model: CNN
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 11] ]
+    resunet_depths: *resunet_depths
+    siamese_op: concatenation
+
+  exp_20:
+    model: models.resunet_siamese.networks.SiameseSARPrevDef # 
+    description: CNN Siamese Diff SAR 
+    sumary: Model Trained and tested with pair of SAR images
+    short: Siamese Diff SAR
+    group_model: CNN
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 11] ]
+    resunet_depths: *resunet_depths
+    siamese_op: difference
+
   exp_21:
+    model: models.resunet_siamese.networks.SiameseSARPrevDef # 
+    description: CNN Siamese Conc SAR 
+    sumary: Model Trained and tested with pair of SAR images
+    short: Siamese Conc SAR
+    group_model: CNN
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 11] ]
+    resunet_depths: *resunet_depths
+    siamese_op: concatenation
+
+  exp_51:
     model: models.swin.networks.SwinUnetOpt # 
     description: SWIN-Unet Optical (Diverse cloud)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
@@ -377,7 +493,7 @@ experiments:
     test_sar_imgs: [ [0, 11] ]
     swin_params: *swin_params
 
-  exp_22:
+  exp_52:
     model: models.swin.networks.SwinUnetSAR # 
     description: SWIN-Unet SAR (12 Average images)
     sumary: Model Trained and tested with 12 average SAR images
@@ -393,7 +509,7 @@ experiments:
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     swin_params: *swin_params
 
-  exp_23:
+  exp_53:
     model: models.swin.networks.SwinUnetEF # 
     description: SWIN-Unet Early Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
@@ -409,7 +525,7 @@ experiments:
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     swin_params: *swin_params
 
-  exp_24:
+  exp_54:
     model: models.swin.networks.SwinUnetJF # 
     description: SWIN-Unet Joint Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
@@ -425,7 +541,7 @@ experiments:
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     swin_params: *swin_params
 
-  exp_25:
+  exp_55:
     model: models.swin.networks.SwinUnetLF # 
     description: SWIN-Unet Late Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
@@ -441,7 +557,7 @@ experiments:
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     swin_params: *swin_params
 
-  exp_26:
+  exp_56:
     model: models.swin.networks.SwinUnetOpt # 
     description: SWIN-Unet Opt (Cloud-free)
     sumary: Model Trained and tested with cloud-free optical images
@@ -457,7 +573,7 @@ experiments:
     test_sar_imgs: [ [0, 11] ]
     swin_params: *swin_params
 
-  exp_27:
+  exp_57:
     model: models.swin.networks.SwinUnetJF # 
     description: SWIN-Unet pretrained Joint Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
@@ -468,15 +584,15 @@ experiments:
     sar_bands: *sar_bands
     n_classes: *n_classes
     pretrained_encoders:
-      opt_exp: 21
-      sar_exp: 22
+      opt_exp: 51
+      sar_exp: 52
     train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
     train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     swin_params: *swin_params
 
-  exp_28:
+  exp_58:
     model: models.swin.networks.SwinUnetLF # 
     description: SWIN-Unet pretrained Late Fusion (Diverse cloud and 12 Avg SAR images)
     sumary: Model Trained and tested with diverse cloud conditions in the optical images
@@ -487,67 +603,15 @@ experiments:
     sar_bands: *sar_bands
     n_classes: *n_classes
     pretrained_encoders_decoders:
-      opt_exp: 21
-      sar_exp: 22
+      opt_exp: 51
+      sar_exp: 52
     train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
     train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     swin_params: *swin_params
 
-  exp_29:
-    model: models.swin.networks.SwinUnetOptMultiTask # 
-    description: SWIN-Unet Multi-task Opt (Diverse cloud) 
-    sumary: Model Trained and tested with cloud-free optical images
-    short: Opt (Multi-task)
-    group_model: SWIN-Unet
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    train_sar_imgs: [ [0, 11] ]
-    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    test_sar_imgs: [ [0, 11] ]
-    swin_params: *swin_params
-    override_train_params:
-      loss_fn_def: 
-        module: segmentation_models_pytorch.losses.FocalLoss
-        params:
-          mode: multiclass
-          gamma: 3
-      loss_fn_cloud:
-        weight: 1.0
-        module: torch.nn.MSELoss
-        params:
-          reduction: mean
-      optimizer:
-        module: torch.optim.AdamW
-        params:
-          lr: 2.0e-5
-
-  exp_30:
-    model: models.swin.networks.SwinUnetJF # 
-    description: SWIN-Unet pretrained (Multi-task) Joint Fusion (Diverse cloud and 12 Avg SAR images)
-    sumary: Model Trained and tested with diverse cloud conditions in the optical images
-    short: Joint Fusion (pre-trained with Opt Multitask)
-    group_model: SWIN-Unet
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    pretrained_encoders:
-      opt_exp: 29
-      sar_exp: 22
-    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
-    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
-    swin_params: *swin_params
-
-
-
-  exp_31:
+  exp_59:
     model: models.swin.networks.SwinUnetEF # 
     description: SWIN-Unet Early Fusion (Cloud-free and 12 Avg SAR images)
     sumary: Model Trained and tested with Cloud-free conditions in the optical images
@@ -563,7 +627,7 @@ experiments:
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     swin_params: *swin_params
 
-  exp_32:
+  exp_60:
     model: models.swin.networks.SwinUnetJF # 
     description: SWIN-Unet Joint Fusion (Cloud-free and 12 Avg SAR images)
     sumary: Model Trained and tested with Cloud-free conditions in the optical images
@@ -579,7 +643,7 @@ experiments:
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     swin_params: *swin_params
 
-  exp_33:
+  exp_61:
     model: models.swin.networks.SwinUnetLF # 
     description: SWIN-Unet Late Fusion (Cloud-free and 12 Avg SAR images)
     sumary: Model Trained and tested with Cloud-free conditions in the optical images
@@ -595,8 +659,178 @@ experiments:
     test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
     swin_params: *swin_params
 
+  exp_62:
+    model: models.swin2.networks.SwinUnetOpt # 
+    description: SWIN-Unet Optical [No Prev Def] (Cloud-free)
+    sumary: Model Trained and tested with Cloud-free conditions in the optical images
+    short: Opt [No Prev Def] (Cloud-free)
+    group_model: SWIN-Unet
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 11] ]
+    swin_params: *swin_params
 
-  exp_51:
+  exp_63:
+    model: models.swin2.networks.SwinUnetSAR # 
+    description: SWIN-Unet SAR [No Prev Def] (12 Average images)
+    sumary: Model Trained and tested with 12 average SAR images
+    short: SAR [No Prev Def] (12 Avg Images)
+    group_model: SWIN-Unet
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] ]
+    swin_params: *swin_params
+
+
+  exp_64:
+    model: models.swin_siamese.networks.SiameseOpt # 
+    description: SWIN-Unet Siamese Diff Opt [No Prev Def] (Cloud-free)
+    sumary: Model Trained and tested with cloud-free optical images without previous deforestation info
+    short: Siamese Diff Opt [No Prev Def] (Cloud-free)
+    group_model: SWIN-Unet
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 11] ]
+    swin_params: *swin_params
+    siamese_op: difference
+
+  exp_65:
+    model: models.swin_siamese.networks.SiameseOpt # 
+    description: SWIN-Unet Siamese Concat Opt [No Prev Def] (Cloud-free)
+    sumary: Model Trained and tested with cloud-free optical images without previous deforestation info
+    short: Siamese Conc Opt [No Prev Def] (Cloud-free)
+    group_model: SWIN-Unet
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 11] ]
+    swin_params: *swin_params
+    siamese_op: concatenation
+
+  exp_66:
+    model: models.swin_siamese.networks.SiameseSAR # 
+    description: SWIN-Unet Siamese Diff SAR [No Prev Def] 
+    sumary: Model Trained and tested with pair of SAR images
+    short: Siamese Diff SAR [No Prev Def] 
+    group_model: SWIN-Unet
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 11] ]
+    swin_params: *swin_params
+    siamese_op: difference
+
+  exp_67:
+    model: models.swin_siamese.networks.SiameseSAR # 
+    description: SWIN-Unet Siamese Conc SAR [No Prev Def] 
+    sumary: Model Trained and tested with pair of SAR images
+    short: Siamese Conc SAR [No Prev Def] 
+    group_model: SWIN-Unet
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 11] ]
+    swin_params: *swin_params
+    siamese_op: concatenation
+
+
+  exp_68:
+    model: models.swin_siamese.networks.SiameseOptPrevDef # 
+    description: SWIN-Unet Siamese Diff Opt (Cloud-free)
+    sumary: Model Trained and tested with cloud-free optical images without previous deforestation info
+    short: Siamese Diff Opt (Cloud-free)
+    group_model: SWIN-Unet
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 11] ]
+    swin_params: *swin_params
+    siamese_op: difference
+
+  exp_69:
+    model: models.swin_siamese.networks.SiameseOptPrevDef # 
+    description: SWIN-Unet Siamese Concat Opt (Cloud-free)
+    sumary: Model Trained and tested with cloud-free optical images without previous deforestation info
+    short: Siamese Conc Opt (Cloud-free)
+    group_model: SWIN-Unet
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3] ]
+    test_sar_imgs: [ [0, 11] ]
+    swin_params: *swin_params
+    siamese_op: concatenation
+
+  exp_70:
+    model: models.swin_siamese.networks.SiameseSARPrevDef # 
+    description: SWIN-Unet Siamese Diff SAR 
+    sumary: Model Trained and tested with pair of SAR images
+    short: Siamese Diff SAR
+    group_model: SWIN-Unet
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 11] ]
+    swin_params: *swin_params
+    siamese_op: difference
+
+  exp_71:
+    model: models.swin_siamese.networks.SiameseSARPrevDef # 
+    description: SWIN-Unet Siamese Conc SAR 
+    sumary: Model Trained and tested with pair of SAR images
+    short: Siamese Conc SAR
+    group_model: SWIN-Unet
+    prefixs: *prefixs
+    opt_bands: *opt_bands
+    sar_bands: *sar_bands
+    n_classes: *n_classes
+    train_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    train_sar_imgs: [ [0, 11] ]
+    test_opt_imgs: [ [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5] ]
+    test_sar_imgs: [ [0, 11] ]
+    swin_params: *swin_params
+    siamese_op: concatenation
+
+
+  exp_101:
     model: models.resunet.networks.ResUnetSAR # 
     description: CNN SAR (2 Average images)
     sumary: Model Trained and tested with 2 average SAR images
@@ -612,7 +846,7 @@ experiments:
     test_sar_imgs: [ [0, 11] ]
     resunet_depths: *resunet_depths
 
-  exp_52:
+  exp_102:
     model: models.swin.networks.SwinUnetSAR # 
     description: SWIN-Unet SAR (2 Average images)
     sumary: Model Trained and tested with 2 average SAR images
@@ -627,68 +861,3 @@ experiments:
     test_opt_imgs: [ [0, 3] ]
     test_sar_imgs: [ [0, 11] ]
     swin_params: *swin_params
-
-  exp_53:
-    model: models.resunet.networks.ResUnetSAR # 
-    description: CNN SAR (All Single images)
-    sumary: Model Trained and tested with All Single SAR images
-    short: SAR (All Single Images)
-    group_model: CNN
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43] ]
-    test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43] ]
-    resunet_depths: *resunet_depths
-
-  exp_54:
-    model: models.swin.networks.SwinUnetSAR # 
-    description: SWIN-Unet SAR (All Single images)
-    sumary: Model Trained and tested with All Single SAR images
-    short: SAR (All Single Images)
-    group_model: SWIN-Unet
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43] ]
-    test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43] ]
-    swin_params: *swin_params
-
-  exp_55:
-    model: models.resunet.networks.ResUnetSAR # 
-    description: CNN SAR (2 Single images)
-    sumary: Model Trained and tested with 2 Single SAR images
-    short: SAR (2 Single Images)
-    group_model: CNN
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [12, 43] ]
-    test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [12, 43] ]
-    resunet_depths: *resunet_depths
-
-  exp_56:
-    model: models.swin.networks.SwinUnetSAR # 
-    description: SWIN-Unet SAR (2 Single images)
-    sumary: Model Trained and tested with 2 Single SAR images
-    short: SAR (2 Single Images)
-    group_model: SWIN-Unet
-    prefixs: *prefixs
-    opt_bands: *opt_bands
-    sar_bands: *sar_bands
-    n_classes: *n_classes
-    train_opt_imgs: [ [0, 3] ]
-    train_sar_imgs: [ [12, 43] ]
-    test_opt_imgs: [ [0, 3] ]
-    test_sar_imgs: [ [12, 43] ]
-    swin_params: *swin_params
-

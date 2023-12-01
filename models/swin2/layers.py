@@ -12,12 +12,12 @@ class PatchEmbed(nn.Module):
         self.patches_resolution = patches_resolution
         self.num_patches = patches_resolution[0] * patches_resolution[1]
 
-        #self.in_chans = in_chans
-        #self.embed_dim = embed_dim
+        self.in_chans = in_chans
+        self.embed_dim = embed_dim
 
         #self.proj = Conv2D(embed_dim, kernel_size=patch_size,
         #                   strides=patch_size, name='proj')
-        self.proj = nn.LazyConv2d(out_channels=embed_dim, kernel_size=patch_size, stride=patch_size, bias = False)
+        self.proj = nn.Conv2d(in_channels=in_chans, out_channels=embed_dim, kernel_size=patch_size, stride=patch_size, bias = False)
         
 
     def forward(self, x):

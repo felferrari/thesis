@@ -22,7 +22,7 @@ class ResidualBlock(nn.Module):
         return self.res_block(x) + self.idt_conv(x)
 
 class ResUnetEncoder(nn.Module):
-    def __init__(self, depths):
+    def __init__(self, input_depth, depths):
         super(ResUnetEncoder, self).__init__()
         self.first_res_block = nn.Sequential(
             nn.LazyConv2d(depths[0], kernel_size=3, padding=1, padding_mode = 'reflect'),
@@ -70,7 +70,7 @@ class ResUnetDecoder(nn.Module):
             x_out = self.dec_blocks[i-1](x_out)
 
         return x_out  
-    
+
 class ResUnetDecoderJF(nn.Module):
     def __init__(self, depths):
         super(ResUnetDecoderJF, self).__init__()
@@ -96,29 +96,7 @@ class ResUnetDecoderJF(nn.Module):
 
         return x_out  
 
-class ResUnetDecoderJFNoSkip(nn.Module):
-    def __init__(self, depths):
-        super(ResUnetDecoderJFNoSkip, self).__init__()
 
-        self.dec_blocks = nn.ModuleList(
-            [ResidualBlock(depths[i-1]) for i in range(1, len(depths)-1)]
-        )
-        self.dec_blocks.append(
-            ResidualBlock(depths[-2])
-        )
-
-        self.up_blocks = nn.ModuleList(
-            [nn.Upsample(scale_factor=2) for i in range(1, len(depths))]
-        )
-
-
-    def forward(self, x):
-        x_out = x
-        for i in range(len(self.up_blocks)-1, -1, -1):
-            x_out = self.up_blocks[i](x_out)
-            x_out = self.dec_blocks[i](x_out)
-
-        return x_out  
 
 class ResUnetClassifier(nn.Module):
     def __init__(self, depth, n_classes, last_activation = nn.Softmax):
@@ -138,7 +116,7 @@ class ResUnetRegressionClassifier(nn.Module):
     def __init__(self, depth):
         super().__init__()
         self.res_block = ResidualBlock(depth)
-        self.last_conv = nn.LazyConv2d(2, kernel_size=1)
+        self.last_conv = nn.LazyConv2d(1, kernel_size=1)
         self.last_act = nn.Sigmoid()
 
     def forward(self, x):
@@ -146,3 +124,18 @@ class ResUnetRegressionClassifier(nn.Module):
         x = self.last_conv(x)
         x = self.last_act(x)
         return x
+
+class PrevDefPooling(nn.Module):
+    def __init__(self, n_depth):
+        super().__init__()
+        self.poolings = nn.ModuleList([
+            nn.MaxPool2d(2, 2) for _ in range(n_depth)
+        ])
+    
+    def forward(self, x):
+        output = [x]
+        for pooling in self.poolings:
+            x = pooling(x)
+            output.append(x)
+
+        return output

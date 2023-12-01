@@ -1,24 +1,16 @@
 #! /bin/bash
-python predict.py -d 1 -s 2 -e 31
-python evaluate.py -s 2 -e 31
+python train.py -d 1 -s 1 -e 68
+python predict.py -d 1 -s 1 -e 68
+python evaluate.py -s 1 -e 68
 
-python predict.py -d 1 -s 2 -e 32
-python evaluate.py -s 2 -e 32
+python train.py -d 1 -s 1 -e 69
+python predict.py -d 1 -s 1 -e 69
+python evaluate.py -s 1 -e 69
 
-python predict.py -d 1 -s 2 -e 33
-python evaluate.py -s 2 -e 33
+python train.py -d 1 -s 1 -e 70
+python predict.py -d 1 -s 1 -e 70
+python evaluate.py -s 1 -e 70
 
-python predict.py -d 1 -s 2 -e 11
-python evaluate.py -s 2 -e 11
-
-python predict.py -d 1 -s 2 -e 12
-python evaluate.py -s 2 -e 12
-
-python predict.py -d 1 -s 2 -e 13
-python evaluate.py -s 2 -e 13
-
-python train.py -d 1 -s 2 -e 6 -m 5
-python train.py -d 1 -s 2 -e 6 -m 6
-python train.py -d 1 -s 2 -e 6 -m 7
-python predict.py -d 1 -s 2 -e 6
-python evaluate.py -s 2 -e 6
+python train.py -d 1 -s 1 -e 71
+python predict.py -d 1 -s 1 -e 71
+python evaluate.py -s 1 -e 71

@@ -1,9 +1,10 @@
 from torch import nn
 from torchvision.models.swin_transformer import SwinTransformerBlock, PatchMerging
 import torch
+from einops import rearrange
 
 class PatchEmbed(nn.Module):
-    def __init__(self, img_size, patch_size, in_chans, embed_dim, norm_layer=None):
+    def __init__(self, img_size, patch_size, embed_dim):
         super().__init__()
         patches_resolution = [img_size[0] //
                               patch_size[0], img_size[1] // patch_size[1]]
@@ -12,11 +13,6 @@ class PatchEmbed(nn.Module):
         self.patches_resolution = patches_resolution
         self.num_patches = patches_resolution[0] * patches_resolution[1]
 
-        #self.in_chans = in_chans
-        #self.embed_dim = embed_dim
-
-        #self.proj = Conv2D(embed_dim, kernel_size=patch_size,
-        #                   strides=patch_size, name='proj')
         self.proj = nn.LazyConv2d(out_channels=embed_dim, kernel_size=patch_size, stride=patch_size, bias = False)
         
 
@@ -28,7 +24,7 @@ class PatchEmbed(nn.Module):
 class PatchExpand(nn.Module):
     def __init__(self, dim: int, norm_layer = nn.LayerNorm):
         super().__init__()
-        self.expand = nn.Linear(dim, 2 * dim, bias=False)
+        self.expand = nn.LazyLinear(2 * dim, bias=False)
         if norm_layer is not None:
             self.norm_layer = norm_layer(2*dim)
         else:
@@ -48,7 +44,7 @@ class PatchExpand(nn.Module):
 class PatchExpandx4(nn.Module):
     def __init__(self, dim: int, norm_layer = nn.LayerNorm):
         super().__init__()
-        self.expand = nn.Linear(dim, 16 * dim, bias=False)
+        self.expand = nn.LazyLinear(16 * dim, bias=False)
         if norm_layer is not None:
             self.norm_layer = norm_layer(16 * dim)
         else:
@@ -94,7 +90,6 @@ class SwinTransformerBlockSet(nn.Module):
 class SwinEncoder(nn.Module):
     def __init__(
             self, 
-            input_depth, 
             base_dim, 
             window_size,
             shift_size,
@@ -107,7 +102,6 @@ class SwinEncoder(nn.Module):
         self.embed = PatchEmbed(
             img_size=[img_size, img_size],
             patch_size=patch_size,
-            in_chans=input_depth,
             embed_dim=base_dim
             )
         
@@ -164,14 +158,9 @@ class SwinDecoder(nn.Module):
         ])
 
         self.linear_projs  = nn.ModuleList([
-            nn.Conv2d( (2**(i+1))*base_dim,  (2**(i))*base_dim, kernel_size=1, bias = False)
+            nn.LazyConv2d( (2**(i))*base_dim, kernel_size=1, bias = False)
             for i in range(self.n_layers-1)
         ])
-        
-
-        #self.patch_expand_last = PatchExpandx4(dim = base_dim)
-
-    
 
     def forward(self, x):
         x_out = x[-1]
@@ -212,12 +201,12 @@ class SwinDecoderJF(nn.Module):
         ])
 
         self.linear_projs  = nn.ModuleList([
-            nn.Conv2d( (2**(i+1))*base_dim,  (2**(i))*base_dim, kernel_size=1, bias = False)
+            nn.LazyConv2d( (2**(i))*base_dim, kernel_size=1, bias = False)
             for i in range(self.n_layers)
         ])
 
         self.linear_projs_skip  = nn.ModuleList([
-            nn.Conv2d( (2**(i+1))*base_dim,  (2**(i))*base_dim, kernel_size=1, bias = False)
+            nn.LazyConv2d( (2**(i))*base_dim, kernel_size=1, bias = False)
             for i in range(self.n_layers-1)
         ])
 
@@ -258,7 +247,7 @@ class SwinClassifier(nn.Module):
 
         self.patch_expand_last = PatchExpandx4(dim = base_dim)
 
-        self.last_proj = nn.Conv2d( base_dim,  n_classes, kernel_size=1, bias=False)
+        self.last_proj = nn.LazyConv2d(n_classes, kernel_size=1, bias=False)
         self.last_act = nn.Softmax(dim=1)
 
     def forward(self, x):
@@ -288,7 +277,7 @@ class SwinRegressionClassifier(nn.Module):
 
         self.patch_expand_last = PatchExpandx4(dim = base_dim)
 
-        self.last_proj = nn.Conv2d(base_dim, 2, kernel_size=1, bias=False)
+        self.last_proj = nn.LazyConv2d(2, kernel_size=1, bias=False)
         self.last_act = nn.Sigmoid()
 
     def forward(self, x):
@@ -298,3 +287,21 @@ class SwinRegressionClassifier(nn.Module):
         x = self.last_proj(x)
         x = self.last_act(x)
         return x
+    
+class PrevDefPooling(nn.Module):
+    def __init__(self, n_depth):
+        super().__init__()
+        self.poolings = nn.ModuleList([
+            nn.MaxPool2d(4, 4)
+        ])
+
+        for _ in range(1, n_depth):
+            self.poolings.append(nn.MaxPool2d(2, 2))
+    
+    def forward(self, x):
+        output = []
+        for pooling in self.poolings:
+            x = pooling(x)
+            output.append(rearrange(x, 'b c h w -> b h w c'))
+
+        return output
