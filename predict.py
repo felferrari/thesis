@@ -109,6 +109,7 @@ statistics_file = prepared_folder / preparation_params['statistics_data']
 
 logging.getLogger("lightning").setLevel(logging.ERROR)
 warnings.filterwarnings("ignore", ".*Consider increasing the value of the `num_workers` argument*")
+warnings.filterwarnings("ignore", ".*Lazy modules are a new feature under heavy development*")
 
 #device = f"cuda:{args.device}" if torch.cuda.is_available() else "cpu"
 
