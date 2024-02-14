@@ -42,17 +42,17 @@ preparation_params:
   patch_overlap: 0.7
   min_def_proportion: 0.02 #!CHANGE
 paths:
-  opt_data: D:\Ferrari\Projects\thesis\site_1\data\opt
-  sar_data: D:\Ferrari\Projects\thesis\site_1\data\sar
+  opt_data: D:\Ferrari\Projects\thesis\site_2\data\opt
+  sar_data: D:\Ferrari\Projects\thesis\site_2\data\sar
   prodes_data: D:\Ferrari\Projects\thesis\prodes
-  tiles_path: D:\Ferrari\Projects\thesis\site_1\data\general\tiles.tif
-  experiments: D:\Ferrari\Projects\thesis\site_1\experiments
-  label_train: D:\Ferrari\Projects\thesis\site_1\data\general\label_train.tif
-  label_test: D:\Ferrari\Projects\thesis\site_1\data\general\label_test.tif
-  previous_train: D:\Ferrari\Projects\thesis\site_1\data\general\previous_train.tif
-  previous_test: D:\Ferrari\Projects\thesis\site_1\data\general\previous_test.tif
+  tiles_path: D:\Ferrari\Projects\thesis\site_2\data\general\tiles.tif
+  experiments: D:\Ferrari\Projects\thesis\site_2\experiments
+  label_train: D:\Ferrari\Projects\thesis\site_2\data\general\label_train.tif
+  label_test: D:\Ferrari\Projects\thesis\site_2\data\general\label_test.tif
+  previous_train: D:\Ferrari\Projects\thesis\site_2\data\general\previous_train.tif
+  previous_test: D:\Ferrari\Projects\thesis\site_2\data\general\previous_test.tif
   prepared_data: C:\Users\felferrari\Documents\projetos\thesis\prepared
-  results_sqlite: D:\Ferrari\Projects\thesis\site_1\experiments\results.db
+  results_sqlite: D:\Ferrari\Projects\thesis\site_2\experiments\results.db
 prodes_params:
   previous_def: accumulated_deforestation_2007.shp #!CHANGE
   hydrography: hydrography.shp
