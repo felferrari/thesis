@@ -1,176 +1,36 @@
 #! /bin/bash
-python train.py -d 1 -s 2 -e 1
-python predict.py -d 1 -s 2 -e 1
-python evaluate.py -s 2 -e 1
+python train.py -d 0 -s 3 -e 17
+python predict.py -d 0 -s 3 -e 17
+python evaluate.py -s 3 -e 17
 
-python train.py -d 1 -s 2 -e 2
-python predict.py -d 1 -s 2 -e 2
-python evaluate.py -s 2 -e 2
+python train.py -d 0 -s 3 -e 18
+python predict.py -d 0 -s 3 -e 18
+python evaluate.py -s 3 -e 18
 
-python train.py -d 1 -s 2 -e 3
-python predict.py -d 1 -s 2 -e 3
-python evaluate.py -s 2 -e 3
+python train.py -d 0 -s 3 -e 19
+python predict.py -d 0 -s 3 -e 19
+python evaluate.py -s 3 -e 19
 
-python train.py -d 1 -s 2 -e 4
-python predict.py -d 1 -s 2 -e 4
-python evaluate.py -s 2 -e 4
+python train.py -d 0 -s 3 -e 20
+python predict.py -d 0 -s 3 -e 20
+python evaluate.py -s 3 -e 20
 
-python train.py -d 1 -s 2 -e 5
-python predict.py -d 1 -s 2 -e 5
-python evaluate.py -s 2 -e 5
+python train.py -d 0 -s 3 -e 21
+python predict.py -d 0 -s 3 -e 21
+python evaluate.py -s 3 -e 21
 
-python train.py -d 1 -s 2 -e 6
-python predict.py -d 1 -s 2 -e 6
-python evaluate.py -s 2 -e 6
+python train.py -d 0 -s 3 -e 22
+python predict.py -d 0 -s 3 -e 22
+python evaluate.py -s 3 -e 22
 
-python train.py -d 1 -s 2 -e 7
-python predict.py -d 1 -s 2 -e 7
-python evaluate.py -s 2 -e 7
+python train.py -d 0 -s 3 -e 23
+python predict.py -d 0 -s 3 -e 23
+python evaluate.py -s 3 -e 23
 
-python train.py -d 1 -s 2 -e 8
-python predict.py -d 1 -s 2 -e 8
-python evaluate.py -s 2 -e 8
+python train.py -d 0 -s 3 -e 24
+python predict.py -d 0 -s 3 -e 24
+python evaluate.py -s 3 -e 24
 
-python train.py -d 1 -s 2 -e 9
-python predict.py -d 1 -s 2 -e 9
-python evaluate.py -s 2 -e 9
-
-python train.py -d 1 -s 2 -e 10
-python predict.py -d 1 -s 2 -e 10
-python evaluate.py -s 2 -e 10
-
-python train.py -d 1 -s 2 -e 11
-python predict.py -d 1 -s 2 -e 11
-python evaluate.py -s 2 -e 11
-
-python train.py -d 1 -s 2 -e 12
-python predict.py -d 1 -s 2 -e 12
-python evaluate.py -s 2 -e 12
-
-python train.py -d 1 -s 2 -e 13
-python predict.py -d 1 -s 2 -e 13
-python evaluate.py -s 2 -e 13
-
-python train.py -d 1 -s 2 -e 14
-python predict.py -d 1 -s 2 -e 14
-python evaluate.py -s 2 -e 14
-
-python train.py -d 1 -s 2 -e 15
-python predict.py -d 1 -s 2 -e 15
-python evaluate.py -s 2 -e 15
-
-python train.py -d 1 -s 2 -e 16
-python predict.py -d 1 -s 2 -e 16
-python evaluate.py -s 2 -e 16
-
-python train.py -d 1 -s 2 -e 17
-python predict.py -d 1 -s 2 -e 17
-python evaluate.py -s 2 -e 17
-
-python train.py -d 1 -s 2 -e 18
-python predict.py -d 1 -s 2 -e 18
-python evaluate.py -s 2 -e 18
-
-python train.py -d 1 -s 2 -e 19
-python predict.py -d 1 -s 2 -e 19
-python evaluate.py -s 2 -e 19
-
-python train.py -d 1 -s 2 -e 20
-python predict.py -d 1 -s 2 -e 20
-python evaluate.py -s 2 -e 20
-
-python train.py -d 1 -s 2 -e 21
-python predict.py -d 1 -s 2 -e 21
-python evaluate.py -s 2 -e 21
-
-python train.py -d 1 -s 2 -e 51
-python predict.py -d 1 -s 2 -e 51
-python evaluate.py -s 2 -e 51
-
-python train.py -d 1 -s 2 -e 52
-python predict.py -d 1 -s 2 -e 52
-python evaluate.py -s 2 -e 52
-
-python train.py -d 1 -s 2 -e 53
-python predict.py -d 1 -s 2 -e 53
-python evaluate.py -s 2 -e 53
-
-python train.py -d 1 -s 2 -e 54
-python predict.py -d 1 -s 2 -e 54
-python evaluate.py -s 2 -e 54
-
-python train.py -d 1 -s 2 -e 55
-python predict.py -d 1 -s 2 -e 55
-python evaluate.py -s 2 -e 55
-
-python train.py -d 1 -s 2 -e 56
-python predict.py -d 1 -s 2 -e 56
-python evaluate.py -s 2 -e 56
-
-python train.py -d 1 -s 2 -e 57
-python predict.py -d 1 -s 2 -e 57
-python evaluate.py -s 2 -e 57
-
-python train.py -d 1 -s 2 -e 58
-python predict.py -d 1 -s 2 -e 58
-python evaluate.py -s 2 -e 58
-
-python train.py -d 1 -s 2 -e 59
-python predict.py -d 1 -s 2 -e 59
-python evaluate.py -s 2 -e 59
-
-python train.py -d 1 -s 2 -e 60
-python predict.py -d 1 -s 2 -e 60
-python evaluate.py -s 2 -e 60
-
-python train.py -d 1 -s 2 -e 61
-python predict.py -d 1 -s 2 -e 61
-python evaluate.py -s 2 -e 61
-
-python train.py -d 1 -s 2 -e 62
-python predict.py -d 1 -s 2 -e 62
-python evaluate.py -s 2 -e 62
-
-python train.py -d 1 -s 2 -e 63
-python predict.py -d 1 -s 2 -e 63
-python evaluate.py -s 2 -e 63
-
-python train.py -d 1 -s 2 -e 64
-python predict.py -d 1 -s 2 -e 64
-python evaluate.py -s 2 -e 64
-
-python train.py -d 1 -s 2 -e 65
-python predict.py -d 1 -s 2 -e 65
-python evaluate.py -s 2 -e 65
-
-python train.py -d 1 -s 2 -e 66
-python predict.py -d 1 -s 2 -e 66
-python evaluate.py -s 2 -e 66
-
-python train.py -d 1 -s 2 -e 67
-python predict.py -d 1 -s 2 -e 67
-python evaluate.py -s 2 -e 67
-
-python train.py -d 1 -s 2 -e 68
-python predict.py -d 1 -s 2 -e 68
-python evaluate.py -s 2 -e 68
-
-python train.py -d 1 -s 2 -e 69
-python predict.py -d 1 -s 2 -e 69
-python evaluate.py -s 2 -e 69
-
-python train.py -d 1 -s 2 -e 70
-python predict.py -d 1 -s 2 -e 70
-python evaluate.py -s 2 -e 70
-
-python train.py -d 1 -s 2 -e 71
-python predict.py -d 1 -s 2 -e 71
-python evaluate.py -s 2 -e 71
-
-python train.py -d 1 -s 2 -e 101
-python predict.py -d 1 -s 2 -e 101
-python evaluate.py -s 2 -e 101
-
-python train.py -d 1 -s 2 -e 102
-python predict.py -d 1 -s 2 -e 102
-python evaluate.py -s 2 -e 102
+python train.py -d 0 -s 3 -e 25
+python predict.py -d 0 -s 3 -e 25
+python evaluate.py -s 3 -e 25
