@@ -6,14 +6,19 @@
     "configurations": [
         {
             "name": "Python: Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": false,
             //"args": ["-r"],
             //"args": ["--train-data"],
-            "args": ["-e", "68", "-s", "1"]
+            "args": ["D:\\Ferrari\\Projects\\deforestation-forescast\\paper\\deter-amz-deter-public.shp", 
+            "D:\\Ferrari\\Projects\\deforestation-forescast\\paper\\Risk_areas_template.tif", 
+            "D:\\Ferrari\\Projects\\deforestation-forescast\\paper", 
+            "2024-11-27",
+            "1"
+        ]
         }
     ]
 }

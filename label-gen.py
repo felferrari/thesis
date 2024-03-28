@@ -111,6 +111,10 @@ border_data = dilation(defor_data, disk(def_inner_buffer)) - erosion(defor_data,
 
 rasterized_data[border_data==1] = 3
 
+defor_label = (rasterized_data==1).astype(np.uint8)
+defor_remove = defor_label - area_opening(defor_label, general_params['min_area'])
+rasterized_data[defor_remove == 1] = 3
+
 target_train.GetRasterBand(1).WriteArray(rasterized_data)
 target_train = None
 
@@ -154,7 +158,7 @@ del defor_data
 rasterized_data[border_data==1] = 3
 
 defor_label = (rasterized_data==1).astype(np.uint8)
-defor_remove = defor_label - area_opening(defor_label, 625)
+defor_remove = defor_label - area_opening(defor_label, general_params['min_area'])
 rasterized_data[defor_remove == 1] = 3
 
 target_test.GetRasterBand(1).WriteArray(rasterized_data)
