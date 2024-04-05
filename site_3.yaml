@@ -11,7 +11,8 @@ date:
 n_sar_avg_images: 12
 before_days: 31
 opt_images_dates:
-  - ['2019-08-28', '2019-08-29'] # muito poucas nuvens
+  - ['2019-09-27', '2019-09-28'] # sem nuvem
+  # - ['2019-08-28', '2019-08-29'] # muito poucas nuvens
   - ['2019-09-02', '2019-09-03'] # media nuvens
   - ['2019-09-22', '2019-09-23'] # muita nuvem
   - ['2020-08-07', '2020-08-08'] # sem nuvens
@@ -28,7 +29,8 @@ tiles_params:
 original_data:
   opt_imgs:
     train:
-      - 2019-08-28-2019-08-29.tif
+      - 2019-09-27-2019-09-28.tif
+      #- 2019-08-28-2019-08-29.tif
       - 2019-09-02-2019-09-03.tif
       - 2019-09-22-2019-09-23.tif
       - 2020-08-07-2020-08-08.tif

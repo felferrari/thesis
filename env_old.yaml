@@ -1,0 +1,50 @@
+name: ferrari
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - console_shortcut
+  - notebook
+  - jupyterlab
+  - matplotlib
+  - fiona
+  - gdal=3.6.4
+  - shapely
+  - pandas
+  - altair 
+  - vega_datasets
+  - openpyxl
+  - geopandas 
+  - python-kaleido
+  - earthengine-api
+  - geemap
+  - tqdm
+  - yaml
+  - plotly=5.15.0
+  - scikit-learn=1.3.0
+  - scikit-image=0.20.0
+  - tensorboard
+  - neptune
+  - lightning
+  - pip
+  - s2cloudless=1.7.0
+  - iopath
+  - fvcore
+  - segmentation-models-pytorch
+  - h5py
+  - einops
+  - scipy
+  - numpy=1.24.3
+  - torchmetrics
+  - pip:
+    - git+https://github.com/rwightman/pytorch-image-models.git
+  - pip:
+    - torch==2.0.1
+    - torchvision==0.15.2
+    
+    - --index-url https://download.pytorch.org/whl/cu118
+variables:
+  KMP_DUPLICATE_LIB_OK: True
+
+  

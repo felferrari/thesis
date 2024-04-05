@@ -1,0 +1,17 @@
+numpy
+shapely
+pandas
+geopandas
+earthengine-api
+geemap
+tqdm
+pyyaml
+plotly
+scikit-learn
+scikit-image
+scipy
+mlflow
+h5py
+s2cloudless
+einops
+torchmetrics
