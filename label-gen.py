@@ -54,8 +54,12 @@ else:
     l_no_forest = None
 
 f_residual = prodes_folder / prodes_params['residual']
-v_residual = ogr.Open(str(f_residual))
-l_residual = v_residual.GetLayer()
+if f_residual.exists():
+    v_residual = ogr.Open(str(f_residual))
+    l_residual = v_residual.GetLayer()
+else:
+    l_residual = None
+
 
 f_hydrography = prodes_folder / prodes_params['hydrography']
 v_hydrography = ogr.Open(str(f_hydrography))
@@ -87,18 +91,18 @@ where_ref = f'"year"={train_year}'
 gdal.RasterizeLayer(target_train, [1], l_previous_def, burn_values=[2])
 if l_no_forest is not None:
     gdal.RasterizeLayer(target_train, [1], l_no_forest, burn_values=[3])
+if l_residual is not None:
+    gdal.RasterizeLayer(target_train, [1], l_residual, burn_values=[3])
+    
 gdal.RasterizeLayer(target_train, [1], l_hydrography, burn_values=[3])
 
 
+
 l_yearly_def.SetAttributeFilter(where_past)
-l_residual.SetAttributeFilter(where_past)
 gdal.RasterizeLayer(target_train, [1], l_yearly_def, burn_values=[2])
-gdal.RasterizeLayer(target_train, [1], l_residual, burn_values=[2])
 
 l_yearly_def.SetAttributeFilter(where_ref)
-l_residual.SetAttributeFilter(where_ref)
 gdal.RasterizeLayer(target_train, [1], l_yearly_def, burn_values=[1])
-gdal.RasterizeLayer(target_train, [1], l_residual, burn_values=[1])
 
 rasterized_data = target_train.ReadAsArray() 
 
@@ -136,7 +140,8 @@ gdal.RasterizeLayer(target_test, [1], l_previous_def, burn_values=[2])
 if l_no_forest is not None:
     gdal.RasterizeLayer(target_test, [1], l_no_forest, burn_values=[3])
 gdal.RasterizeLayer(target_test, [1], l_hydrography, burn_values=[3])
-gdal.RasterizeLayer(target_test, [1], l_residual, burn_values=[3])
+if l_residual is not None:
+    gdal.RasterizeLayer(target_test, [1], l_residual, burn_values=[3])
 
 l_yearly_def.SetAttributeFilter(where_past)
 gdal.RasterizeLayer(target_test, [1], l_yearly_def, burn_values=[2])
